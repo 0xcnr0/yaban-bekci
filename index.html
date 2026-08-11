@@ -58,6 +58,44 @@ canvas{
   display:grid;place-items:center;backdrop-filter:blur(6px);
 }
 .chip:active{background:var(--panel-hi);transform:scale(.94)}
+
+/* --- sanal kumanda (yalnız dokunmatik modda) --------------------------- */
+#pad, #fire{
+  pointer-events:auto;position:absolute;
+  bottom:calc(env(safe-area-inset-bottom) + 10px);
+  border-radius:50%;backdrop-filter:blur(6px);
+  border:1px solid rgba(252,252,252,.34);
+  background:rgba(20,24,31,.42);
+  touch-action:none;
+}
+#pad[hidden], #fire[hidden]{display:none}
+#pad{
+  left:calc(env(safe-area-inset-left) + 10px);
+  width:116px;height:116px;
+}
+#padKnob{
+  position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;
+  border-radius:50%;background:rgba(252,252,252,.30);
+  border:1px solid rgba(252,252,252,.55);
+  transition:background .12s;
+}
+#pad.on #padKnob{background:rgba(252,252,252,.62)}
+/* Ateş düğmesi MENÜNÜN SOLUNDA — üst üste binmesin diye yeri CSS'ten
+   hesaplanıyor, kanvasta elle koordinat tutmuyoruz. */
+#fire{
+  right:calc(env(safe-area-inset-right) + 72px);
+  width:96px;height:96px;
+  display:grid;place-items:center;padding:0;
+}
+#fire:active{background:rgba(252,252,252,.18)}
+#fireAmmo{display:flex;gap:5px}
+#fireAmmo i{display:block;width:5px;height:15px;border-radius:1px;background:rgba(252,252,252,.24)}
+#fireAmmo i.f{background:var(--gold,#F8D878)}
+#fireAmmo i.f.r{opacity:.55}
+/* Şarjör boşken düğme kendini duyursun — oyuncu neden ateş etmediğini
+   anlamalı. Şerit "namluyu indir" diyor, düğme "ben boşum" diyor. */
+#fire.bos{border-color:var(--gold,#F8D878);animation:nudge 1.1s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){ #fire.bos{animation:none} }
 #btnCenter{left:calc(env(safe-area-inset-left) + 10px)}
 #btnMenu{right:calc(env(safe-area-inset-right) + 10px)}
 /* Şarj düğmesi menünün solunda. Kanvasın alt şeridi iOS Safari'de araç
@@ -318,6 +356,12 @@ html.tiny  #startNote, html.tiny #progNote{display:none}
   <button class="chip" id="btnCenter" title="Nişangâhı ortala" aria-label="Nişangâhı ortala">&#9678;</button>
   <button class="chip" id="btnReload" title="Şarj et" aria-label="Şarj et">&#8635;</button>
   <button class="chip" id="btnMenu" title="Ayarlar" aria-label="Ayarlar">&#9776;</button>
+  <!-- Sanal kumanda DOM: kanvasa çizilince 2.3 kat büyütülüyor ve piksel
+       piksel duruyordu; ayrıca yerleşimi elle hesaplandığı için ⊚/↻/☰
+       düğmeleriyle üst üste biniyordu. DOM'da hem keskin çiziliyor hem de
+       CSS yerleşimi çakışmayı kendi çözüyor. -->
+  <div id="pad" hidden><div id="padKnob"></div></div>
+  <button id="fire" hidden aria-label="Ateş et"><span id="fireAmmo"></span></button>
 </div>
 
 <!-- İlk açılışta BİR KEZ: nasıl nişan alınacak. Menüye kalıcı bir seçici
@@ -505,10 +549,11 @@ const STR = {
     pGuardLost:'YETİŞEMEDİ - HAYVAN GİTTİ, GERİ GELMEZ',
     pTrackHelp:'TELEFONU SİLAH GİBİ TUT VE ÇEVİR',
     pCenterHint:'KAYARSA SOLDAKİ DÜĞME ORTALAR',
-    pTrackTouch:'SÜRÜKLEYEREK NİŞANGÂHI KARTALA GÖTÜR',
+    pTrackTouch:'SOL ALTTAKİ ÇUBUKLA NİŞANGÂHI SÜR',
     pShootHelp:'NİŞAN AL, DOKUNARAK ATEŞ ET',
+    pShootTouch:'SAĞ ALTTAKİ DÜĞMEYLE ATEŞ ET',
     pReloadHelp:'NAMLUYU AŞAĞI İNDİR',
-    pReloadTouch:'ALT ŞERİDE BAS',
+    pReloadTouch:'ÇUBUĞU AŞAĞI İT VE TUT',
     pDone:'HAZIRSIN', pDoneSub:'BOZKIR SENİ BEKLİYOR',
     calibTitle:'HEDEFİ TAKİP ET', calibFlips:'AŞMA',
     calibTooFast:'ÇOK AŞIYORSUN - HASSASİYETİ DÜŞÜR',
@@ -640,7 +685,7 @@ const STR = {
       diagTitle:'Sensör tanısı', retrySensor:'Sensörü yeniden dene',
       aimTitle:'Nasıl nişan alacaksın?',
       aimTouch:'Parmakla', aimGyro:'Telefonu eğerek',
-      aimTouchNote:'Sürükleyerek nişan al, dokunarak ateş et.',
+      aimTouchNote:'Sol alttaki çubukla nişan al, sağdaki düğmeyle ateş et.',
       aimGyroNote:'Telefon silah olur — daha zor, daha keskin.',
       aimLater:'Sonra ayarlardan değiştirebilirsin.',
       paused:'Duraklatıldı', resume:'Devam et',
@@ -694,10 +739,11 @@ const STR = {
     pGuardLost:'TOO LATE - IT IS GONE, FOR GOOD',
     pTrackHelp:'HOLD THE PHONE LIKE A GUN AND TURN',
     pCenterHint:'DRIFTING? LEFT BUTTON RECENTRES',
-    pTrackTouch:'DRAG TO STEER THE CROSSHAIR ONTO THE EAGLE',
+    pTrackTouch:'STEER THE CROSSHAIR WITH THE LEFT STICK',
     pShootHelp:'AIM, THEN TAP TO FIRE',
+    pShootTouch:'FIRE WITH THE RIGHT BUTTON',
     pReloadHelp:'AIM DOWN TO RELOAD',
-    pReloadTouch:'TAP THE BOTTOM STRIP',
+    pReloadTouch:'PUSH THE STICK DOWN AND HOLD',
     pDone:'YOU ARE READY', pDoneSub:'THE STEPPE IS WAITING',
     calibTitle:'TRACK THE BIRD', calibFlips:'OVERSHOOT',
     calibTooFast:'OVERSHOOTING - LOWER SENSITIVITY',
@@ -825,7 +871,7 @@ const STR = {
       diagTitle:'Sensor diagnostics', retrySensor:'Retry sensor',
       aimTitle:'How do you want to aim?',
       aimTouch:'With your finger', aimGyro:'By tilting',
-      aimTouchNote:'Drag to aim, tap to fire.',
+      aimTouchNote:'Left stick aims, right button fires.',
       aimGyroNote:'The phone becomes the gun — harder, sharper.',
       aimLater:'You can change this later in settings.',
       paused:'Paused', resume:'Resume',
@@ -2354,7 +2400,7 @@ function startReload(){
 }
 function updateReload(){
   if(G.phase !== 'play' && G.phase !== 'calib'){ G.reloadT = 0; return; }
-  // Jiroskopta namlu aşağı inince başlar. Dokunmatikte alt şeride dokununca.
+  // Jiroskopta namlu aşağı inince başlar. Dokunmatikte çubuğu dibe itip tutunca.
   if(cfg.mode === 'gyro' && aim.below) startReload();
   if(G.reloadT > 0 && --G.reloadT <= 0){
     G.shots = magCap();
@@ -2645,7 +2691,7 @@ function layFlock(n){
   /* Kaçınma mesafesi kumandanın GERÇEK ölçüsünden hesaplanıyor. Sabit sayı
      yazınca (54) kumanda küçülüp büyüdükçe yanlış kalıyordu; çubuğun sağ
      kenarı 36+22=58 iken sürü 54'ten başlıyor ve altına giriyordu. */
-  const kose = cfg.mode === 'touch' ? Math.round(PAD.r * 2 + 24) : 14;
+  const kose = cfg.mode === 'touch' ? PAD.koseKac : 14;
   for(let i = 0; i < n; i++){
     out.push({
       id: i,
@@ -2973,7 +3019,7 @@ function drawCalib(){
     sub = cfg.mode === 'gyro' ? T.pTrackHelp : T.pTrackTouch;
     bar = Math.min(1, c.st / (PRACTICE.track + 90));
   } else if(c.step === 2){
-    sub = T.pShootHelp;
+    sub = cfg.mode === 'gyro' ? T.pShootHelp : T.pShootTouch;
     bar = c.hits / PRACTICE.shots;
   } else if(c.step === 3){
     sub = cfg.mode === 'gyro' ? T.pReloadHelp : T.pReloadTouch;
@@ -3018,8 +3064,9 @@ function drawCalib(){
   if(c.step === 1 && cfg.mode === 'gyro')
     textC(g, T.pSens + ' ' + (+cfg.sens).toFixed(1), W/2, 40, c.adj ? PAL.gold : PAL.dim, 1, PAL.ink);
 
-  // şarjör göstergesi 2. ve 3. adımda
-  if(c.step >= 2){
+  // Şarjör göstergesi 2. ve 3. adımda — dokunmatikte ateş düğmesinde
+  // duruyor, sol alt köşe çubuğun altında kalıyor (bkz. drawHUD).
+  if(c.step >= 2 && cfg.mode !== 'touch'){
     for(let i=0;i<G.mods.shots;i++){
       const bx2 = 5 + i*7, by2 = H - 10, live = i < G.shots;
       px(g, bx2, by2, 4, 7, live ? PAL.gold : 'rgba(16,16,24,0.42)');
@@ -3947,6 +3994,7 @@ function update(){
   for(const a of G.flock) if(a.alarm > 0 && --a.alarm === 0 && a.state === 'alert') a.state = 'graze';
   if(G.dogHurt > 0) G.dogHurt--;
   updatePad();
+  syncAmmo();
   updateEdge();
   G.ducks = G.ducks.filter(d => !d.done && d.y > -60 && d.y < H + 60 && d.x > -60 && d.x < W + 60);
 }
@@ -4100,7 +4148,6 @@ function render(){
   }
   if(G.hint) drawHint();
 
-  drawPad(g);
   if(G.phase === 'play')
     drawAim(g, aim.x, aim.y, G.shots === 0,
             G.reloadT > 0 ? 1 - G.reloadT / reloadCost() : -1,
@@ -4217,14 +4264,17 @@ function drawHUD(){
   px(g, bx, 4, Math.round(bw * prog), 3, PAL.sun);
   px(g, bx + Math.round(bw * prog) - 1, 2, 3, 7, PAL.sun);
 
-  // --- şarjör ------------------------------------------------------------
+  /* --- şarjör -----------------------------------------------------------
+     Dokunmatikte sol alt köşe çubuğun altında kalıyor; mermi sayısı ateş
+     düğmesinin üstünde duruyor (syncAmmo). Şarj ŞERİDİ iki modda da kalır:
+     "namluyu indir" hem jiroskopta hem çubukta aynı hareket. */
   const cap = G.mods.shots;
-  for(let i=0;i<cap;i++){
+  for(let i=0;i<cap && cfg.mode !== 'touch';i++){
     const sx = 5 + i*7, sy = H - 10, live = i < G.shots;
     px(g, sx, sy, 4, 7, live ? PAL.gold : 'rgba(16,16,24,0.42)');
     px(g, sx, sy, 4, 2, live ? PAL.orange : 'rgba(16,16,24,0.42)');
   }
-  if(G.reloadT > 0){
+  if(G.reloadT > 0 && cfg.mode !== 'touch'){
     const pr = 1 - G.reloadT / reloadCost();
     px(g, 5, H - 12, Math.round(cap * 7 - 3) * pr, 1, PAL.bone);
   }
@@ -4616,12 +4666,14 @@ $('btnClose').addEventListener('click', e => {
    de dokunmatikte köşelerden uzak duruyor (layFlock) — ama parmak
    kumandanın çizdiği halkadan büyük. Bunu koşum ölçemez (yapay nişancı
    ekrana bakmıyor); yalnız cihazda oynanarak görülür.                     */
+/* Kumandanın DAVRANIŞI burada; YERLEŞİMİ CSS'te (#pad, #fire). Önceden
+   ikisi de burdaydı ve kanvasa çiziliyordu: 2.3 kat büyütülüp piksel piksel
+   duruyordu, ayrıca elle hesaplanan koordinatlar ⊚/↻/☰ ile çakışıyordu.
+
+   `koseKac` sürünün kumanda altına girmemesi için: CSS'teki genişliklerden
+   türetiliyor (116px çubuk + 96px ateş, kanvas ~x2.3 ölçekli). */
 const PAD = {
-  /* Yarıçap ölçüyle seçildi: telefonda kanvas ~x2.3 ölçekleniyor, yani
-     22 kanvas px = ~50 CSS px yarıçap = 100 px çapında dokunma hedefi.
-     Başparmak için rahat, ama 26'daki kadar çok sürü örtmüyor. */
-  r: 22,          // çubuğun yarıçapı (kanvas px)
-  knob: 8,        // başlığın yarıçapı
+  koseKac: 62,    // sürünün kaçınacağı kenar payı (kanvas px)
   dead: 0.16,     // ölü bölge (yarıçapın oranı)
   /* Azami nişan hızı. cfg.sens'e BAĞLANMIYOR — ilk hali öyleydi ve
      kırıktı: alıştırma jiroskop için sens'i yükseltiyor (takip edemeyen
@@ -4635,11 +4687,10 @@ const PAD = {
   fireR: 19,      // ateş düğmesi yarıçapı
   reloadHold: 16, // çubuk dipteyken kaç kare sonra şarj
 };
-const padPos  = () => ({ x: PAD.r + 14, y: H - PAD.r - 10 });
-const firePos = () => ({ x: W - PAD.fireR - 14, y: H - PAD.fireR - 10 });
-
-const pad = { id:null, dx:0, dy:0, down:0 };
-const fireBtn = { id:null };
+/* Kumandalar DOM. Kanvasa çizilince 2.3 kat büyütülüp piksel piksel
+   duruyordu ve yerleşimi elle hesaplandığı için ⊚/↻/☰ ile çakışıyordu.
+   Girdi matematiği burada; yerleşim CSS'te — tek kaynak. */
+const pad = { on:false, id:null, dx:0, dy:0, down:0 };
 
 function canvasPt(p){
   const r = cv.getBoundingClientRect();
@@ -4649,100 +4700,110 @@ function inputBlocked(e){
   if(G.paused || (G.phase !== 'play' && G.phase !== 'calib')) return true;
   if(sheet.classList.contains('open')) return true;
   const t = e.target;
-  return !!(t && t.closest && t.closest('button,#sheet,.screen'));
+  return !!(t && t.closest && t.closest('button,#sheet,.screen,#pad'));
 }
 const tid = p => (p.identifier !== undefined ? p.identifier : 'mouse');
-const yakin = (c, o, r) => (c.x-o.x)*(c.x-o.x) + (c.y-o.y)*(c.y-o.y) < r*r;
 
-function touchStart(e){
-  if(inputBlocked(e)) return;
-  e.preventDefault();
-  for(const p of (e.changedTouches ? Array.from(e.changedTouches) : [e])){
-    const c = canvasPt(p);
-    if(cfg.mode !== 'touch'){ fire(); continue; }   // jiroskopta dokunmak = ateş
-    // Kumanda alanları CÖMERT: parmak tam ortasına denk gelmek zorunda değil.
-    if(pad.id === null && c.x < W/2 && yakin(c, padPos(), PAD.r * 2.0)){
-      pad.id = tid(p); pad.dx = 0; pad.dy = 0; pad.down = 0;
-    } else if(fireBtn.id === null && c.x >= W/2 && yakin(c, firePos(), PAD.fireR * 2.2)){
-      fireBtn.id = tid(p); fire();
-    }
-  }
-}
-
-function touchMove(e){
-  if(pad.id === null || cfg.mode !== 'touch') return;
-  if(G.paused || G.phase === 'over') return;
-  const p = (e.changedTouches ? Array.from(e.changedTouches) : [e]).find(t => tid(t) === pad.id);
-  if(!p) return;
-  e.preventDefault();
-  const c = canvasPt(p), o = padPos();
-  let dx = c.x - o.x, dy = c.y - o.y;
-  const d = Math.hypot(dx, dy) || 1;
-  if(d > PAD.r){ dx = dx / d * PAD.r; dy = dy / d * PAD.r; }   // halkanın içinde kal
+/* Çubuk: parmağın merkezden sapması nişan HIZINI verir. */
+function padSet(p){
+  const el = $('pad'), r = el.getBoundingClientRect();
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  const yari = r.width / 2;
+  let dx = (p.clientX - cx) / yari, dy = (p.clientY - cy) / yari;   // -1..1
+  const d = Math.hypot(dx, dy);
+  if(d > 1){ dx /= d; dy /= d; }
   pad.dx = dx; pad.dy = dy;
+  const k = $('padKnob');
+  if(k) k.style.transform = 'translate(' + (dx * yari * 0.62).toFixed(1) + 'px,' +
+                                            (dy * yari * 0.62).toFixed(1) + 'px)';
+}
+function padRelease(){
+  pad.on = false; pad.id = null; pad.dx = 0; pad.dy = 0; pad.down = 0;
+  const k = $('padKnob'); if(k) k.style.transform = '';
+  $('pad').classList.remove('on');
 }
 
-function touchEnd(e){
-  for(const p of (e.changedTouches ? Array.from(e.changedTouches) : [e])){
-    const id = tid(p);
-    if(id === pad.id){ pad.id = null; pad.dx = 0; pad.dy = 0; pad.down = 0; }
-    if(id === fireBtn.id) fireBtn.id = null;
-  }
-}
-
-/* Çubuk her karede nişangâhı sürer. Hız eğrisi: ölü bölgeden sonra kareyle
-   artıyor — merkeze yakın hassas, kenara doğru hızlı süpürme. */
 function updatePad(){
-  if(cfg.mode !== 'touch' || pad.id === null){ if(pad.id === null) pad.down = 0; return; }
-  const d = Math.hypot(pad.dx, pad.dy);
-  const n = d / PAD.r;
-  if(n <= PAD.dead) { pad.down = 0; return; }
+  if(cfg.mode !== 'touch' || !pad.on){ pad.down = 0; return; }
+  const n = Math.hypot(pad.dx, pad.dy);
+  if(n <= PAD.dead){ pad.down = 0; return; }
   const t = (n - PAD.dead) / (1 - PAD.dead);
-  /* Eğri: merkeze yakın çok ince, kenara doğru hızlı. Saf kare (t*t) alt
-     uçta fazla ölüydü; küçük bir doğrusal pay düzeltmeyi mümkün kılıyor. */
+  /* Eğri: merkeze yakın çok ince, kenara doğru hızlı. Saf kare alt uçta
+     fazla ölüydü; küçük bir doğrusal pay düzeltmeyi mümkün kılıyor. */
   const egri = t * (0.30 + 0.70 * t);
   const hiz = PAD.speed * (cfg.padSens / 6) * egri;
-  aim.x = Math.max(0, Math.min(W, aim.x + (pad.dx / d) * hiz));
-  aim.y = Math.max(0, Math.min(H, aim.y + (pad.dy / d) * hiz));
+  aim.x = Math.max(0, Math.min(W, aim.x + (pad.dx / n) * hiz));
+  aim.y = Math.max(0, Math.min(H, aim.y + (pad.dy / n) * hiz));
   // Çubuğu DİBE itip tutmak = şarj (jiroskoptaki "namluyu indir" ile aynı).
-  const dipte = pad.dy > PAD.r * 0.72 && n > 0.85;
+  const dipte = pad.dy > 0.72 && n > 0.85;
   pad.down = dipte ? pad.down + 1 : 0;
   if(pad.down === PAD.reloadHold) startReload();
 }
 
-function drawPad(g){
-  if(cfg.mode !== 'touch' || G.phase !== 'play') return;
-  const o = padPos(), f = firePos();
-  /* Yarı saydam ama OKUNUR. Çok soluk olunca kumanda görünmüyordu; çok
-     koyu olunca sürünün üstünü kapatıyor. Dolgu zeminden ayırıyor, halka
-     sınırı veriyor. */
-  const zemin = 'rgba(16,18,26,0.30)';
-  const halka = 'rgba(252,252,252,0.42)';
-  const dolu  = 'rgba(252,252,252,0.72)';
-  ell(g, o.x, o.y, PAD.r, PAD.r, zemin);
-  ring(g, o.x, o.y, PAD.r, halka);
-  ell(g, f.x, f.y, PAD.fireR, PAD.fireR, zemin);
-  ring(g, f.x, f.y, PAD.fireR, G.shots > 0 ? halka : 'rgba(216,40,0,0.55)');
-  // başlık: parmağın nerede olduğunu gösterir
-  const kx = o.x + pad.dx, ky = o.y + pad.dy;
-  ell(g, kx, ky, PAD.knob, PAD.knob, pad.id !== null ? dolu : halka);
-  // ateş düğmesinin içinde kalan mermi
-  for(let i = 0; i < magCap(); i++){
-    const bx = f.x - (magCap()*4 - 2)/2 + i*4;
-    px(g, bx, f.y - 1, 2, 3, i < G.shots ? PAL.gold : 'rgba(252,252,252,0.22)');
+/* Ateş düğmesindeki mermi göstergesi — ayrı HUD öğesi gerekmiyor. */
+let ammoSon = -1;
+function syncAmmo(){
+  if(cfg.mode !== 'touch') return;
+  const n = magCap(), sarjda = G.reloadT > 0;
+  // Şarj sırasında fişekler tek tek doluyor — bekleme görünür olsun.
+  const dolu = sarjda ? Math.floor(n * (1 - G.reloadT / reloadCost())) : G.shots;
+  const imza = dolu + (sarjda ? 'r' : '') + n;
+  if(imza === ammoSon) return;
+  ammoSon = imza;
+  const box = $('fireAmmo'); if(!box) return;
+  box.textContent = '';
+  for(let i = 0; i < n; i++){
+    const b = document.createElement('i');
+    if(i < dolu) b.className = sarjda ? 'f r' : 'f';
+    box.append(b);
   }
+  $('fire').classList.toggle('bos', dolu === 0 && !sarjda);
 }
 
-/* İnce halka. İlk hali 44 noktaydı ve basılan karede NOKTALI çıkıyordu —
-   kumanda gibi değil çizim hatası gibi duruyordu (ölçüldü: shot.js kumanda).
-   Örnekleme yarıçapa bağlandı, artık sürekli. */
-function ring(g, cx, cy, r, col){
-  const n = Math.max(48, Math.round(r * 9));
-  for(let a = 0; a < n; a++){
-    const t = a / n * Math.PI * 2;
-    px(g, Math.round(cx + Math.cos(t) * r), Math.round(cy + Math.sin(t) * r), 1, 1, col);
-  }
+/* --- çubuk ve ateş düğmesinin kendi dokunuşları --- */
+{
+  const el = $('pad');
+  const bas = e => {
+    if(G.paused || G.phase === 'over') return;
+    e.preventDefault();
+    const p = e.changedTouches ? e.changedTouches[0] : e;
+    pad.on = true; pad.id = tid(p); el.classList.add('on'); padSet(p);
+  };
+  const oynat = e => {
+    if(!pad.on) return;
+    const list = e.changedTouches ? Array.from(e.changedTouches) : [e];
+    const p = list.find(t => tid(t) === pad.id);
+    if(!p) return;
+    e.preventDefault(); padSet(p);
+  };
+  el.addEventListener('touchstart', bas, { passive:false });
+  el.addEventListener('touchmove',  oynat, { passive:false });
+  el.addEventListener('touchend',   e => { padRelease(); }, { passive:false });
+  el.addEventListener('touchcancel',() => padRelease());
+  el.addEventListener('mousedown',  e => { if(!('ontouchstart' in window)) bas(e); });
+  addEventListener('mousemove', e => { if(!('ontouchstart' in window)) oynat(e); });
+  addEventListener('mouseup',   () => { if(!('ontouchstart' in window) && pad.on) padRelease(); });
+
+  $('fire').addEventListener('touchstart', e => {
+    e.preventDefault(); if(!G.paused) fire();
+  }, { passive:false });
+  $('fire').addEventListener('click', e => {
+    e.preventDefault(); if(!('ontouchstart' in window) && !G.paused) fire();
+  });
 }
+
+/* Oyun alanına dokunmak: jiroskopta ateş, dokunmatikte hiçbir şey
+   (nişan çubukla sürülüyor, ekrana dokunmak kazara ateşlemesin). */
+function touchStart(e){
+  if(inputBlocked(e)) return;
+  e.preventDefault();
+  const c = canvasPt(e.changedTouches ? e.changedTouches[0] : e);
+  if(cfg.mode === 'touch') return;
+  if(c.y >= H - RELOAD_ZONE){ startReload(); return; }
+  fire();
+}
+function touchMove(){}
+function touchEnd(){}
 
 addEventListener('touchstart', touchStart, { passive:false });
 addEventListener('touchmove',  touchMove,  { passive:false });
@@ -4769,10 +4830,16 @@ function updateEdge(){
 }
 
 function syncUI(){
-  /* Ortalama düğmesi ARTIK İKİ MODDA DA anlamlı. Dokunmatik nişan göreli
-     sürüklemeye geçtiği için nişangâh kenarda kalabiliyor; eskiden parmağın
-     olduğu yerdeydi ve ortalamanın anlamı yoktu. */
-  $('btnCenter').hidden = false;
+  /* Dokunmatikte ⊚ ve ↻ GİZLENİYOR: çubuk zaten nişanı sürüyor (sapma
+     yok) ve şarj çubuğu dibe itmekle yapılıyor. İkisi de ekranda dururken
+     sanal kumandayla üst üste biniyordu — oyun sahibinin şikâyeti buydu.
+     Menü (☰) kalıyor. */
+  const dokunmatik = cfg.mode === 'touch';
+  $('btnCenter').hidden = dokunmatik;
+  $('btnReload').hidden = dokunmatik;
+  $('pad').hidden  = !dokunmatik;
+  $('fire').hidden = !dokunmatik;
+  if(dokunmatik){ ammoSon = -1; syncAmmo(); }
   $('modeGyro').setAttribute('aria-pressed', cfg.mode === 'gyro');
   $('modeTouch').setAttribute('aria-pressed', cfg.mode === 'touch');
   /* Kaydırıcı AKTİF MODUN hassasiyetini ayarlar. Tek kaydırıcı iki moda
