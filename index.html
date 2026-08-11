@@ -2133,7 +2133,7 @@ const Snd = {
    4. GİRDİ — jiroskop + dokunmatik
    ------------------------------------------------------------------ */
 const cfg = {
-  mode:'gyro', sens:6, smooth:0.25, expo:1.4, invX:false, invY:false, mute:false, marks:false,
+  mode:'gyro', sens:6, padSens:5, smooth:0.25, expo:1.4, invX:false, invY:false, mute:false, marks:false,
   load(){
     let raw = {};
     try{ raw = JSON.parse(localStorage.getItem('yaban.cfg') || '{}') || {}; }catch(e){}
@@ -2143,6 +2143,10 @@ const cfg = {
        derecede desteklenen alternatif — ilk açılışta oyuncu seçiyor. */
     this.mode   = (raw.mode === 'touch' || raw.mode === 'gyro') ? raw.mode : 'gyro';
     this.sens   = clamp(raw.sens, 1, 30, 6);
+    /* Dokunmatiğin AYRI hassasiyeti. sens ile paylaşmak KIRIKTI: alıştırma
+       jiroskop için sens'i yükseltiyor, dokunmatik oyuncu da onun bedelini
+       ödüyordu. İki şemanın doğal ölçeği aynı değil. */
+    this.padSens = clamp(raw.padSens, 2, 16, 5);
     this.smooth = clamp(raw.smooth, 0.02, 1, 0.25);
     this.expo   = clamp(raw.expo, 1, 3, 1.4);
     this.invX = !!raw.invX; this.invY = !!raw.invY;
@@ -2150,7 +2154,7 @@ const cfg = {
   },
   save(){
     try{ localStorage.setItem('yaban.cfg', JSON.stringify(
-      {mode:this.mode,sens:this.sens,smooth:this.smooth,expo:this.expo,
+      {mode:this.mode,sens:this.sens,padSens:this.padSens,smooth:this.smooth,expo:this.expo,
        invX:this.invX,invY:this.invY,mute:this.mute,marks:this.marks})); }catch(e){}
   }
 };
@@ -4619,7 +4623,15 @@ const PAD = {
   r: 22,          // çubuğun yarıçapı (kanvas px)
   knob: 8,        // başlığın yarıçapı
   dead: 0.16,     // ölü bölge (yarıçapın oranı)
-  speed: 2.6,     // azami nişan hızı (px/kare, cfg.sens ile ölçeklenir)
+  /* Azami nişan hızı. cfg.sens'e BAĞLANMIYOR — ilk hali öyleydi ve
+     kırıktı: alıştırma jiroskop için sens'i yükseltiyor (takip edemeyen
+     oyuncuda x1.22, tavan 16), sonra dokunmatiğe geçen oyuncunun çubuğu
+     2-2.7 kat hızlanıyordu. Ekranı 0.8 saniyede kat ediyordu; nişan almak
+     imkânsızdı. Ölçüldü.
+
+     "İki mod aynı hassasiyeti paylaşsın" fikri kâğıtta zarifti ama iki
+     şemanın doğal ölçeği aynı değil. Dokunmatiğin kendi ayarı var. */
+  speed: 2.0,     // azami nişan hızı (px/kare, padSens ile ölçeklenir)
   fireR: 19,      // ateş düğmesi yarıçapı
   reloadHold: 16, // çubuk dipteyken kaç kare sonra şarj
 };
@@ -4686,7 +4698,10 @@ function updatePad(){
   const n = d / PAD.r;
   if(n <= PAD.dead) { pad.down = 0; return; }
   const t = (n - PAD.dead) / (1 - PAD.dead);
-  const hiz = PAD.speed * (cfg.sens / 6) * t * t;
+  /* Eğri: merkeze yakın çok ince, kenara doğru hızlı. Saf kare (t*t) alt
+     uçta fazla ölüydü; küçük bir doğrusal pay düzeltmeyi mümkün kılıyor. */
+  const egri = t * (0.30 + 0.70 * t);
+  const hiz = PAD.speed * (cfg.padSens / 6) * egri;
   aim.x = Math.max(0, Math.min(W, aim.x + (pad.dx / d) * hiz));
   aim.y = Math.max(0, Math.min(H, aim.y + (pad.dy / d) * hiz));
   // Çubuğu DİBE itip tutmak = şarj (jiroskoptaki "namluyu indir" ile aynı).
@@ -4760,7 +4775,10 @@ function syncUI(){
   $('btnCenter').hidden = false;
   $('modeGyro').setAttribute('aria-pressed', cfg.mode === 'gyro');
   $('modeTouch').setAttribute('aria-pressed', cfg.mode === 'touch');
-  $('sens').value = cfg.sens;       $('sensVal').textContent = (+cfg.sens).toFixed(1);
+  /* Kaydırıcı AKTİF MODUN hassasiyetini ayarlar. Tek kaydırıcı iki moda
+     birden bakınca dokunmatik oyuncu jiroskobun ayarını değiştiriyordu. */
+  const aktifSens = cfg.mode === 'touch' ? cfg.padSens : cfg.sens;
+  $('sens').value = aktifSens;       $('sensVal').textContent = (+aktifSens).toFixed(1);
   $('invX').setAttribute('aria-pressed', cfg.invX);
   $('invY').setAttribute('aria-pressed', cfg.invY);
   $('btnMute').setAttribute('aria-pressed', !cfg.mute);
@@ -4804,7 +4822,13 @@ $('btnShare').addEventListener('click', async () => {
   catch(e){ b.textContent = U().shareFail; setTimeout(() => { b.textContent = old; }, 2200); }
   finally{ b.disabled = false; }
 });
-$('sens').addEventListener('input', e => { cfg.sens = +e.target.value; cfg.save(); syncUI(); });
+/* Kaydırıcı AKTİF MODUN değerini yazar. Tek kaydırıcı iki moda birden
+   bakınca dokunmatikte oynayan oyuncu jiroskobun ayarını bozuyordu. */
+$('sens').addEventListener('input', e => {
+  const v = +e.target.value;
+  if(cfg.mode === 'touch') cfg.padSens = v; else cfg.sens = v;
+  cfg.save(); syncUI();
+});
 $('invX').addEventListener('click', () => { cfg.invX = !cfg.invX; cfg.save(); syncUI(); });
 $('invY').addEventListener('click', () => { cfg.invY = !cfg.invY; cfg.save(); syncUI(); });
 $('btnMarks').addEventListener('click', () => { cfg.marks = !cfg.marks; cfg.save(); syncUI(); });
