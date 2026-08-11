@@ -1,0 +1,523 @@
+{
+ "image": "birds.png",
+ "size": [
+  200,
+  320
+ ],
+ "cell": [
+  40,
+  40
+ ],
+ "anchor": [
+  18,
+  22
+ ],
+ "frames": {
+  "black:fly0:r": {
+   "x": 0,
+   "y": 0,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "black:fly1:r": {
+   "x": 40,
+   "y": 0,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "black:fly2:r": {
+   "x": 80,
+   "y": 0,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "black:hit:r": {
+   "x": 120,
+   "y": 0,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "black:fall:r": {
+   "x": 160,
+   "y": 0,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "black:fly0:l": {
+   "x": 0,
+   "y": 40,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "black:fly1:l": {
+   "x": 40,
+   "y": 40,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "black:fly2:l": {
+   "x": 80,
+   "y": 40,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "black:hit:l": {
+   "x": 120,
+   "y": 40,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "black:fall:l": {
+   "x": 160,
+   "y": 40,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "blue:fly0:r": {
+   "x": 0,
+   "y": 80,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "blue:fly1:r": {
+   "x": 40,
+   "y": 80,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "blue:fly2:r": {
+   "x": 80,
+   "y": 80,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "blue:hit:r": {
+   "x": 120,
+   "y": 80,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "blue:fall:r": {
+   "x": 160,
+   "y": 80,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "blue:fly0:l": {
+   "x": 0,
+   "y": 120,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "blue:fly1:l": {
+   "x": 40,
+   "y": 120,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "blue:fly2:l": {
+   "x": 80,
+   "y": 120,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "blue:hit:l": {
+   "x": 120,
+   "y": 120,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "blue:fall:l": {
+   "x": 160,
+   "y": 120,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "red:fly0:r": {
+   "x": 0,
+   "y": 160,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "red:fly1:r": {
+   "x": 40,
+   "y": 160,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "red:fly2:r": {
+   "x": 80,
+   "y": 160,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "red:hit:r": {
+   "x": 120,
+   "y": 160,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "red:fall:r": {
+   "x": 160,
+   "y": 160,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "red:fly0:l": {
+   "x": 0,
+   "y": 200,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "red:fly1:l": {
+   "x": 40,
+   "y": 200,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "red:fly2:l": {
+   "x": 80,
+   "y": 200,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "red:hit:l": {
+   "x": 120,
+   "y": 200,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "red:fall:l": {
+   "x": 160,
+   "y": 200,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "decoy:fly0:r": {
+   "x": 0,
+   "y": 240,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "decoy:fly1:r": {
+   "x": 40,
+   "y": 240,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "decoy:fly2:r": {
+   "x": 80,
+   "y": 240,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "decoy:hit:r": {
+   "x": 120,
+   "y": 240,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "decoy:fall:r": {
+   "x": 160,
+   "y": 240,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "decoy:fly0:l": {
+   "x": 0,
+   "y": 280,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "decoy:fly1:l": {
+   "x": 40,
+   "y": 280,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "decoy:fly2:l": {
+   "x": 80,
+   "y": 280,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "decoy:hit:l": {
+   "x": 120,
+   "y": 280,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  },
+  "decoy:fall:l": {
+   "x": 160,
+   "y": 280,
+   "w": 40,
+   "h": 40,
+   "ax": 18,
+   "ay": 22
+  }
+ },
+ "anims": {
+  "black_fly_r": {
+   "frames": [
+    "black:fly0:r",
+    "black:fly1:r",
+    "black:fly2:r"
+   ],
+   "fps": 10,
+   "loop": true
+  },
+  "black_hit_r": {
+   "frames": [
+    "black:hit:r"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "black_fall_r": {
+   "frames": [
+    "black:fall:r"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "black_fly_l": {
+   "frames": [
+    "black:fly0:l",
+    "black:fly1:l",
+    "black:fly2:l"
+   ],
+   "fps": 10,
+   "loop": true
+  },
+  "black_hit_l": {
+   "frames": [
+    "black:hit:l"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "black_fall_l": {
+   "frames": [
+    "black:fall:l"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "blue_fly_r": {
+   "frames": [
+    "blue:fly0:r",
+    "blue:fly1:r",
+    "blue:fly2:r"
+   ],
+   "fps": 10,
+   "loop": true
+  },
+  "blue_hit_r": {
+   "frames": [
+    "blue:hit:r"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "blue_fall_r": {
+   "frames": [
+    "blue:fall:r"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "blue_fly_l": {
+   "frames": [
+    "blue:fly0:l",
+    "blue:fly1:l",
+    "blue:fly2:l"
+   ],
+   "fps": 10,
+   "loop": true
+  },
+  "blue_hit_l": {
+   "frames": [
+    "blue:hit:l"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "blue_fall_l": {
+   "frames": [
+    "blue:fall:l"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "red_fly_r": {
+   "frames": [
+    "red:fly0:r",
+    "red:fly1:r",
+    "red:fly2:r"
+   ],
+   "fps": 10,
+   "loop": true
+  },
+  "red_hit_r": {
+   "frames": [
+    "red:hit:r"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "red_fall_r": {
+   "frames": [
+    "red:fall:r"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "red_fly_l": {
+   "frames": [
+    "red:fly0:l",
+    "red:fly1:l",
+    "red:fly2:l"
+   ],
+   "fps": 10,
+   "loop": true
+  },
+  "red_hit_l": {
+   "frames": [
+    "red:hit:l"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "red_fall_l": {
+   "frames": [
+    "red:fall:l"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "decoy_fly_r": {
+   "frames": [
+    "decoy:fly0:r",
+    "decoy:fly1:r",
+    "decoy:fly2:r"
+   ],
+   "fps": 10,
+   "loop": true
+  },
+  "decoy_hit_r": {
+   "frames": [
+    "decoy:hit:r"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "decoy_fall_r": {
+   "frames": [
+    "decoy:fall:r"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "decoy_fly_l": {
+   "frames": [
+    "decoy:fly0:l",
+    "decoy:fly1:l",
+    "decoy:fly2:l"
+   ],
+   "fps": 10,
+   "loop": true
+  },
+  "decoy_hit_l": {
+   "frames": [
+    "decoy:hit:l"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "decoy_fall_l": {
+   "frames": [
+    "decoy:fall:l"
+   ],
+   "fps": 1,
+   "loop": false
+  }
+ }
+}

@@ -1,0 +1,118 @@
+{
+ "image": "dog.png",
+ "size": [
+  192,
+  88
+ ],
+ "cell": [
+  48,
+  44
+ ],
+ "anchor": [
+  22,
+  24
+ ],
+ "frames": {
+  "walk:0": {
+   "x": 0,
+   "y": 0,
+   "w": 48,
+   "h": 44,
+   "ax": 22,
+   "ay": 24
+  },
+  "walk:1": {
+   "x": 48,
+   "y": 0,
+   "w": 48,
+   "h": 44,
+   "ax": 22,
+   "ay": 24
+  },
+  "sniff:0": {
+   "x": 96,
+   "y": 0,
+   "w": 48,
+   "h": 44,
+   "ax": 22,
+   "ay": 24
+  },
+  "jump:0": {
+   "x": 144,
+   "y": 0,
+   "w": 48,
+   "h": 44,
+   "ax": 22,
+   "ay": 24
+  },
+  "hold:0": {
+   "x": 0,
+   "y": 44,
+   "w": 48,
+   "h": 44,
+   "ax": 22,
+   "ay": 24
+  },
+  "laugh:0": {
+   "x": 48,
+   "y": 44,
+   "w": 48,
+   "h": 44,
+   "ax": 22,
+   "ay": 24
+  },
+  "angry:0": {
+   "x": 96,
+   "y": 44,
+   "w": 48,
+   "h": 44,
+   "ax": 22,
+   "ay": 24
+  }
+ },
+ "anims": {
+  "dog_walk": {
+   "frames": [
+    "walk:0",
+    "walk:1"
+   ],
+   "fps": 7,
+   "loop": true
+  },
+  "dog_sniff": {
+   "frames": [
+    "sniff:0"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "dog_jump": {
+   "frames": [
+    "jump:0"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "dog_hold": {
+   "frames": [
+    "hold:0"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "dog_laugh": {
+   "frames": [
+    "laugh:0"
+   ],
+   "fps": 1,
+   "loop": false
+  },
+  "dog_angry": {
+   "frames": [
+    "angry:0"
+   ],
+   "fps": 1,
+   "loop": false
+  }
+ }
+}
