@@ -19,6 +19,15 @@
   --ok:#00A800;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+/* `hidden` HER ZAMAN gizlesin. Tarayıcının kendi kuralı `[hidden]{display:none}`
+   ile yazdığımız `.chip{display:grid}` AYNI ağırlıkta, ve eşitlikte yazar
+   sayfası kazanıyor — yani `el.hidden = true` hiçbir şey yapmıyor.
+   Chrome bunu gizliyor çünkü onun kuralı `[hidden]:not([hidden="until-found"])`
+   (daha ağır); WebKit'inki sade `[hidden]`. Sonuç: masaüstü Chrome'da doğru
+   görünüp iPhone'da bozulan bir hata. Sanal kumandaya geçince ⊚ ve ↻ tam
+   olarak böyle ekranda kaldı. Aşağıdaki `.screen[hidden]` gibi tek tek
+   yamalar bu kuralın önceki kurbanları — artık gereksizler ama zararsız. */
+[hidden]{display:none !important}
 html,body{height:100%;overflow:hidden;background:var(--void);}
 body{
   font:400 14px/1.5 ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
@@ -395,6 +404,10 @@ html.tiny  #startNote, html.tiny #progNote{display:none}
   <p class="note" id="dailyNote"></p>
   <p class="note" id="startNote">&#304;lk dokunu&#351;ta hareket sens&#246;r&#252; izni istenecek. Reddedersen dokunmatik moda ge&#231;ilir.</p>
   <p class="note" id="progNote"></p>
+  <!-- Nişan modu OYUNA GİRERKEN görünsün. Seçim ekranı yalnız ilk açılışta
+       çıkıyordu; sonradan değiştirmek için Ayarlar'a girmek gerekiyordu ve
+       kimse bulmuyordu. Tek dokunuşla değişir, hangisinde olduğun yazar. -->
+  <button class="linkish" id="btnMode"></button>
   <button class="linkish" id="btnCalib"></button>
   <button class="linkish" id="btnDiag" hidden></button>
 </section>
@@ -688,6 +701,8 @@ const STR = {
       aimTouchNote:'Sol alttaki çubukla nişan al, sağdaki düğmeyle ateş et.',
       aimGyroNote:'Telefon silah olur — daha zor, daha keskin.',
       aimLater:'Sonra ayarlardan değiştirebilirsin.',
+      // Başlık ekranındaki tek dokunuşluk mod düğmesi
+      modeNow:m => 'Nişan: ' + m + '  •  değiştir',
       paused:'Duraklatıldı', resume:'Devam et',
       pauseNote:'Nişangâh devam ederken yeniden ortalanır',
       /* Ses düğmesi DURUMU değil EYLEMİ söyler: kapalıyken "Sesi aç". */
@@ -874,6 +889,7 @@ const STR = {
       aimTouchNote:'Left stick aims, right button fires.',
       aimGyroNote:'The phone becomes the gun — harder, sharper.',
       aimLater:'You can change this later in settings.',
+      modeNow:m => 'Aim: ' + m + '  •  change',
       paused:'Paused', resume:'Resume',
       pauseNote:'Your aim recentres when you resume',
       soundOn:'Sound off', soundOff:'Sound on',
@@ -4829,6 +4845,21 @@ function updateEdge(){
   if(b) b.classList.toggle('nudge', cfg.mode === 'gyro' && aim.edge > 90);
 }
 
+/* Başlık ekranındaki nişan modu düğmesi. Seçim ekranı (scrAim) yalnız ilk
+   açılışta çıkıyor; sonradan değiştirmenin tek yolu Ayarlar'ın içiydi ve
+   oyun sahibi haklı olarak "oyuna girerken seçsem" dedi. Burada hem HANGİ
+   modda olduğu yazıyor hem tek dokunuşla değişiyor. */
+function syncModeBtn(){
+  const b = $('btnMode'); if(!b) return;
+  const u = U();
+  b.textContent = u.modeNow(cfg.mode === 'gyro' ? u.aimGyro : u.aimTouch);
+}
+$('btnMode').addEventListener('click', async () => {
+  cfg.mode = cfg.mode === 'gyro' ? 'touch' : 'gyro';
+  cfg.save(); Telemetry.modeChanged(); syncUI();
+  if(cfg.mode === 'gyro' && !gyro.ok) await requestGyro();
+});
+
 function syncUI(){
   /* Dokunmatikte ⊚ ve ↻ GİZLENİYOR: çubuk zaten nişanı sürüyor (sapma
      yok) ve şarj çubuğu dibe itmekle yapılıyor. İkisi de ekranda dururken
@@ -4853,6 +4884,7 @@ function syncUI(){
   $('btnMarks').setAttribute('aria-pressed', cfg.marks);
   ART.marks = cfg.marks;
   Snd.setMute(cfg.mute);
+  syncModeBtn();
 }
 $('modeGyro').addEventListener('click', async () => {
   cfg.mode = 'gyro'; cfg.save(); Telemetry.modeChanged(); syncUI();
@@ -5026,6 +5058,7 @@ function applyLang(){
   set('tAimTitle', u.aimTitle); set('btnAimTouch', u.aimTouch); set('btnAimGyro', u.aimGyro);
   set('tAimTouchNote', u.aimTouchNote); set('tAimGyroNote', u.aimGyroNote);
   set('tAimLater', u.aimLater);
+  syncModeBtn();
   set('tPaused', u.paused); set('btnResume', u.resume); set('tPauseNote', u.pauseNote);
   set('btnPauseSet', u.pauseSet); set('btnPauseQuit', u.pauseQuit);
   set('tRotate', u.rotate); set('tRotateNote', u.rotateNote);
