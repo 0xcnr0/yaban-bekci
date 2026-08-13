@@ -14,7 +14,14 @@
   --line:#28303D;
   --text:#C6CEDA;
   --text-dim:#7A8494;
-  --sky:#5C94FC;
+  /* Eskiden #5C94FC (parlak NES-mavisi) — oyunun 302 renginin (Görev 4'ten
+     sonra kanvasla birleşmiş ana palet dahil) hiçbirinde bu mavi yoktu,
+     DOM'un geri kalanı kanvasla aynı sahnede görünmediği hâlde "ayrı bir
+     uygulama" gibi duruyordu (tasarım turu, Görev 6, 2026-08-13). Adı
+     hâlâ --sky (17 kullanım yerini değiştirmemek için) ama değeri artık
+     PAL.gold — reload dolunca #fire.bos'un zaten kullandığı aynı sıcak
+     altın, DOM'daki vurgu rengi kanvastaki "hazır/dikkat" rengiyle aynı. */
+  --sky:#F8D878;
   --alert:#D82800;
   --ok:#00A800;
 }
@@ -30,7 +37,16 @@
 [hidden]{display:none !important}
 html,body{height:100%;overflow:hidden;background:var(--void);}
 body{
-  font:400 14px/1.5 ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  /* Eskiden ui-monospace/SF Mono ÖNCE geliyordu — iOS'ta (oyuncunun asıl
+     platformu) bu doğrudan Apple'ın kod editörü fontuna çözülüyor, oyunun
+     kendi 5x7 blok bitmap fontunun (bkz. FONT) yanında "kod editörü" gibi
+     duruyordu (tasarım turu, Görev 6, 2026-08-13). Yeni bir webfont
+     GÖMMEDİK (art-pipeline'a danışmayı gerektirirdi) — Courier New zaten
+     her platformda var, düz/geniş darbeli harfleri SF Mono'nun yuvarlak
+     humanist çizgisinden çok daha yakın bir "daktilo/terminal" hissi
+     veriyor. Kod fontları YEDEK olarak duruyor (yalnız Courier New hiç
+     yoksa devreye girer). */
+  font:400 14px/1.5 "Courier New",Courier,ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
   color:var(--text);
   -webkit-font-smoothing:antialiased;
   -webkit-tap-highlight-color:transparent;
@@ -365,16 +381,19 @@ input[type=range]::-moz-range-thumb{
    Daha önce ortaya yazıldığında sonraki kurallar tarafından eziliyordu.
    ===================================================================== */
 
-/* --- ekran geçişleri: ani kesme yerine kademeli giriş --- */
-.screen{animation:screenIn .28s cubic-bezier(.2,.8,.3,1) both}
-@keyframes screenIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.screen > *{animation:itemIn .34s cubic-bezier(.2,.8,.3,1) both}
-.screen > *:nth-child(2){animation-delay:.05s}
-.screen > *:nth-child(3){animation-delay:.09s}
-.screen > *:nth-child(4){animation-delay:.13s}
-.screen > *:nth-child(5){animation-delay:.16s}
-@keyframes itemIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){ .screen,.screen > *{animation:none} }
+/* --- ekran geçişleri: ani kesme yerine kademeli giriş ---
+   ESKİDEN ekran translateY(10px) ile aşağıdan kayarak geliyordu, İÇİNDEKİ
+   HER ÇOCUK da (nth-child ile) kendi kademeli gecikmesiyle ayrıca kayıyordu
+   — bu tam olarak Material Design/web sihirbazı dili (liste elemanlarının
+   sırayla "uçarak gelmesi"), oyunun kendi diliyle ilgisi yok. Oyunun kendi
+   "giriş" dili YUMUŞAK IŞIK: ağarma (DAWN) yön/kayma değil YALNIZ parlaklık
+   değiştiriyor; #fire.bos/.chip.nudge nabız gibi büyüyüp küçülüyor, hiçbiri
+   kaymıyor. Ekran geçişi de aynı ilkeye çekildi: TEK, senkron bir soluma —
+   kayma yok, çocuklar arasında sıralı gecikme yok (tasarım turu, Görev 6,
+   2026-08-13). */
+.screen{animation:screenIn .4s ease-out both}
+@keyframes screenIn{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){ .screen{animation:none} }
 
 /* --- wordmark: katmanlı gölge --- */
 .wordmark{
@@ -1663,33 +1682,33 @@ const ART = { marks:false, env:null, sunUp:1 };   // env: yüklenmiş arka plan 
 
 const PAL = {
   // şafak gökyüzü bantları (yukarıdan aşağıya)
-  skyBands:['#2C2C6C','#4C3878','#7C4C80','#B05C70','#D8785C','#F0A058'],
-  skyMissBands:['#38384C','#4A4A5C','#5C5C6C','#70707C','#84848C','#9C9C9C'],
-  cloud:'#F8D8A8', cloudDk:'#D8A878',
-  sun:'#FCE0A0',
-  hillFar:'#5C4878', hillMid:'#40365C', hillNear:'#2C2640',
-  tree:'#3C2C18', treeDk:'#241808', leaf:'#6C7440', leafDk:'#4C5428',
-  scrub:'#7C6C3C', scrubDk:'#544824',
-  grass:'#A88048', grassLt:'#C89C58', grassDk:'#6C5028',
+  skyBands:['#413764','#413764','#695684','#946388','#bc6557','#d39273'],
+  skyMissBands:['#413764','#523e46','#695684','#89615a','#937575','#b3897d'],
+  cloud:'#fcdf98', cloudDk:'#ddab91',
+  sun:'#fcdf98',
+  hillFar:'#59477a', hillMid:'#413764', hillNear:'#2a1e3b',
+  tree:'#38282e', treeDk:'#2e2028', leaf:'#775752', leafDk:'#604342',
+  scrub:'#89615a', scrubDk:'#604342',
+  grass:'#b3897d', grassLt:'#c99474', grassDk:'#604342',
   ink:'#101018', bone:'#FCFCFC', dim:'#A09080',
   orange:'#FC9838', orangeDk:'#C05800',
-  clay:'#E86830', clayDk:'#A03818', clayRim:'#F8A860',
+  clay:'#bc6557', clayDk:'#883e3e', clayRim:'#f8bb85',
   red:'#D82800', gold:'#F8D878',
   // Kangal: krem gövde, kara maske — Duck Hunt'ın av köpeğiyle sıfır benzerlik
-  dog:'#E8CC98', dogDk:'#B09058', dogWht:'#FCF0D8', dogMask:'#282420',
+  dog:'#e7be95', dogDk:'#c99474', dogWht:'#dfd6c7', dogMask:'#2e2028',
   // Akkaraman: krem yapağı, kara yüz ve bacaklar. Kangal'ın kremiyle
   // karışmasın diye biraz daha soğuk ve açık.
-  wool:'#F4EAD2', woolDk:'#CCBE9C', woolLt:'#FCFAF0', face:'#332C24',
+  wool:'#dfd6c7', woolDk:'#ddab91', woolLt:'#dfd6c7', face:'#38282e',
   // Kaya kartalı: koyu kahve gövde, altın ense, sarı gaga ve pençe.
-  eagle:'#4A3524', eagleDk:'#2A1D12', eagleLt:'#8A6438', eagleNape:'#C89848',
+  eagle:'#483436', eagleDk:'#2e2028', eagleLt:'#89615a', eagleNape:'#d39273',
   talon:'#E8B830',
 };
 
 // Bozkır kuşları. Parlak şafağa karşı koyu siluet okunur.
 const DUCK = {
-  black:{ body:'#4C4038', lite:'#8C7C64', tier:0 },   // boz keklik
-  blue: { body:'#282430', lite:'#E8DCC0', tier:1 },   // alaca — yüksek kontrast
-  red:  { body:'#983020', lite:'#F09050', tier:2 },   // kızıl
+  black:{ body:'#483436', lite:'#937575', tier:0 },   // boz keklik
+  blue: { body:'#201d2b', lite:'#dfd6c7', tier:1 },   // alaca — yüksek kontrast
+  red:  { body:'#883e3e', lite:'#d39273', tier:2 },   // kızıl
 };
 
 function px(g,x,y,w,h,c){ if(w<=0||h<=0) return; g.fillStyle=c; g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h)); }
@@ -2015,8 +2034,8 @@ const DOGPOSE = {
    Üretim hattı: tools/refgen.js -> tools/pixelize.js                      */
 const EAGLE_TOP = {
   w: 30, h: 14,
-  pal: { a:'#4a3524', b:'#332c24', c:'#2a1d12', d:'#e8b830',
-         e:'#c89848', f:'#fc9838', g:'#8a6438' },
+  pal: { a:'#483436', b:'#38282e', c:'#2e2028', d:'#e8b830',
+         e:'#d39273', f:'#d39273', g:'#89615a' },
   rows: [
     '.aa.......................ba..',
     '.abb.....................bba..',
@@ -2091,7 +2110,7 @@ function drawEagle(g, x, y, dir, wing, diving){
    duruyordu. Üretim hattı: tools/refgen.js -> tools/pixelize.js           */
 const SHEEP = {
   w: 17, h: 11,
-  pal: { a:'#f4ead2', b:'#e8cc98', c:'#ccbe9c', d:'#4a3524', e:'#a09080', f:'#332c24', g:'#8a6438', h:'#c89848', i:'#b09058', j:'#282420', k:'#2a1d12' },
+  pal: { a:'#dfd6c7', b:'#e7be95', c:'#ddab91', d:'#483436', e:'#c99474', f:'#38282e', g:'#89615a', h:'#d39273', i:'#c99474', j:'#2e2028', k:'#2e2028' },
   rows: [
     '....aaaaa........',
     '..aaaaaaaaaaa....',
@@ -2143,7 +2162,7 @@ function drawSheep(g, x, y, dir, state, f){
    Üretim hattı: tools/refgen.js -> tools/pixelize.js                      */
 const KANGAL = {
   w: 26, h: 18,
-  pal: { a:'#e8cc98', b:'#4a3524', c:'#ccbe9c', d:'#332c24', e:'#101018', f:'#282420', g:'#a09080', h:'#8a6438', i:'#c89848', j:'#b09058' },
+  pal: { a:'#e7be95', b:'#483436', c:'#ddab91', d:'#38282e', e:'#100e1e', f:'#2e2028', g:'#c99474', h:'#89615a', i:'#d39273', j:'#c99474' },
   rows: [
     '..aaa..............bcc....',
     '.aaaaa...........adeccf...',
@@ -2180,6 +2199,11 @@ const KANGAL_SCARS = [
           ceza şanssızlık gibi hissettiriyor (yayla denemesinin dersi).    */
 function drawKangal(g, x, y, dir, step, scars, sore){
   const S = KANGAL, x0 = x - (S.w >> 1), y0 = y - S.h + 3;
+  // Zemin gölgesi (drawSheep'teki teknikle aynı ilke — Görev 1, tasarım
+  // turu 2026-08-13): ayakta duran Kangal AYAKTA pozda zeminden ayrık,
+  // yüzen bir leke gibi duruyordu (yatmış poz zaten kendi gölgesini
+  // taşıyordu, bkz. drawFoldKangal).
+  ell(g, x, y + 1, 9, 2, 'rgba(20,18,28,0.35)');
   const legRow = S.h - 5;                       // bu satırdan aşağısı bacak
   // Yorgunken gövde bir piksel çöker — siluetten okunur.
   const sag = sore ? 1 : 0;
@@ -2223,7 +2247,7 @@ function drawKangal(g, x, y, dir, step, scars, sore){
    kompozisyonlari Faz 2 kapsaminda degil (uretim listesi md. 7, sonraki iş). */
 const KURT = {
   w: 36, h: 20,
-  pal: { a:'#101018', b:'#232130', c:'#383544', d:'#4e4a58', e:'#6f695f', f:'#8f8a90', g:'#e8b830', h:'#fcfcfc' },
+  pal: { a:'#100e1e', b:'#201d2b', c:'#38282e', d:'#523e46', e:'#775752', f:'#937575', g:'#e8b830', h:'#dfd6c7' },
   kare: {
     sinsi0: [
       '....................................',
@@ -2472,7 +2496,7 @@ const KURT = {
 
 const KURT_BOGUS = {
   w: 48, h: 24,
-  pal: { a:'#101018', b:'#232130', c:'#383544', d:'#4e4a58', e:'#6f695f', f:'#8f8a90', g:'#e8b830', h:'#fcfcfc', A:'#282420', B:'#4a3524', C:'#8a6438', D:'#b09058', E:'#e8cc98', F:'#fcf0d8', G:'#e8b830', H:'#fcfcfc' },
+  pal: { a:'#100e1e', b:'#201d2b', c:'#38282e', d:'#523e46', e:'#775752', f:'#937575', g:'#e8b830', h:'#dfd6c7', A:'#2e2028', B:'#483436', C:'#89615a', D:'#c99474', E:'#e7be95', F:'#dfd6c7', G:'#e8b830', H:'#dfd6c7' },
   kare: {
     bogus0: [
       '................................................',
@@ -2557,7 +2581,7 @@ const KURT_BOGUS = {
 
 const CAKAL = {
   w: 28, h: 15,
-  pal: { a:'#101018', b:'#332a24', c:'#5c4c3c', d:'#7d6b54', e:'#8e7a5e', f:'#c0ac8c', g:'#e8b830', h:'#fcfcfc' },
+  pal: { a:'#100e1e', b:'#38282e', c:'#604342', d:'#89615a', e:'#937575', f:'#ddab91', g:'#e8b830', h:'#dfd6c7' },
   kare: {
     sinsi0: [
       '............................',
@@ -2882,6 +2906,9 @@ function drawKurt(g, S, kare, x, y, dir){
   const R = S.kare ? S.kare[kare] : kare;
   if(!R) return;
   const x0 = x - (S.w >> 1), y0 = y - S.h + 3;
+  // Zemin gölgesi — drawSheep/drawKangal ile aynı ilke (Görev 1, tasarım
+  // turu 2026-08-13): koyun/kuzu/kurt hepsi aynı çizici üzerinden geçer.
+  ell(g, x, y + 1, Math.max(4, Math.round(S.w / 3)), 2, 'rgba(20,18,28,0.35)');
   for(let r = 0; r < R.length; r++){
     const row = R[r];
     for(let i = 0; i < row.length; i++){
@@ -3036,7 +3063,7 @@ function drawAim(g, x, y, hot, rl, st){
  * Koyun varyantları oyunun SHEEP tablosundan türetilir (yalnız meme
  * kademesi farklı). Çapa drawSheep ile aynı: x0=x-(w>>1), y0=y-h+4.
  */
-const SUT_PAL = {"a":"#f4ead2","b":"#e8cc98","c":"#ccbe9c","d":"#4a3524","e":"#a09080","f":"#332c24","g":"#8a6438","h":"#c89848","i":"#b09058","j":"#282420","k":"#2a1d12","m":"#eeb4a0","n":"#b07c64","p":"#4a2818","q":"#8a4a28","r":"#c07840","s":"#fcfaf0","t":"#33231e","u":"#5c3a2e"};
+const SUT_PAL = {"a":"#dfd6c7","b":"#e7be95","c":"#ddab91","d":"#483436","e":"#c99474","f":"#38282e","g":"#89615a","h":"#d39273","i":"#c99474","j":"#2e2028","k":"#2e2028","m":"#f6bca8","n":"#b3897d","p":"#38282e","q":"#883e3e","r":"#bc6557","s":"#dfd6c7","t":"#2e2028","u":"#604342"};
 const SUT_KOYUN = { w:17, h:11, pal:SUT_PAL, kare:{
   koyun_dolu: ['....aaaaa........','..aaaaaaaaaaacc..','abaaaaaaaaaaabdec','bcaaaaaaaaaabbdfg','.baaaaaaaaaaccdfd','..aabbaaabaabc.ff','..bachccchaacc...','.fddmmmhhiee.....','.ffnmmmn..jf.....','.f.jn.n...kf.....','.eeeebbbbcegcbb..'],
   koyun_yarim: ['....aaaaa........','..aaaaaaaaaaa....','abaaaaaaaaaaaa...','bcaaaaaaaaaaacc..','.baaaaaaaaaaabdec','..aabbaaabaabbdfg','..bachccchaaccdfd','.fddnmmhhiee...ff','.ffj.nn...jf.....','.f.j......kf.....','.eeeebbbbcegcbb..'],
@@ -3325,8 +3352,8 @@ function drawFoldShelf(g, bx, by, n, t){
    6 izden sonra kararması (o okunuyor, çünkü ton farkı). */
 const FOLD_KANGAL_YAT = {
   w: 26, h: 18,
-  pal: { a:'#e8cc98', b:'#4a3524', c:'#ccbe9c', d:'#332c24', e:'#101018',
-         f:'#282420', g:'#a09080', h:'#8a6438', i:'#c89848', j:'#b09058' },
+  pal: { a:'#e7be95', b:'#483436', c:'#ddab91', d:'#38282e', e:'#100e1e',
+         f:'#2e2028', g:'#c99474', h:'#89615a', i:'#d39273', j:'#c99474' },
   rows: [
     '..........................',
     '..........................',
@@ -3403,11 +3430,28 @@ const Assets = {
   // 'kangal': bakım yakın çekimi (ADIM 3) — portre katmanları (taban/iz/sargı/tasma).
   // 'gecit'/'kislak': Faz 3 sabit manzaralar. 'goc'/'gocdag'/'goctepe'/
   // 'gocon': göç sabahının akan katmanları (art/manzara/goc.json tarifi).
-  ready:false, sheets:{}, names:['birds','dog','env','fold','kangal',
-    'gecit','kislak','goc','gocdag','goctepe','gocon'],
+  // 'bakim': bakım yakın çekiminin KENDİ zemini (art/bakim/bakim.json).
+  // Ağıl panı GENİŞ kuş bakışı; bakımda portre 136x142 — aynı karede iki
+  // ölçek "iki ayrı fotoğraf üst üste" gibi duruyordu. Bkz. renderCare.
+  // 'foldopen'/'gate'/'merapan'/'gecis': kapı geçişi (bkz. renderDoorPan,
+  // art/agil/pan.json) — dört varlık ÖNCEDEN derlenmişti ama hiçbir kod
+  // onları aramıyordu (Görev 5, tasarım turu 2026-08-13).
+  ready:false, sheets:{}, names:['birds','dog','env','fold','bakim','kangal',
+    'gecit','kislak','goc','gocdag','goctepe','gocon',
+    'foldopen','gate','merapan','gecis'],
   async load(){
     try{
-      for(const n of this.names){
+      /* PARALEL (Görev 5, tasarım turu 2026-08-13): eskiden bu bir for-of
+         içinde SIRAYLA (await await await...) yükleniyordu — 12 varlıkla
+         gözle görülmeyen bir gecikmeydi, ama kapı geçişi dört varlık daha
+         ekleyince (bkz. names) dizinin SONUNDAKİler tools/dom.js'in sabit
+         250ms bekleyişini kaçırıyordu: 'agil'/'bakim' hâlâ çalışıyordu
+         (kendi varlıkları dizinin başında, sırası çoktan gelmişti) ama
+         'kapigecis' filmde DÜZ MOR basıyordu — Assets.sheets'te foldopen/
+         gate/merapan/gecis hiç yoktu, blit() sessizce false dönüyordu.
+         Paralel yükleme hem bu yarışı ortadan kaldırıyor hem gerçek açılışı
+         hızlandırıyor (16 varlık artık birbirini beklemiyor). */
+      await Promise.all(this.names.map(async n => {
         const inl = (typeof ASSET_DATA !== 'undefined') ? ASSET_DATA[n] : null;
         const meta = inl ? inl.meta
                          : await (await fetch('assets/' + n + '.json', {cache:'force-cache'})).json();
@@ -3418,7 +3462,7 @@ const Assets = {
           im.src = inl ? inl.png : 'assets/' + n + '.png';
         });
         this.sheets[n] = Object.assign({}, meta, { img });
-      }
+      }));
       this.ready = true;
       if(this.sheets.env) ART.env = this.sheets.env.img;   // arka plan görseli
     }catch(e){
@@ -3505,11 +3549,15 @@ const CARE_PET_MAX = 16;   // basılı tutma "doygunluğu" — baş yaslanmasın
    ağıldaki fotoğrafa dokununca kart hiç görünmeden DOĞRUDAN iOS paylaşım
    sayfası açılıyordu). care ile AYNI desen: ağılın İÇİNDE bir alt durum.
    card kutusu CARD sabitlerinden (216x270, dosyada DAHA SONRA tanımlı —
-   ileri referans olmasın diye sayılar elle türetildi) dikeyde sığdırıldı:
-   sc = (180-30)/270 = 5/9 -> 216*5/9=120, 270*5/9=150. */
+   ileri referans olmasın diye sayılar elle türetildi) dikeyde sığdırıldı.
+   ÖNCEDEN 5/9 oranıydı (216*5/9=120, 270*5/9=150) — tam sayı olmayan oran
+   drawImage'ı KÜÇÜLTÜRKEN bitmap fontun piksel satırlarını düzensiz
+   aralıklarla atlıyordu, kart basılıp bakılınca (Görev 2, tasarım turu
+   2026-08-13) glifler okunmaz hâldeydi. Tam sayı oran (1/2) aynı hizada
+   iki piksel bir piksele düşürüyor — glif kenarları düz kalıyor. */
 const CARD_VIEW_LAYOUT = {
   w: 320, h: 180,
-  card:  { x:100, y:14,  w:120, h:150 },
+  card:  { x:106, y:14,  w:108, h:135 },
   close: { x:288, y:8,   w:26,  h:22 },
   share: { x:70,  y:164, w:180, h:14 },
 };
@@ -3525,6 +3573,7 @@ const CARD_VIEW_LAYOUT = {
 // Palet BİLEREK soğuk krem (#f4ead2/#fcfaf0 — yapağı tonu): saf beyaz+kırmızı
 // sahnenin krem/mor/kahve paletine yabancı duruyordu (sahibi bastı, yakaladı).
 function drawCareSargiRoll(g, cx, cy){
+  ell(g, cx, cy + 6, 6, 2, 'rgba(20,18,28,0.35)');   // zemin gölgesi (Görev 1)
   ell(g, cx, cy, 7, 6, '#fcfaf0');
   ell(g, cx, cy, 5, 4, '#f4ead2');
   px(g, cx - 6, cy - 3, 12, 2, '#8a6438');   // sarılı kumaşın gölge çizgisi
@@ -3533,6 +3582,7 @@ function drawCareSargiRoll(g, cx, cy){
 // Yal kabı: kangal.json'da ayrı bir kare yok — küçük bakır bir kâse,
 // sağım setinin güğüm paletiyle aynı aileden (ton tutarlılığı).
 function drawCareBowl(g, cx, cy){
+  ell(g, cx, cy + 5, 8, 2, 'rgba(20,18,28,0.35)');   // zemin gölgesi (Görev 1)
   ell(g, cx, cy, 10, 5, '#8a6438');
   ell(g, cx, cy - 1, 8, 4, '#c0ac8c');
   ell(g, cx, cy - 2, 6, 2, '#5c3a2e');
@@ -3545,6 +3595,7 @@ function drawCareBowl(g, cx, cy){
    (dikdörtgen bloklarla, ell() değil px()) "el" siluetini taşıyor. */
 function drawCareHand(g, cx, cy){
   const x0 = cx - 5, y0 = cy - 6;
+  ell(g, cx, cy + 6, 6, 2, 'rgba(20,18,28,0.35)');   // zemin gölgesi (Görev 1)
   // avuç gövdesi
   px(g, x0 + 1, y0 + 4, 8, 7, '#5c3a2e');
   px(g, x0 + 2, y0 + 5, 6, 5, '#c0916a');
@@ -4581,9 +4632,29 @@ const Attract = {
      Katmanlar SIRAYLA: taban poz (tepki ofsetiyle KAYDIRILMIŞ) -> yara
      izleri -> sargı (uygulandıysa yanıp söner) -> tasma. */
   renderCare(){
-    if(!blit(g, 'fold', 'fold', 0, 0)) px(g, 0, 0, W, H, PAL.hillFar);
-    // Ağıl loşça arkada kalır — yakın plan onun ÜSTÜNE açılıyor.
-    px(g, 0, 0, W, H, 'rgba(16,16,24,0.72)');
+    /* ZEMİN: ağıl panı DEĞİL, bakımın kendi yakın çekim panı (art/bakim,
+       sheet 'bakim'). Ağıl panı kuş bakışı ve geniş — 1x basınca duvar
+       taşı portrenin ~1/14'ü kalıyordu, portre ise ağıldaki köpeğin ~6
+       katı: aynı karede iki ölçek, sahibinin telefon testindeki "iki ayrı
+       fotoğraf üst üste" hissi. Yeni pan AYNI dünyanın daha yakın kamerası
+       (aynı ağıl paleti, taş sırası 45px = portrenin ~1/3'ü, zemin çizgisi
+       y=150 — Kangal'ın pençeleri tam oraya basıyor).
+       Yedek hâlâ ağıl panı: yeni sayfa yüklenemezse ekran boş kalmasın. */
+    if(!blit(g, 'bakim', 'bakim', 0, 0) && !blit(g, 'fold', 'fold', 0, 0))
+      px(g, 0, 0, W, H, PAL.hillFar);
+    /* Akşam perdesi — DÜNYA payı. renderFold'daki dünya/varlık ayrımının
+       aynısı: ağır pay burada (Kangal çizilmeden ÖNCE), hafif pay aşağıda
+       (çizildikten SONRA, yine TAM EKRAN). Eskiden ikinci pay portre
+       KUTUSUNA basılıyordu ve yeni yakın çekim zemininde duvarın üstünde
+       düpedüz bir DİKDÖRTGEN görünüyordu — duvara yapıştırılmış afiş gibi
+       (basıldı, bakıldı: shots/dom/bakim-tr.png). Kutu kalktı.
+       İLK sayı (0.57 dünya + 0.35 varlık) Görev 1'in ölçülen ilişkisini
+       birebir koruyordu ama basılıp bakılınca (shots/dom/bakim-alternatif-
+       acik-tr.png ile karşılaştırıldı) ağılın kendi duvarına göre gereksiz
+       koyu/kahverengi duruyordu — taş dokusu boğuluyordu. Açık alternatif
+       seçildi: dünya 0.38 + varlık 0.26, taş dokusu okunur kalıyor, ağılın
+       paletiyle daha aynı dünyada duruyor, yine de loş bir yakın çekim. */
+    px(g, 0, 0, W, H, 'rgba(16,16,24,0.38)');
 
     const c = CARE_LAYOUT.portrait;
     const cx = c.x, cy = c.y;
@@ -4632,6 +4703,9 @@ const Attract = {
     }
     roy += Math.round((RC.petT / CARE_PET_MAX) * 7);   // el: baş/gövde yaslanması
 
+    // Zemin gölgesi (Görev 1, tasarım turu 2026-08-13) — portre önceden
+    // zeminden ayrık, kesilip yapıştırılmış gibi duruyordu.
+    ell(g, cx + c.w / 2, cy + c.h - 2, c.w / 3, 4, 'rgba(20,18,28,0.35)');
     const usedAtlas = blit(g, 'kangal', pose, cx + rox, cy + roy);
     if(!usedAtlas){
       // Yedek: atlas yoksa portre yerine bildiğimiz prosedürel Kangal —
@@ -4644,6 +4718,23 @@ const Attract = {
       if(G.care.flashT > 0 && (G.care.flashT >> 2) % 2 === 0)
         blit(g, 'kangal', 'sargi:govde', cx + rox, cy + roy);
     }
+    /* Varlık ışığı payı (renderFold'daki dünya/varlık ayrımıyla AYNI ilke,
+       bkz. FOLD_DARK_MUL yorumu) — ölçüldü: portre atlas'tan geldiği için
+       arka planın (0.72 alfayla karartılmış ağıl) çok üstünde parlaklıkta
+       kalıyordu (p95 206 vs 58, "iki jpeg üst üste" hissinin bir parçası,
+       tasarım turu 2026-08-13). İKİ deneme (büyütülmüş dikdörtgen, eş
+       merkezli elips yığını) basılıp bakılınca gökyüzüne binen keskin
+       hat/halka bırakıyordu — sayı düzelirken görünürlüğü daha da bozdu.
+       Üçüncüsü portre kutusunun kendisiydi (CARE_LAYOUT.portrait) ve ağıl
+       panının bulanık uzak tepeleri üstünde fark edilmiyordu; yeni yakın
+       çekim zemininde (düz ışıklı taş sıraları) DUVARA YAPIŞTIRILMIŞ BİR
+       AFİŞ gibi göründü — kutunun dört kenarı da okunuyordu.
+       DÖRDÜNCÜSÜ: pay TAM EKRANA basılıyor, tıpkı renderFold'un varlık payı
+       gibi. Şekil yok, dolayısıyla kenar da yok. BEŞİNCİSİ (şimdiki): iki
+       pay da (dünya 0.38, varlık 0.26) ağılın kendi paletiyle daha aynı
+       dünyada duran açık alternatife çekildi — bkz. yukarıdaki dünya payı
+       notu. Taş dokusu artık boğulmuyor, yine de loş bir yakın çekim. */
+    px(g, 0, 0, W, H, 'rgba(16,16,24,0.26)');
 
     /* Üç fiziksel nesne, ALT SIRA — "önce göster": el simgesi yok, o
        yüzden neyin tutulabilir olduğu görsel olarak DURMALI. Aynı çizim
@@ -4669,7 +4760,12 @@ const Attract = {
        Sargı yalnız köpek yorgunken görünür, etiketi de öyle. */
     const uc = U();
     if(sore) textC(g, uc.careEtiketSargi, sp.x + sp.w / 2, sp.y - 4, FOLD_PAL.k, 1, FOLD_PAL.o);
-    textC(g, uc.careEtiketBowl, bp.x + bp.w / 2, bp.y - 4, FOLD_PAL.k, 1, FOLD_PAL.o);
+    /* BESLE, kâsenin KUTUSUNA değil GERÇEK çizilen konumuna göre yerleşir
+       (Görev 2, tasarım turu 2026-08-13): drawCareBowl duran hâlde
+       bp.y+bp.h/2+4'e (kutunun ortasından 4px aşağı kaymış) çiziliyor —
+       etiket kutunun ham üst kenarına göre konsaydı köpeğin ön bacağının
+       üstüne düşüyordu, kâseyle bağı kopuyordu. */
+    textC(g, uc.careEtiketBowl, bp.x + bp.w / 2, bp.y + bp.h / 2 + 4 - 5 - 4, FOLD_PAL.k, 1, FOLD_PAL.o);
     textC(g, uc.careEtiketEl, ep.x + ep.w / 2, ep.y - 4, FOLD_PAL.k, 1, FOLD_PAL.o);
 
     /* Kapat — bakım ekranından TEK çıkış. careClose .hs (DOM) yalnız
@@ -4705,6 +4801,9 @@ const Attract = {
     }
     Card.draw(this._cardCanvas.getContext('2d'), G.card || {}, this.t);
     const cv = CARD_VIEW_LAYOUT.card;
+    // Zemin gölgesi (Görev 1, tasarım turu 2026-08-13) — kart havada asılı
+    // gibi durmasın diye hafif bir gölge kartın arkasına/altına düşer.
+    px(g, cv.x + 3, cv.y + 3, cv.w, cv.h, 'rgba(10,10,16,0.35)');
     px(g, cv.x - 2, cv.y - 2, cv.w + 4, cv.h + 4, 'rgba(252,252,252,0.22)');   // ince kenar — "tutulan kart"
     g.drawImage(this._cardCanvas, 0, 0, CARD.w, CARD.h, cv.x, cv.y, cv.w, cv.h);
 
@@ -7561,6 +7660,7 @@ addEventListener('orientationchange', () => setTimeout(fit, 250));
    ayrı tutulduğunda araçlar yanlış ekranı çiziyordu. */
 function paint(){
   if(G.phase === 'calib'){ drawScene(g, G.t, false); drawCalib(); return; }
+  if(G.phase === 'doorpan'){ renderDoorPan(); return; }
   /* Nişan seçimi bir KARAR ekranı: kartallar metnin üstünden geçerse
      okunmuyor. Menüde kalırlar (oyunun ilk karesi ne olduğunu söylemeli). */
   if(G.phase === 'idle' || G.phase === 'over'){
@@ -7589,6 +7689,7 @@ function loop(now){
       // atladığı için oradaki çağrı bu yola hiç uğramıyor.
       if(G.phase === 'calib'){ updateAim(); updateReload(); G.t++; updateCalib(); }
       else if(G.phase === 'idle' || G.phase === 'over') Attract.update();
+      else if(G.phase === 'doorpan') updateDoorPan();
       else update();
       acc -= step;
     }
@@ -7623,8 +7724,59 @@ const scrTitle = $('scrTitle'), scrOver = $('scrOver'), sheet = $('sheet'), hud 
    gösterecek bir skor yok. Sürü ve köpeğin hâli üzerine kurulu yeni bir
    kart tasarlanacak. */
 
+/* Kapı geçişi (Görev 5, tasarım turu 2026-08-13): ağıldan meraya eskiden
+   SESSİZ KESME vardı — kapıya dokun, ekran anında mera. mevsim-tasarim.md'nin
+   "en sık görülen sinematik: kapı geçişi (~3 sn pan)" dediği şey art/agil/
+   pan.json'da tarif edilmiş, dört varlığı da (foldopen/gate/merapan/gecis)
+   derlenmiş, ama HİÇBİR kod onları aramıyordu.
+   pan.json'un asıl planı (elips-yıkama, satır satır piksel örneklemesi)
+   yerine kendi "yedekPlan"ı (çapraz-geçiş) uygulandı: tek drawImage +
+   globalAlpha, pixcanvas.js'in de desteklediği tek mekanizma — böylece
+   tools/dom.js film modu ve npm test ile de doğrulanabiliyor. Işığın
+   kapıdan taşma hissi gider (pan.json'un kendi notu), ama üç varlığın
+   tamamı gerçekten oynuyor: kanat açılır, ağıl ışığa erir, ışık meraya
+   çözülür. */
+const DOOR_PAN_LEN = 180;   // 3sn @ 60fps, pan.json "sure"
+function startDoorPan(){
+  scrTitle.hidden = true;   // hsKapi vb. hotspot'lar animasyon sırasında tıklanamaz
+  G.phase = 'doorpan'; G.doorPanT = 0;
+}
+function updateDoorPan(){
+  G.doorPanT++;
+  if(G.doorPanT >= DOOR_PAN_LEN) begin();
+}
+function renderDoorPan(){
+  const t = G.doorPanT;
+  // Taban: geçiş ışığı (ağıl eksenli), baştan sona sabit — kapı ve duvar
+  // onun ÜSTÜNE çiziliyor, kapı açıldıkça/eridikçe altından bu çıkıyor.
+  if(!blit(g, 'gecis', 'agil', 0, 0)) px(g, 0, 0, W, H, PAL.hillFar);
 
+  // Faz 1 "kanat" (0-42): kapı kanatları menteşeden açılır, kamera sabit.
+  const wingT = Math.min(1, t / 42);
+  const wingEase = wingT * wingT * (3 - 2 * wingT);   // smoothstep — sert başlayıp sert durmasın
+  const wingFrame = Math.min(4, Math.floor(wingEase * 5));
 
+  // Faz 2 "yıkama" (34-132): duvar (foldopen + kapı kanadı) alfası 1->0
+  // iner, ışık ağılı yutar. Kanat aynı alfayı paylaşıyor — aynı fiziksel
+  // yapı, ayrı ayrı eriseler duvarsız asılı bir kanat kalırdı.
+  const fadeT = Math.max(0, Math.min(1, (t - 34) / (132 - 34)));
+  const wallA = 1 - fadeT;
+  if(wallA > 0.002){
+    g.globalAlpha = wallA;
+    blit(g, 'foldopen', 'fold', 0, 0);
+    blit(g, 'gate', 'gate:' + wingFrame, 139, 108);
+    g.globalAlpha = 1;
+  }
+
+  // Faz 3 "otur" (126-180): ışık meraya çözülür; ardından begin() gerçek
+  // sabahı (dog intro + drawScene) başlatır.
+  const settleT = Math.max(0, Math.min(1, (t - 126) / (180 - 126)));
+  if(settleT > 0.002){
+    g.globalAlpha = settleT;
+    blit(g, 'merapan', 'mera', 0, 0);
+    g.globalAlpha = 1;
+  }
+}
 
 async function begin(){
   Snd.unlock();
@@ -8245,8 +8397,14 @@ function initFoldHotspots(){
 }
 initFoldHotspots();
 
-// Kapı: nöbete çık. Alıştırma/nişan seçimi ilk dokunuşta begin() içinde devreye girer.
-$('hsKapi').addEventListener('click', () => begin());
+/* Kapı: nöbete çık. Alıştırma/nişan seçimi ilk dokunuşta begin() içinde
+   devreye girer — İLK açılışta pan OYNAMAZ, kapıdan çıkan şey bir ayar
+   ekranı olur, sinematik yanlış yere denk gelir. Sonraki HER sabah
+   (en sık görülen yol) pan oynar, bitince begin() zaten kendisini çağırır. */
+$('hsKapi').addEventListener('click', () => {
+  if(!Save.d.seen['aim'] || !Save.d.seen['practice']) begin();
+  else startDoorPan();
+});
 
 /* Raf: dünyaya ait kısa bir not (canvas, bkz. renderFold) — ayrı bir
    panel açmaya değecek kadar veri yok (süt/kiler ADIM 4). "boş" durumu
