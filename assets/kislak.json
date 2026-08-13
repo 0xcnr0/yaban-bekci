@@ -1,0 +1,82 @@
+{
+ "image": "kislak.png",
+ "size": [
+  320,
+  180
+ ],
+ "cell": [
+  320,
+  180
+ ],
+ "anchor": [
+  0,
+  0
+ ],
+ "frames": {
+  "kislak": {
+   "x": 0,
+   "y": 0,
+   "w": 320,
+   "h": 180,
+   "ax": 0,
+   "ay": 0
+  }
+ },
+ "anims": {},
+ "kaynak": "kislak_0",
+ "tarif": "kislak",
+ "yerlesim": {
+  "ufuk": 159,
+  "zemin": 169
+ },
+ "palette": [
+  "#1a1640",
+  "#2c2c54",
+  "#353c6a",
+  "#473553",
+  "#63475a",
+  "#504981",
+  "#595f8d",
+  "#3f5e9e",
+  "#5f7ab1",
+  "#6889bf",
+  "#87595d",
+  "#9f7069",
+  "#8b698f",
+  "#9c8296",
+  "#9c8ab6",
+  "#c18b78",
+  "#d19ca8",
+  "#eca3ab",
+  "#d699ae",
+  "#eaa2ae",
+  "#ba91b5",
+  "#d097b2",
+  "#8293c6",
+  "#948fbd",
+  "#a78ebf",
+  "#ba92be",
+  "#e69ec0",
+  "#85b0e5",
+  "#aeb2cc",
+  "#c8bbc7",
+  "#8bb2e4",
+  "#acbfe1",
+  "#8ab4e9",
+  "#9bbdea",
+  "#9ec4f2",
+  "#c2d9f9",
+  "#f6beaf",
+  "#e0dce8",
+  "#edeff2",
+  "#f2f5fc"
+ ],
+ "notu": "Sezon kapanisi. KIS PERDESI SART: varliklar (koyun/Kangal) cizildikten SONRA rgba(96,132,206,0.20) basilmali — krem suru mavi-beyaz panin uzerinde perdesiz YAPISTIRMA duruyor (docs/shots/manzara-sahne.png ikinci panel, perdesiz hali).",
+ "kapi": {
+  "x": 74,
+  "y": 104,
+  "w": 32,
+  "h": 36,
+  "notu": "tas agilin kemerli kapisi; suru buradan iceri sayilir"
+ }
+}

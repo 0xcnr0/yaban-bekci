@@ -1,0 +1,42 @@
+{
+ "image": "merapan.png",
+ "size": [
+  320,
+  199
+ ],
+ "cell": [
+  320,
+  180
+ ],
+ "anchor": [
+  0,
+  0
+ ],
+ "frames": {
+  "agil": {
+   "x": 0,
+   "y": 19,
+   "w": 320,
+   "h": 180,
+   "ax": 0,
+   "ay": 0
+  },
+  "mera": {
+   "x": 0,
+   "y": 0,
+   "w": 320,
+   "h": 180,
+   "ax": 0,
+   "ay": 0
+  }
+ },
+ "anims": {},
+ "yerlesim": {
+  "ufukSatiri": 132,
+  "panAralik": [
+   0,
+   19
+  ],
+  "notu": "pencere y=panY..panY+179; ufuk ekranda 132-panY"
+ }
+}

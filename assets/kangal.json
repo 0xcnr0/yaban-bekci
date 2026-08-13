@@ -1,0 +1,262 @@
+{
+ "image": "kangal.png",
+ "size": [
+  408,
+  187
+ ],
+ "cell": [
+  136,
+  142
+ ],
+ "anchor": [
+  0,
+  0
+ ],
+ "frames": {
+  "bakimli": {
+   "x": 0,
+   "y": 0,
+   "w": 136,
+   "h": 142,
+   "ax": 0,
+   "ay": 0
+  },
+  "mat": {
+   "x": 136,
+   "y": 0,
+   "w": 136,
+   "h": 142,
+   "ax": 0,
+   "ay": 0
+  },
+  "yorgun": {
+   "x": 272,
+   "y": 0,
+   "w": 136,
+   "h": 142,
+   "ax": 0,
+   "ay": 0
+  },
+  "iz0": {
+   "x": 0,
+   "y": 142,
+   "w": 13,
+   "h": 9,
+   "ax": -80,
+   "ay": -56
+  },
+  "iz1": {
+   "x": 14,
+   "y": 142,
+   "w": 17,
+   "h": 5,
+   "ax": -58,
+   "ay": -80
+  },
+  "iz2": {
+   "x": 32,
+   "y": 142,
+   "w": 9,
+   "h": 13,
+   "ax": -44,
+   "ay": -93
+  },
+  "iz3": {
+   "x": 42,
+   "y": 142,
+   "w": 6,
+   "h": 11,
+   "ax": -97,
+   "ay": -47
+  },
+  "iz4": {
+   "x": 49,
+   "y": 142,
+   "w": 15,
+   "h": 3,
+   "ax": -55,
+   "ay": -72
+  },
+  "iz5": {
+   "x": 65,
+   "y": 142,
+   "w": 4,
+   "h": 13,
+   "ax": -101,
+   "ay": -100
+  },
+  "sargi:omuz": {
+   "x": 70,
+   "y": 142,
+   "w": 31,
+   "h": 41,
+   "ax": -78,
+   "ay": -36
+  },
+  "sargi:govde": {
+   "x": 102,
+   "y": 142,
+   "w": 29,
+   "h": 45,
+   "ax": -50,
+   "ay": -56
+  },
+  "sargi:sagri": {
+   "x": 132,
+   "y": 142,
+   "w": 30,
+   "h": 45,
+   "ax": -35,
+   "ay": -77
+  },
+  "sargi:bacak": {
+   "x": 163,
+   "y": 142,
+   "w": 13,
+   "h": 24,
+   "ax": -98,
+   "ay": -95
+  },
+  "tasma": {
+   "x": 177,
+   "y": 142,
+   "w": 33,
+   "h": 15,
+   "ax": -80,
+   "ay": -42
+  },
+  "bogazlik": {
+   "x": 211,
+   "y": 142,
+   "w": 33,
+   "h": 20,
+   "ax": -80,
+   "ay": -37
+  }
+ },
+ "anims": {},
+ "yerlesim": {
+  "tuval": [
+   136,
+   142
+  ],
+  "ekranOneri": {
+   "x": 92,
+   "y": 18,
+   "notu": "320x180 icinde; ustte kural satiri, altta metin satiri"
+  },
+  "katmanSirasi": [
+   "taban(hal)",
+   "iz0..iz5 (yara sayisi kadar)",
+   "yipranma tint",
+   "sargi:<bolge>",
+   "tasma | bogazlik"
+  ],
+  "izler": [
+   {
+    "ad": "iz0",
+    "nokta": [
+     86,
+     60
+    ],
+    "bolge": "omuz",
+    "neden": "kartal — omuz"
+   },
+   {
+    "ad": "iz1",
+    "nokta": [
+     66,
+     82
+    ],
+    "bolge": "govde",
+    "neden": "kartal — böğür"
+   },
+   {
+    "ad": "iz2",
+    "nokta": [
+     48,
+     99
+    ],
+    "bolge": "sagri",
+    "neden": "kurt — sağrı"
+   },
+   {
+    "ad": "iz3",
+    "nokta": [
+     99,
+     52
+    ],
+    "bolge": "omuz",
+    "neden": "kurt — boyun"
+   },
+   {
+    "ad": "iz4",
+    "nokta": [
+     62,
+     73
+    ],
+    "bolge": "govde",
+    "neden": "kartal — sırt"
+   },
+   {
+    "ad": "iz5",
+    "nokta": [
+     103,
+     106
+    ],
+    "bolge": "bacak",
+    "neden": "kurt — ön bacak"
+   }
+  ],
+  "sargiBolge": {
+   "omuz": {
+    "rx": 13,
+    "ry": 10,
+    "uz": 20,
+    "bag": "dik",
+    "egim": -0.3
+   },
+   "govde": {
+    "rx": 14,
+    "ry": 10,
+    "uz": 22,
+    "bag": "dik",
+    "egim": 0.18
+   },
+   "sagri": {
+    "rx": 13,
+    "ry": 10,
+    "uz": 22,
+    "bag": "dik",
+    "egim": 0.34
+   },
+   "bacak": {
+    "rx": 6,
+    "ry": 11,
+    "uz": 9,
+    "bag": "yatay",
+    "egim": 0,
+    "x0": 96,
+    "x1": 112
+   }
+  },
+  "yorgunKayma": {
+   "taban": "kafa (-3,+7), govde (0,+2)",
+   "katman": [
+    0,
+    2
+   ],
+   "notu": "yorgun tabanda TUM katmanlar 2 piksel asagi cizilir; iz3 boyunda oldugu icin kafa blogunun degil govdenin kaymasini izler"
+  },
+  "yipranma": {
+   "esik": 6,
+   "adim": 0.05,
+   "tavan": 0.3,
+   "renk": "#4a3524",
+   "notu": "6 izden sonra yeni iz yok, post KARARIYOR — oyundaki kuralin aynisi"
+  },
+  "dokunma": {
+   "notu": "sargi bolgeleri dokunma hedefi olarak kullanilabilir; en dari 22 piksel yuksekliginde"
+  }
+ }
+}

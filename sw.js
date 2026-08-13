@@ -7,7 +7,7 @@
 /* SHELL listesi ELLE TUTULMAZ — tools/build.js diskteki gerçek dosyalardan
    üretir. Elle tutulduğunda atlas asset'leri listeye girmemişti ve çevrimdışı
    ilk açılışta oyun prosedürel sanata düşüyordu. */
-const CACHE = 'yaban-3542aaab';
+const CACHE = 'yaban-fda60e08';
 /* ==SHELL-START== */
 const SHELL = [
   './',
@@ -19,6 +19,30 @@ const SHELL = [
   './assets/dog.png',
   './assets/env.json',
   './assets/env.png',
+  './assets/fold.json',
+  './assets/fold.png',
+  './assets/foldopen.json',
+  './assets/foldopen.png',
+  './assets/gate.json',
+  './assets/gate.png',
+  './assets/gecis.json',
+  './assets/gecis.png',
+  './assets/gecit.json',
+  './assets/gecit.png',
+  './assets/goc.json',
+  './assets/goc.png',
+  './assets/gocdag.json',
+  './assets/gocdag.png',
+  './assets/gocon.json',
+  './assets/gocon.png',
+  './assets/goctepe.json',
+  './assets/goctepe.png',
+  './assets/kangal.json',
+  './assets/kangal.png',
+  './assets/kislak.json',
+  './assets/kislak.png',
+  './assets/merapan.json',
+  './assets/merapan.png',
   './icons/icon-1024.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
