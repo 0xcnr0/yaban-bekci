@@ -1,0 +1,35 @@
+{
+ "image": "sagimham.png",
+ "size": [
+  216,
+  96
+ ],
+ "cell": [
+  216,
+  96
+ ],
+ "anchor": [
+  0,
+  0
+ ],
+ "frames": {
+  "koyun": {
+   "x": 0,
+   "y": 0,
+   "w": 150,
+   "h": 96,
+   "ax": 0,
+   "ay": 0
+  },
+  "kuzu": {
+   "x": 150,
+   "y": 0,
+   "w": 66,
+   "h": 62,
+   "ax": 0,
+   "ay": 0
+  }
+ },
+ "anims": {},
+ "notu": "kuzu ÇEVRİLMİŞ pişirildi (sahne hep dir=-1 gösteriyor, blit() aynalamıyor)."
+}

@@ -207,40 +207,6 @@ canvas{
 #foldFoot > *{pointer-events:auto}
 #foldFoot .note{max-width:34ch;flex-basis:100%}
 
-/* Takvim tahtası paneli — ayar panelinin (#sheet) aynı dili konuşuyor. */
-#calBoard{
-  position:fixed;left:0;right:0;bottom:0;z-index:26;
-  background:var(--panel);border-top:1px solid var(--line);
-  padding:20px 20px calc(env(safe-area-inset-bottom) + 20px);
-  display:flex;flex-direction:column;gap:14px;
-  max-height:82vh;overflow-y:auto;
-}
-/* 30 gün = 10 sütun x 3 satır. Eskiden 6 sütundu ve aspect-ratio:1 ile
-   birlikte telefonun YATAY ekranına sığmıyordu: 30 günün yalnız 12'si
-   görünüp gerisi panelin altına taşıyordu (basıldı, görüldü). Takvim
-   ağılın beş dokunma noktasından biri — okunamayan takvim, görünmeyen
-   son tarih demek, oyunun omurgası o son tarihe dayanıyor. */
-#calGrid{
-  display:grid;grid-template-columns:repeat(10,1fr);gap:4px;
-}
-.calCell{
-  aspect-ratio:1;max-height:9vh;
-  border:1px solid var(--line);border-radius:2px;
-  display:grid;place-items:center;font-size:10px;color:var(--text-dim);
-  font-variant-numeric:tabular-nums;position:relative;
-}
-/* ÇENTİK: geçen gün tahtaya çentikle işleniyor (tasarımın kendi dili).
-   Soluklaştırma tek başına "geçmiş" demiyordu — çentik nesnesi lazım. */
-.calCell.gecmis{opacity:.55}
-.calCell.gecmis::after{
-  content:'';position:absolute;left:50%;top:22%;
-  width:1px;height:56%;background:var(--text-dim);
-  transform:translateX(-50%) rotate(14deg);opacity:.85;
-}
-.calCell.bugun{border-color:var(--sky);color:var(--sky);font-weight:700}
-.calCell.kurt{background:rgba(216,40,0,.14);border-color:#7a3a3a}
-.calCell.gecit{background:rgba(0,168,0,.12);border-color:#3a6a3a}
-
 /* --- ayar paneli --- */
 #sheet{
   /* Duraklat perdesi z-index 25. Panel 20'deyken duraklatmadan "Ayarlar"a
@@ -544,6 +510,15 @@ html.tiny  #startNote, html.tiny #progNote{display:none}
          ("atlanabilir, oynanışı kesmez" — tasarımın kendi kuralı). Yalnız
          G.vinyet.open iken görünür (bkz. syncVinyetUI). -->
     <button class="hs" id="hsVinyetSkip" style="left:0;top:0;width:100%;height:100%" hidden></button>
+    <!-- Sağım yakın çekimi (ADIM 4, "gece vardiyası" görevi 2026-08-14):
+         hsVinyetSkip ile AYNI desen — tam ekran, atlanabilir. Yalnız
+         G.sagimYakin.open iken görünür (bkz. syncSagimYakinUI). -->
+    <button class="hs" id="hsSagimSkip" style="left:0;top:0;width:100%;height:100%" hidden></button>
+    <!-- Takvim (büyük tasarım turu, 2026-08-14): careClose/cardViewClose
+         ile AYNI desen — küçük bir X hit-box, TAKVIM_LAYOUT.close'tan
+         initFoldHotspots ile konumlanır. Yalnız G.takvim.open iken
+         görünür (bkz. syncTakvimUI). -->
+    <button class="hs" id="hsTakvimKapat" hidden></button>
   </div>
   <div id="foldFoot">
     <p class="note" id="startNote">&#304;lk dokunu&#351;ta hareket sens&#246;r&#252; izni istenecek. Reddedersen dokunmatik moda ge&#231;ilir.</p>
@@ -554,16 +529,6 @@ html.tiny  #startNote, html.tiny #progNote{display:none}
     <button class="linkish" id="btnDiag" hidden></button>
   </div>
 </section>
-
-<!-- Takvim tahtası dokununca: 30 günlük şerit, çentik/bugün/kurt ayı/geçit. -->
-<div id="calBoard" hidden role="dialog" aria-label="Takvim">
-  <div class="sheet-hd">
-    <h2 id="tCalTitle"></h2>
-    <button class="cta ghost" id="btnCalClose" style="padding:8px 14px"></button>
-  </div>
-  <div id="calGrid"></div>
-  <p class="hint" id="calLegend"></p>
-</div>
 
 <section class="screen" id="scrOver" hidden>
   <p class="eyebrow" id="overWhy">Ge&#231;me &#231;izgisini a&#351;amad&#305;n</p>
@@ -826,7 +791,12 @@ const STR = {
       // ADIM 4: dokun-sağ. sagimDone KANVASA çiziliyor (G.msg) — ASCII tire.
       hsSuru:'Sürü — sağmak için dokun',
       sagimDone:'Süt alındı, güğüm rafa.',
-      calTitle: (s, d) => s + '. sezon — ' + d + '. gün', calClose:'Kapat',
+      /* ASCII tire (em-tire "—" DEĞİL, 2026-08-14): DOM'dayken fark etmiyordu
+         (textContent Unicode'u basar), takvim KANVASA taşınınca bitmap
+         fontta em-tire olmadığı için "?" basardı — dil bütünlüğü testi
+         yakaladı. Bu koddaki tekrarlanan bir sınıf (bkz. careSargiDone,
+         foldRafBos yorumları): KANVASA çizilen her metin bu kurala tabi. */
+      calTitle: (s, d) => s + '. sezon - ' + d + '. gün', calClose:'Kapat',
       calLegend:'Kurt ayı 20-27 · Geçit 28-30 · bugün vurgulu',
       foldRafBos:'KİLER BOŞ · SÜT HENÜZ YOK',
       /* Bakım yakın çekimi (ADIM 3). careSargiDone tasarım dokümanının
@@ -858,8 +828,24 @@ const STR = {
       kislakDevam:'AĞILA DÖN',
       kislakCentikDone:'Çentik atıldı - bir mevsim geride.',
       kislakBogazlikDone:'Boğazlık boynunda artık - kurt onu zorlar.',
+      // Liderlik tablosu (Görev 3, "gece vardiyası" turu, 2026-08-14) —
+      // kışlak ritüeli bitince gösterilen özet, KANVASA çiziliyor.
+      lbBaslik:'GEÇEN SEZONLAR',
+      lbBuSezon:(flock, scars) => 'Bu sezon: ' + flock + ' koyun, ' + scars + ' yara',
+      lbSuruBaslik:'EN BÜYÜK SÜRÜ', lbYaraBaslik:'EN AZ YARA',
+      lbSatir:(season, val) => season + '. sezon: ' + val,
       // Vinyetler (ADIM 2): SÖZLÜKTE YOK, doğrudan yazıldı — bkz. teslim raporu.
       hsVinyetSkip:'Geç',
+      // Sağım yakın çekimi ("gece vardiyası" görevi, 2026-08-14) — hsVinyetSkip ile AYNI desen.
+      hsSagimSkip:'Geç',
+      /* Kurt vinyeti alt yazısı (Görev Z, "gece vardiyası" 2026-08-14,
+         docs/sabah-sorulari.md 1e — sahibi KARARLAŞTIRDI). Mevsim I'de
+         İLK karşılaşma, Mevsim II+'da kurt artık TANIDIK — kısaltılmış
+         vinyet zaten kodda (VINYET.kurt.sonra:'kisalt'), yalnız bu iki
+         metin eksikti. Yalnız 'kurt' vinyetinde (day 20) — 'aksak' (day
+         24, dönüş) kendi kadrajını PAYLAŞIR ama bu alt yazıyı almaz. */
+      vinyetKurtIlk:'Sırtta bir gölge - bakıştılar.',
+      vinyetKurtTanidik:'Yine o.',
       /* Süt akışı (sahibinin kararı, "Kiler STOK değil AKIŞ"): SÖZLÜKTE
          YOK, doğrudan yazıldı — bkz. teslim raporu. KANVASA çiziliyor
          (G.msg), careSargiDone ile aynı kural: em-tire yok, ASCII "-".
@@ -1068,7 +1054,7 @@ const STR = {
       // ADIM 4 — SÖZLÜKTE YOK, FİNALİZE EDİLMEDİ. sagimDone KANVASA çiziliyor.
       hsSuru:'The flock — touch to milk',
       sagimDone:'Milk drawn, jug to the shelf.',
-      calTitle: (s, d) => 'Season ' + s + ' — day ' + d, calClose:'Close',
+      calTitle: (s, d) => 'Season ' + s + ' - day ' + d, calClose:'Close',
       calLegend:'Wolf Moon 20-27 · the Pass 28-30 · today highlighted',
       foldRafBos:'THE LARDER IS EMPTY · NO MILK YET',
       // ADIM 3 — düz çeviri, SÖZLÜKTE YOK, FİNALİZE EDİLMEDİ (bkz. teslim
@@ -1090,8 +1076,20 @@ const STR = {
       kislakDevam:'RETURN TO THE FOLD',
       kislakCentikDone:'Notch cut - a season behind us.',
       kislakBogazlikDone:'Collar on him now - the wolf will find him harder.',
+      // Leaderboard ("night shift" task, 2026-08-14) — shown when the
+      // kışlak ritual is done, drawn to CANVAS.
+      lbBaslik:'PAST SEASONS',
+      lbBuSezon:(flock, scars) => 'This season: ' + flock + ' sheep, ' + scars + ' scars',
+      lbSuruBaslik:'BIGGEST FLOCK', lbYaraBaslik:'FEWEST SCARS',
+      lbSatir:(season, val) => 'Season ' + season + ': ' + val,
       // Vignettes (ADIM 2): NOT IN THE GLOSSARY, written directly — see delivery report.
       hsVinyetSkip:'Skip',
+      // Milking close-up ("night shift" task, 2026-08-14) — same pattern as hsVinyetSkip.
+      hsSagimSkip:'Skip',
+      // Wolf vignette caption (Görev Z, "night shift" 2026-08-14) — plain
+      // translation call, not a KARAR GEREKİR (design brief's own words).
+      vinyetKurtIlk:'A shadow on the ridge - their eyes met.',
+      vinyetKurtTanidik:'There he is again.',
       // Milk flow: NOT IN THE GLOSSARY, written directly — see delivery report.
       sutAkisiNot:(n, m) => n + ' jugs spent - ' + m + ' lambs to feed.',
       mDawn:'Dawn broke', mEmpty:'The flock is gone',
@@ -1376,11 +1374,15 @@ if(typeof window !== 'undefined'){
 const SAVE_V = 5;   // v2: sürü/köpek alanları  (v3 yer alanı denendi, geri alındı)
 const FLOCK_START = 8, FLOCK_MIN = 3, FLOCK_MAX = 24, FLOCK_BIRTH_EVERY = 3;
 const num = (v, d) => (typeof v === 'number' && isFinite(v) && v >= 0) ? v : d;
+// Liderlik tablosu (Görev 3, "gece vardiyası" turu, 2026-08-14): son N
+// sezonun sonucu — sonsuza kadar büyümesin diye üst sınır (bkz. ensureSeason).
+const SEASON_HIST_MAX = 20;
 const Save = {
   d:{ v:SAVE_V, runs:0, wins:0, bestRound:0, birds:0, seen:{}, medals:[],
       flock:FLOCK_START, mornings:0, scars:0, bestFlock:FLOCK_START, sore:0,
       seasonStart:'', season:1, wolfLimping:false, dogFed:false, larder:0, milkedThisCycle:0,
-      collar:false, kislakPending:false, kislakFrom:0, kislakTo:0, kislakCollarOffer:false },
+      collar:false, kislakPending:false, kislakFrom:0, kislakTo:0, kislakCollarOffer:false,
+      seasonScarsStart:0, seasonHist:[] },
   load(){
     let raw = {};
     try{ raw = JSON.parse(localStorage.getItem('yaban.save') || '{}') || {}; }catch(e){}
@@ -1431,6 +1433,20 @@ const Save = {
       kislakFrom: Math.max(0, num(raw.kislakFrom, 0)),
       kislakTo: Math.max(0, num(raw.kislakTo, 0)),
       kislakCollarOffer: raw.kislakCollarOffer === true,
+      /* Liderlik tablosu (Görev 3, 2026-08-14): seasonScarsStart — o an
+         süren sezonun BAŞINDA Save.d.scars neydi (yara KALICI/ömür boyu
+         sayaç, bkz. seasonCarry yorumu — bu yüzden "bu sezon kaç yara"
+         için kendi başlangıç anlık görüntümüz gerekiyor). seasonHist —
+         son SEASON_HIST_MAX sezonun {season,flock,scars,date} kaydı;
+         ensureSeason() sezon sınırını geçince BİR KEZ ekler. */
+      seasonScarsStart: num(raw.seasonScarsStart, 0),
+      seasonHist: (Array.isArray(raw.seasonHist) ? raw.seasonHist : [])
+        .filter(e => e && typeof e === 'object')
+        .map(e => ({
+          season: num(e.season, 1), flock: num(e.flock, 0), scars: num(e.scars, 0),
+          date: typeof e.date === 'string' ? e.date : '',
+        }))
+        .slice(-SEASON_HIST_MAX),
     };
   },
   put(){ try{ localStorage.setItem('yaban.save', JSON.stringify(this.d)); }catch(e){} },
@@ -1840,7 +1856,13 @@ function drawScene(g, t, missFlash){
     // ıska anında gökyüzü soğur — üretilen görselin üstüne gri perde
     if(missFlash) px(g, 0, 0, W, GROUND, 'rgba(108,112,132,0.55)');
     // Prosedürel bulut ÇİZİLMEZ: üretilen gökyüzünün kendi atmosferi var,
-    // elips bulutlar üstüne yapıştırma duruyordu. Hareketi kuşlar sağlıyor.
+    // elips bulutlar üstüne yapıştırma duruyordu. Hareketi kuşlar sağlıyor
+    // — ama sabahın en sessiz diliminde henüz hiçbir tehdit kuşu yok
+    // (Görev 2, 2026-08-14): uzak kuş sürüsü silueti o boşluğu dolduruyor.
+    // dawnP() 'play' DIŞINDA (idle/over/calib/vinyet) 1 döner — bu yüzden
+    // ağıl/vinyet/kart gibi diğer drawScene çağrılarında KENDİLİĞİNDEN kapalı.
+    const p = dawnP();
+    if(p < 0.15) drawDistantBirds(g, p);
     return;
   }
   // --- yedek: prosedürel şafak ---
@@ -1977,6 +1999,31 @@ function drawDuck(g, d){
 }
 
 /* Bulutlar her iki yolda da en üstte — hareket, sabit arka plana hayat verir. */
+/* Uzak kuş sürüsü silueti (Görev 2, "gece vardiyası" turu, 2026-08-14) —
+   docs/yeni-oturum-devir.md'nin açık kalan maddesi: "sabahın ilk yarım
+   dakikasına hayat". Üretilen gökyüzü (ART.env, drawScene'in asıl yolu)
+   BAKILMIŞ bir görüntü, kendi hareketi yok — "hareketi kuşlar sağlıyor"
+   diyen yorum TEHDİT kartallarını kastediyor, ama sabahın en sessiz
+   diliminde (morningShape'in ~%7'lik açılışı, bkz. bugünkü kartal-
+   sıklığı işi) henüz hiçbir tehdit YOK, yani hiçbir şey kıpırdamıyor.
+
+   ÇOK küçük (üç nokta), kartaldan (drawEagle/drawEagleTop) apayrı —
+   sabit yükseklikte YATAY geçer, asla alçalmıyor/dalmıyor, tehdit
+   OKUNABİLİRLİĞİNE karışmaz (okunabilirlik sınırı, "Sabahın ışığı"
+   bölümü). p (dawnP, 0..1) doğrudan konum veriyor — döngü değil, TEK
+   geçiş: ekranın solundan sağına p=0..0.15 arası geçip gidiyor, o
+   pencereden sonra bir daha görünmüyor (o noktadan sonra zaten tehdit
+   sahaya giriyor, hareket kendiliğinden var oluyor). */
+function drawDistantBirds(g, p){
+  const span = W + 60;
+  const bx = Math.round(-30 + Math.min(1, p / 0.15) * span);
+  const y = 24;
+  const c = 'rgba(28,26,48,0.5)';
+  px(g, bx,     y,     1, 1, c);
+  px(g, bx - 4, y + 2, 1, 1, c);
+  px(g, bx + 5, y + 1, 1, 1, c);
+}
+
 function drawClouds(g, t){
   for(let i=0;i<3;i++){
     const cx = ((i*137 + t*0.08) % (W+80)) - 40;
@@ -2919,18 +2966,17 @@ function drawKurt(g, S, kare, x, y, dir){
   }
 }
 
-/* drawKurt'un 2x ÖLÇEKLİ hâli — vinyetler için (art/vinyet/vinyet.json
-   "ölçek_notu": "20/24. günde kurt 68x40 (vinyet ölçeği)... büyütme değil,
-   aynı referanstan yeniden indirme; ölçek farkı perspektif"). Yeni bir
-   sprite üretilmedi (üretilen sanat yalnız arka plan/anahtar görsel için
-   kazançlı — art-pipeline); KURT/KURT_YIRTIK_SET'in kendi satırları 2x2
-   blok basılıyor, 36x20 -> 72x40, notun istediği 68x40'a çok yakın. Yırtık
-   kulağın çentiği ancak bu ölçekte okunuyor — vinyet notunun gerekçesi. */
-function drawKurtBig(g, S, kare, x, y, dir){
+/* drawKurt'un BÜYÜTÜLMÜŞ hâli — vinyetler için (art/vinyet/vinyet.json
+   "ölçek_notu": "büyütme değil, aynı referanstan yeniden indirme; ölçek
+   farkı perspektif" — SC parametrik: tasarım turu 2026-08-14 ölçümü,
+   sabit SC=2'nin (20/24. gün vinyeti) ayak hizasına göre ~3.6 kat fazla
+   boy verdiğini gösterdi (bkz. drawVinyetKurt). x0 ARTIK SC ile ölçekli
+   (eskiden S.w — yalnız SC=2'de x merkez gibi davranmasının sebebi
+   tesadüftü, SC≠2 olunca sprite kayardı). */
+function drawKurtBig(g, S, kare, x, y, dir, SC = 2){
   const R = S.kare ? S.kare[kare] : kare;
   if(!R) return;
-  const SC = 2;
-  const x0 = x - S.w, y0 = y - (S.h - 3) * SC;
+  const x0 = x - (S.w * SC) / 2, y0 = y - (S.h - 3) * SC;
   for(let r = 0; r < R.length; r++){
     const row = R[r];
     for(let i = 0; i < row.length; i++){
@@ -3154,69 +3200,101 @@ const FOLD_BOARD = {
   dagX: 25, dagGun: [28, 30],
 };
 
-function drawFoldBoard(g, bx, by, day, t){
+/* Takvim ekranı (2026-08-14, "büyük tasarım turu" — sahibinin geri
+   bildirimi: "takvim düz koyu kutular, oyunun dünyasıyla hiçbir ilgisi
+   yok"). Eskiden #calGrid — ayrı bir DOM ızgarası, ağılın kanvas diliyle
+   hiç konuşmuyordu, "iki ayrı ürün" gibi duruyordu. Şimdi drawFoldBoard'ın
+   AYNI çentik/tahta dilini SC=4 ile büyütüp CARD_VIEW_LAYOUT/CARE_LAYOUT
+   ile AYNI "ağılın içindeki alt durum" desenini izliyor (renderTakvim).
+   SC=4: tahtanın 40x30'luk alanı ~164x120 kaplıyor, 320x180 ekranda
+   ortalanmış (bx=78 -> sağ/sol boşluk simetrik), üstte başlık, altta
+   lejant, sağ üstte careClose/cardViewClose ile BİREBİR aynı X düğmesi. */
+const TAKVIM_LAYOUT = {
+  w: 320, h: 180,
+  sc: 4,
+  board: { x: 78, y: 26 },
+  titleY: 8, legendY: 158,
+  close: { x: 288, y: 8, w: 26, h: 22 },
+};
+
+/* SC (2026-08-14, "takvim ekranını canvasa taşı" turu): büyütme çarpanı,
+   varsayılan 1 — ağıldaki küçük tahta çağrıları AYNEN eski davranışı korur.
+   Her ofset/boyut SC ile çarpılır (px() zaten her nesneyi kendi hücresi
+   olarak çiziyor, drawKurtBig'in SC deseniyle AYNI: tam sayı SC'de komşu
+   dikdörtgenler arasında dikiş/boşluk kalmaz). Büyük takvim ekranı bu
+   fonksiyonu doğrudan büyük SC ile çağırıyor (bkz. renderTakvim) — ayrı
+   bir "büyük tahta" fonksiyonu YAZILMADI, aynı çentik dili tek kaynaktan. */
+function drawFoldBoard(g, bx, by, day, t, SC = 1){
   const P = FOLD_PAL;
-  const x = bx + 1, y = by + 2, w = 38, h = 26;
+  const s = v => v * SC;
+  const x = bx + s(1), y = by + s(2), w = s(38), h = s(26);
 
   // askı: iki çivi (başları ışık alır — duvarda asılı olduğunu söyleyen şey)
-  px(g, x + 6,  by, 2, 3, P.o);
-  px(g, x + 30, by, 2, 3, P.o);
-  px(g, x + 6,  by, 2, 1, P.j);
-  px(g, x + 30, by, 2, 1, P.j);
+  px(g, x + s(6),  by, s(2), s(3), P.o);
+  px(g, x + s(30), by, s(2), s(3), P.o);
+  px(g, x + s(6),  by, s(2), s(1), P.j);
+  px(g, x + s(30), by, s(2), s(1), P.j);
   /* İdle (dokunulabilen nesne kıpırdar kuralı): sol çividen sarkan kısa
      bir sayaç ipi, hafifçe sallanır. t verilmeyen çağrılarda (kışlak,
      vinyet, statik önizleme) tamamen hareketsiz kalır — "dokunulamayan
      hiçbir şey kıpırdamasın" kuralı. */
   if(t != null){
-    const sway = Math.round(Math.sin(t * 0.05) * 1);
-    px(g, x + 6, by + 3, 1, 4, P.j);
-    px(g, x + 6 + sway, by + 7, 1, 1, P.j);
+    const sway = Math.round(Math.sin(t * 0.05) * 1) * SC;
+    px(g, x + s(6), by + s(3), s(1), s(4), P.j);
+    px(g, x + s(6) + sway, by + s(7), s(1), s(1), P.j);
   }
 
   // duvara düşen gölge: sağa ve aşağıya 2px. Tahtanın "asılı" okunmasını
   // sağlayan tek şey bu — gölgesiz levha duvarın deseni gibi duruyordu.
-  px(g, x + 2, y + h, w, 2, 'rgba(28,26,48,0.55)');
-  px(g, x + w, y + 2, 2, h, 'rgba(28,26,48,0.55)');
+  px(g, x + s(2), y + h, w, s(2), 'rgba(28,26,48,0.55)');
+  px(g, x + w, y + s(2), s(2), h, 'rgba(28,26,48,0.55)');
 
   // gövde: kontur + üç kalas (yatay lif; çentikler dikey — ikisi karışmasın)
   px(g, x, y, w, h, P.o);
   for(let k = 0; k < 3; k++){
-    const ky = y + 1 + k * 8;
-    px(g, x + 1, ky,     w - 2, 8, P.n);   // gövde duvardan KOYU: nesne öne çıksın
-    px(g, x + 1, ky,     w - 2, 1, P.m);   // kalasın üst kenarı ışık alır
-    px(g, x + 1, ky + 7, w - 2, 1, P.o);   // altı gölgede — kalaslar ayrışır
+    const ky = y + s(1) + k * s(8);
+    px(g, x + s(1), ky,      w - s(2), s(8), P.n);   // gövde duvardan KOYU: nesne öne çıksın
+    px(g, x + s(1), ky,      w - s(2), s(1), P.m);   // kalasın üst kenarı ışık alır
+    px(g, x + s(1), ky + s(7), w - s(2), s(1), P.o);   // altı gölgede — kalaslar ayrışır
   }
   // kurt ayı bandı: üçüncü kalas KIZILA çalar. Bant, tehlikeyi çentik
   // sayarak değil TON olarak söylüyor — bu ölçekte tek okunabilir yol.
   // (İlk denemede bant düz siyahtı: kalas kayboldu, çentikler yutuldu.)
   {
-    const ky = y + 18;
-    px(g, x + 1, ky, w - 2, 6, P.m);       // kızıl-kahve: diğer iki kalastan
-    px(g, x + 1, ky, w - 2, 1, P.k);       // hem açık hem SICAK -> uyarı tonu
+    const ky = y + s(18);
+    px(g, x + s(1), ky, w - s(2), s(6), P.m);       // kızıl-kahve: diğer iki kalastan
+    px(g, x + s(1), ky, w - s(2), s(1), P.k);       // hem açık hem SICAK -> uyarı tonu
   }
 
   const d = day | 0;
   // çentikler
   for(let k = 0; k < FOLD_BOARD.kalas.length; k++){
     const [ilk, , n, x0] = FOLD_BOARD.kalas[k];
-    const ky = y + 1 + k * 8;
+    const ky = y + s(1) + k * s(8);
     for(let i = 0; i < n; i++){
-      const gun = ilk + i, cx = x + x0 + i * 3, cy = ky + 2;
+      const gun = ilk + i, cx = x + s(x0) + i * s(3), cy = ky + s(2);
       if(d > gun){                          // geçmiş: oyulmuş (ahşabın içi AÇIK)
-        px(g, cx, cy, 1, 5, P.j);
-        px(g, cx + 1, cy, 1, 5, P.o);       // oyuğun sağ gölgesi -> derinlik
+        px(g, cx, cy, s(1), s(5), P.j);
+        px(g, cx + s(1), cy, s(1), s(5), P.o);       // oyuğun sağ gölgesi -> derinlik
       } else if(d === gun){                 // bugün: altın ve bir piksel uzun
-        px(g, cx - 1, cy - 1, 3, 7, P.o);
-        px(g, cx, cy - 1, 1, 7, P.h);
+        px(g, cx - s(1), cy - s(1), s(3), s(7), P.o);
+        px(g, cx, cy - s(1), s(1), s(7), P.h);
       } else {                              // gelecek: yalnız iz
-        px(g, cx, cy + 1, 1, 3, k === 2 ? P.m : P.o);
+        /* 3. kalasta (kurt ayı bandı) iz rengi ÖNCEDEN P.m'ydi — bandın
+           KENDİ dolgu rengiyle AYNI (bkz. aşağıdaki kurt ayı bandı bloğu),
+           yani gelecek günün izi bandın üstünde tamamen GÖRÜNMEZ kalıyordu.
+           40x30'luk küçük tahtada (3px'lik iz) hiç fark edilmemiş — takvim
+           ekranını SC=4 ile büyütünce (2026-08-14 turu) çıplak gözle
+           yakalandı. P.c ('kızılımsı — kurt ayı' diye tanımlı ama hiç
+           KULLANILMAMIŞ bir palet rengiydi) tam bunun için duruyordu. */
+        px(g, cx, cy + s(1), s(1), s(3), k === 2 ? P.c : P.o);
       }
     }
   }
 
   // geçit: son üç günün yerinde çentik yok, DAĞ oyması var (iki tepe).
   {
-    const ky = y + 19, gx = x + FOLD_BOARD.dagX;
+    const ky = y + s(19), gx = x + s(FOLD_BOARD.dagX);
     const gecti = d > FOLD_BOARD.dagGun[1];
     const simdi = d >= FOLD_BOARD.dagGun[0] && d <= FOLD_BOARD.dagGun[1];
     const c = simdi ? P.h : gecti ? P.i : P.j;
@@ -3228,7 +3306,7 @@ function drawFoldBoard(g, bx, by, day, t){
     ];
     for(let r = 0; r < dag.length; r++)
       for(let i = 0; i < dag[r].length; i++)
-        if(dag[r][i] === 'x') px(g, gx + i, ky + r, 1, 1, c);
+        if(dag[r][i] === 'x') px(g, gx + s(i), ky + s(r), SC, SC, c);
   }
 }
 
@@ -3289,21 +3367,26 @@ function drawFoldShelf(g, bx, by, n, t){
   px(g, bx, by, W_, H_, '#241b22');          // sırt: karanlıktan bir ton açık
   px(g, bx, by, W_, 1, P.o);
   px(g, bx, by, 1, H_, P.o);
-  const bas = (ox, oy, arka) => {
+  const bas = (ox, oy) => {
     for(let r = 0; r < R.h; r++)
       for(let i = 0; i < R.w; i++){
         const ch = R.kare.dolu[r][i];
         if(ch === '.') continue;
-        const c = arka ? (ch === 'r' ? 'q' : ch === 'q' ? 'p' : ch === 's' ? 'r' : 'p') : ch;
-        px(g, bx + ox + i, by + oy + r, 1, 1, SP[c]);
+        px(g, bx + ox + i, by + oy + r, 1, 1, SP[ch]);
       }
   };
-  for(const arka of [true, false]){
-    const pay = arka ? n - KAP : Math.min(n, KAP);
-    for(let i = 0; i < Math.min(Math.max(pay, 0), KAP); i++){
-      const k = KAT - 1 - ((i / SUTUN) | 0), s = i % SUTUN;
-      bas(1 + s * 6 + (arka ? 2 : 0), k * 8 + (arka ? -1 : 0), arka);
-    }
+  /* Görev Y (2026-08-14, "gece vardiyası" — sahibinin sorusu, docs/sabah-
+     sorulari.md 3b): ESKİDEN n 18 görünür yuvaya (KAP) 1:1 eşleniyordu,
+     18'den SONRASI 2px kaymış bir "arka sıra"ydı — basılıp bakılınca (bkz.
+     shots/dom/agilraf{az,yari,dolu}-tr.png) arka sıra ön sıranın ARKASINDA
+     neredeyse hiç görünmüyordu: larder=18 ile larder=36 AYNI basıyordu,
+     kilerin ikinci yarısı görünmez oluyordu. Tek sıra, ORANLI dolduruluyor
+     (n/larderCap * KAP) — 36 kapasitenin TAMAMI 18 yuvaya sığıyor, her
+     yuva artık 2 güğüm temsil ediyor ama en azından GERÇEKTEN görünüyor. */
+  const pay = Math.min(KAP, Math.round((n / SAGIM.larderCap) * KAP));
+  for(let i = 0; i < pay; i++){
+    const k = KAT - 1 - ((i / SUTUN) | 0), s = i % SUTUN;
+    bas(1 + s * 6, k * 8);
   }
   // tahtalar güğümlerin ÜSTÜNE: ön kenar güğümün dibini kesiyor, raf
   // böylece "içine konulmuş" okunuyor
@@ -3320,9 +3403,8 @@ function drawFoldShelf(g, bx, by, n, t){
   /* İdle: bir güğüm sırayla parlar (dokunulabilir nesne kuralı) — hepsi
      birden pırıldarsa "raf yanıyor" gibi olur, tek tek dönmesi "biriken
      şey" hissini korur. t verilmeyen çağrılarda (kışlak/vinyet) sessiz. */
-  const frontCount = Math.min(Math.max(n | 0, 0), KAP);
-  if(t != null && frontCount > 0){
-    const idx = Math.floor(t / 50) % frontCount;
+  if(t != null && pay > 0){
+    const idx = Math.floor(t / 50) % pay;
     const k = KAT - 1 - ((idx / SUTUN) | 0), s = idx % SUTUN;
     const a = 0.3 + 0.4 * Math.max(0, Math.sin(t * 0.15));
     if(a > 0.32) px(g, bx + 1 + s * 6 + 2, by + k * 8 + 1, 1, 1, 'rgba(252,248,224,' + a.toFixed(2) + ')');
@@ -3436,9 +3518,12 @@ const Assets = {
   // 'foldopen'/'gate'/'merapan'/'gecis': kapı geçişi (bkz. renderDoorPan,
   // art/agil/pan.json) — dört varlık ÖNCEDEN derlenmişti ama hiçbir kod
   // onları aramıyordu (Görev 5, tasarım turu 2026-08-13).
+  // 'sagimham': sağım yakın çekiminin koyun+kuzu sprite'ları (bkz.
+  // renderSagimYakin, art/agil/sagimyakin.json — sahibi onaylamıştı ama
+  // hiç bağlanmamıştı, "gece vardiyası" görevi, 2026-08-14).
   ready:false, sheets:{}, names:['birds','dog','env','fold','bakim','kangal',
     'gecit','kislak','goc','gocdag','goctepe','gocon',
-    'foldopen','gate','merapan','gecis'],
+    'foldopen','gate','merapan','gecis','sagimham'],
   async load(){
     try{
       /* PARALEL (Görev 5, tasarım turu 2026-08-13): eskiden bu bir for-of
@@ -3544,6 +3629,126 @@ const CARE_LAYOUT = {
   el:       { x:274, y:148, w:32,  h:28 },
 };
 const CARE_PET_MAX = 16;   // basılı tutma "doygunluğu" — baş yaslanmasının tavanı
+
+/* Sağım yakın çekimi (ADIM 4, "gece vardiyası" görevi 2026-08-14).
+   art/agil/sagimyakin.json'un KENDİSİ — bu tablo o dosyanın "katman"
+   bölümünden birebir kopyalandı (tools/sagimyakin.js tek kaynak, kod
+   ajanı sahneyi ORADAN kurar diye yazılmıştı). Sanat sahibi tarafından
+   ONAYLANMIŞTI (docs/sabah-sorulari.md 3c) ama hiçbir kod bağlamıyordu.
+   care/vinyet ile AYNI desen: ağılın İÇİNDE bir alt durum, ayrı faz yok. */
+const SAGIM_YAKIN_LAYOUT = {
+  w: 320, h: 180,
+  koyun: { x: 22, y: 30, w: 150, h: 96 },
+  kuzu:  { x: 196, y: 67, w: 66, h: 62 },
+  meme:  { kx: 114, ky: 74, rw: 11, rh: 9 },
+  gugum: { x: 122, y: 122, w: 30, h: 28 },
+  zemin: 126,
+};
+/* Dört an, sagimyakin.json "an" dizisiyle BİREBİR: kademe (meme 2/1/0),
+   dolu (güğümdeki süt 0..1), tel (süt telleri), kuzuEmiyor (kuzu memeye
+   yaklaşmış mı). Süreler VINYET'ten kısa TUTULDU — vinyet sezonda bir
+   kaç kez görülür (1400-2000ms/kare kabul edilir), sağım OYNANAN HER
+   SABAH tetikleniyor (bkz. onTapSuru); 5 saniyelik bir vinyet burada
+   "20 saniyelik hızlı sağım işini" can sıkıcı hâle getirirdi. */
+const SAGIM_YAKIN_FRAMES = [
+  { kademe:2, dolu:0,   tel:false, kuzuEmiyor:false, ms:350 },
+  { kademe:2, dolu:0,   tel:false, kuzuEmiyor:false, ms:350 },
+  { kademe:1, dolu:0.5, tel:true,  kuzuEmiyor:false, ms:550 },
+  { kademe:0, dolu:1,   tel:false, kuzuEmiyor:true,  ms:700 },
+];
+
+/* --- meme: gövdeye bağlanan yumru (tools/sagimyakin.js memeCiz'in BİREBİR
+   portu — Node/fillRect yerine oyunun kendi px() yardımcısı). Palette:
+   YENİ renk İCAT EDİLMEDİ (Görev 4'ün ana paletini büyütmemek için) —
+   sagimyakin.js'in eklediği 'v'/'w' ara tonları yerine SUT_PAL'in KENDİ
+   aile içi en yakın anahtarları (h/u) kullanılıyor. */
+function drawSagimMeme(g, kademe){
+  const K = SAGIM_YAKIN_LAYOUT.koyun, M = SAGIM_YAKIN_LAYOUT.meme;
+  const P = SUT_PAL, YUN = P.a, YUNG = P.b, KONTUR = PAL.ink;
+  const mx = K.x + M.kx, my = K.y + M.ky;
+  const rw = kademe === 2 ? M.rw : kademe === 1 ? 8 : 5;
+  const rh = kademe === 2 ? M.rh : kademe === 1 ? 6 : 4;
+  if(kademe === 0){
+    px(g, mx - rw, my + 2, rw * 2, 3, P.n);
+    px(g, mx - 3, my + 5, 2, 2, P.n); px(g, mx + 1, my + 5, 2, 2, P.n);
+    px(g, mx - rw - 1, my, rw * 2 + 2, 2, YUNG);
+    return;
+  }
+  for(let dy = -rh; dy <= rh; dy++){
+    let w;
+    if(dy < -rh * 0.35) w = Math.round(rw * 0.92);
+    else {
+      const t = (dy + rh * 0.35) / (rh * 1.35);
+      const k = 1 - t * t;
+      w = Math.round(rw * Math.sqrt(Math.max(0, k)));
+    }
+    if(w <= 0) continue;
+    px(g, mx - w, my + dy, w * 2, 1, dy > rh * 0.45 ? P.n : dy < -rh * 0.1 ? P.h : P.m);
+    px(g, mx - w, my + dy, 1, 1, P.n);
+  }
+  px(g, mx - rw + 2, my + rh - 1, kademe === 2 ? 3 : 2, kademe === 2 ? 4 : 3, P.n);
+  px(g, mx + rw - 4, my + rh - 1, kademe === 2 ? 3 : 2, kademe === 2 ? 4 : 3, P.n);
+  // bağlantı: memenin üstüne karın yapağısının gölgesi biniyor
+  px(g, mx - rw - 1, my - rh - 1, rw * 2 + 2, 2, YUNG);
+  px(g, mx - rw + 1, my - rh - 2, rw * 2 - 2, 1, YUN);
+  px(g, mx - rw - 2, my - rh - 1, 1, 3, KONTUR);
+  px(g, mx + rw + 1, my - rh - 1, 1, 3, KONTUR);
+}
+
+/* --- güğüm: sagimyakin.json'daki gugum_kare/gugum_kulp ASCII deseninin
+   BİREBİR portu. 'p'/'w' bu tablonun KENDİ paleti (SUT_PAL ile aynı aile,
+   sagim.json'dan — tools/sagimyakin.js'in P objesiyle aynı anahtarlar). */
+const SAGIM_GUGUM_KARE = [
+  '.....pppppppppppppppppp.....','....pqqqqqqqqqqqqqqqqqqqp...',
+  '...pqrrrrrrrrrrrrrrrrrrrrqp.','...pqppppppppppppppppppppqp.',
+  '....pqqqqqqqqqqqqqqqqqqqp...','.....pqqqqqqqqqqqqqqqqqp....',
+  '......pqqqqqqqqqqqqqqqp.....','......pqqqqqqqqqqqqqqqp.....',
+  '.....pqqqqqqqqqqqqqqqqqp....','....pqqqqqqqqqqqqqqqqqqqp...',
+  '...pqqqqqqqqqqqqqqqqqqqqqp..','..pqqqqqqqqqqqqqqqqqqqqqqrp.',
+  '.pqqqqqqqqqqqqqqqqqqqqqqqrrp','.pqqqqqqqqqqqqqqqqqqqqqqqqrp',
+  'pqqqqqqqqqqqqqqqqqqqqqqqqqrp','pqqqqqqqqqqqqqqqqqqqqqqqqqrp',
+  'pqqqqqqqqqqqqqqqqqqqqqqqqrrp','pqqqqqqqqqqqqqqqqqqqqqqqqqrp',
+  'pqqqqqqqqqqqqqqqqqqqqqqqqqrp','pqqqqqqqqqqqqqqqqqqqqqqqqrrp',
+  '.pqqqqqqqqqqqqqqqqqqqqqqqrp.','.pqqqqqqqqqqqqqqqqqqqqqqqrp.',
+  '..pqqqqqqqqqqqqqqqqqqqqqrp..','...pqqqqqqqqqqqqqqqqqqqqp...',
+  '....pqqqqqqqqqqqqqqqqqqp....','.....pppppppppppppppppp.....',
+  '.....pwwwwwwwwwwwwwwwwp.....','......pppppppppppppppp......',
+];
+const SAGIM_GUGUM_KULP = [[26,3],[28,4],[30,6],[31,9],[31,12],[30,15],[28,17],[26,18]];
+function drawSagimGugum(g, dolu){
+  const Gp = SAGIM_YAKIN_LAYOUT.gugum, P = SUT_PAL;
+  const GPAL = { p:P.p, q:P.q, r:P.r, w:P.u };   // w: kulp gölgesi — 'u' SUT_PAL'in kendi aile-içi karşılığı
+  for(const [kx, ky] of SAGIM_GUGUM_KULP){
+    px(g, Gp.x + kx, Gp.y + ky, 3, 3, P.q);
+    px(g, Gp.x + kx + 2, Gp.y + ky, 1, 2, P.r);
+    px(g, Gp.x + kx, Gp.y + ky + 2, 2, 1, P.u);
+  }
+  for(let r = 0; r < SAGIM_GUGUM_KARE.length; r++)
+    for(let i = 0; i < SAGIM_GUGUM_KARE[r].length; i++){
+      const ch = SAGIM_GUGUM_KARE[r][i];
+      if(ch === '.') continue;
+      px(g, Gp.x + i, Gp.y + r, 1, 1, GPAL[ch]);
+    }
+  if(dolu > 0){
+    const yuz = 3 - Math.round(dolu * 1);
+    px(g, Gp.x + 5, Gp.y + yuz, 20, 2, P.s);
+    px(g, Gp.x + 9, Gp.y + yuz, 7, 1, PAL.bone);
+  }
+}
+
+/* --- süt telleri: meme ucundan güğüm ağzına, KESİNTİLİ (düz çizgi
+   "çubuk" gibi okunuyordu — tools/sagimyakin.js'in kendi ölçümü). */
+function drawSagimTel(g){
+  const K = SAGIM_YAKIN_LAYOUT.koyun, M = SAGIM_YAKIN_LAYOUT.meme, Gp = SAGIM_YAKIN_LAYOUT.gugum;
+  const mx = K.x + M.kx, my = K.y + M.ky;
+  const hedef = Gp.y + 12;
+  for(const [dx, faz] of [[-M.rw + 3, 0], [M.rw - 3, 3]]){
+    for(let y = my + M.rh + 2; y < hedef; y++){
+      if(((y + faz) % 7) === 6) continue;
+      px(g, mx + dx + Math.round((y - my) * 0.06), y, 1, 1, SUT_PAL.s);
+    }
+  }
+}
 
 /* Paylaşım kartı önizlemesi (ADIM 3, sahibinin geri bildirimi 2026-08-13:
    ağıldaki fotoğrafa dokununca kart hiç görünmeden DOĞRUDAN iOS paylaşım
@@ -4166,12 +4371,22 @@ const G = {
      frame/t: oynatım ilerlemesi (bkz. VINYET.ms, Attract.update). Ayrı bir
      faz icat edilmedi; atlanabilir, oynanışı kesmez. */
   vinyet:{ open:false, key:null, frame:0, t:0, ms:null },
+  /* Sağım yakın çekimi ("gece vardiyası" görevi, 2026-08-14) — vinyet ile
+     AYNI zamanlayıcı deseni (frame/t), ama key yok: tek bir sahne. Yalnız
+     o SABAHIN İLK sağımında açılır (bkz. onTapSuru); geri kalan sağımlar
+     applySagim()'i doğrudan çağırır, hızlı kalır. */
+  sagimYakin:{ open:false, frame:0, t:0 },
   /* Paylaşım kartı önizlemesi (ADIM 3, sahibinin geri bildirimi 2026-08-13:
      ağıldaki fotoğrafa dokununca DOĞRUDAN iOS paylaşım sayfası açılıyordu,
      kart hiç ekranda görünmüyordu). Ağılın İÇİNDE bir alt durum, care/kislak
      ile AYNI desen: kart önce çizilir, native paylaşım yalnız oyuncu ayrı
      bir "paylaş" dokunuşuyla ister. */
   cardView:{ open:false },
+  /* Takvim ekranı (2026-08-14, "büyük tasarım turu") — care/cardView ile
+     AYNI desen: ağılın İÇİNDE bir alt durum, ayrı frame/t zamanlayıcısı
+     yok (statik bir referans paneli, sinematik değil — idle sallanma için
+     Attract'in kendi `this.t` sayacı zaten yetiyor, bkz. renderTakvim). */
+  takvim:{ open:false },
   /* Süt akışı: startRun()'ın o sabah kilerden ne kadar harcadığını (ve kaç
      kuzu içtiğini) taşır — toMenu() ağıla dönüşte BİR KEZ okuyup gösterir,
      sonra null'a döner (bkz. "GÖRÜNÜR tüketim" maddesi). Save.d'de DEĞİL:
@@ -4233,7 +4448,9 @@ const addDaysKey = (key, n) => { const dt = keyToDate(key); dt.setDate(dt.getDat
 function ensureSeason(now){
   const today = todayKey(now);
   if(!Save.d.seasonStart){
-    Save.d.seasonStart = today; Save.d.season = 1; Save.put();
+    Save.d.seasonStart = today; Save.d.season = 1;
+    Save.d.seasonScarsStart = Save.d.scars || 0;   // liderlik tablosu: bu sezonun yara sayacı sıfırdan
+    Save.put();
     return;
   }
   const D = daysBetween(Save.d.seasonStart, today);
@@ -4264,6 +4481,19 @@ function ensureSeason(now){
     Save.d.kislakFrom = preFlock;
     Save.d.kislakTo = Save.d.flock;
     Save.d.kislakCollarOffer = !Save.d.collar;
+    /* Liderlik tablosu (Görev 3, 2026-08-14): mekanik sezon sınırı TAM
+       BURADA geçiliyor — kayıt burada donuyor, oyuncu kışlak sahnesini
+       HENÜZ görmemiş olabilir ama sonuç zaten kesinleşti (renderKislak
+       yalnız OKUR, bkz. closeKislak). Yara sayısı bu sezona ÖZEL (kalıcı
+       Save.d.scars sayacından seasonScarsStart farkı) — kışlak/geçit
+       sahnesi "en az yara ile geçit" dediği için ölçüm burada, geçit
+       ANINDA (sezonun 28-30. günü Save.d.scars ne ise) alınıyor; bu
+       zaten burada olan Save.d.scars'ın kendisi (30. günden BURAYA kadar
+       yeni yara eklenmez, geçit sonrası mornings kışlağa kadar oynanmaz). */
+    const scarsThisSeason = Math.max(0, (Save.d.scars || 0) - (Save.d.seasonScarsStart || 0));
+    Save.d.seasonHist.push({ season: Save.d.season, flock: preFlock, scars: scarsThisSeason, date: today });
+    if(Save.d.seasonHist.length > SEASON_HIST_MAX) Save.d.seasonHist.shift();
+    Save.d.seasonScarsStart = Save.d.scars || 0;   // yeni sezon sıfırdan sayıyor
     Save.d.season += blocks;
     const remainder = D - blocks * 30;          // 0..29 — yeni sezonun kaçıncı günündeyiz
     Save.d.seasonStart = addDaysKey(today, -remainder);
@@ -4273,6 +4503,18 @@ function ensureSeason(now){
 // Sezon günü, 1..30. ensureSeason() bu çağrıdan ÖNCE koşmuş olmalı.
 function seasonDayNow(now){
   return Math.max(1, Math.min(30, daysBetween(Save.d.seasonStart, todayKey(now)) + 1));
+}
+
+/* Liderlik tablosu (Görev 3, 2026-08-14) — İKİ AYRI görünüm, AYNI kayıt
+   listesinden (Save.d.seasonHist) türetilir; ayrı bir veri şekli icat
+   edilmedi. Kişisel (cihaz-lokal) — sunucu/Game Center YOK, bilerek
+   (bkz. teslim raporu: Apple Developer hesabı gerektiriyor, mağaza
+   sürecine bırakıldı). n=5: kışlak ekranındaki küçük özete yetecek kadar. */
+function lbBySuru(n = 5){
+  return [...Save.d.seasonHist].sort((a, b) => b.flock - a.flock).slice(0, n);
+}
+function lbByYara(n = 5){
+  return [...Save.d.seasonHist].sort((a, b) => a.scars - b.scars).slice(0, n);
 }
 
 /* "c" kararı — tavanlı-tabanlı taşıma (docs/mevsim-tasarim.md, "Geçit ve
@@ -4429,6 +4671,17 @@ const Attract = {
         else closeVinyet();
       }
     }
+    /* Sağım yakın çekimi ("gece vardiyası" görevi, 2026-08-14) — vinyet
+       oynatımıyla AYNI desen (frame/t, kendiliğinden kapanış), tek fark
+       kapanışta finishSagimYakin() sütü GERÇEKTEN kilere işliyor. */
+    if(G.sagimYakin.open){
+      G.sagimYakin.t += 1000 / FPS;
+      if(G.sagimYakin.t >= SAGIM_YAKIN_FRAMES[G.sagimYakin.frame].ms){
+        G.sagimYakin.t = 0;
+        if(G.sagimYakin.frame < SAGIM_YAKIN_FRAMES.length - 1) G.sagimYakin.frame++;
+        else finishSagimYakin();
+      }
+    }
   },
   /* showBirds: MENÜDE kartal olmalı — oyunun ilk karesi hangi oyun olduğunu
      söylemeli. SABAH SONUNDA olmamalı, iki ayrı sebeple:
@@ -4454,9 +4707,15 @@ const Attract = {
       // Bakım yakın çekimi (ADIM 3): ağılın İÇİNDE bir alt durum, ayrı faz
       // değil — Kangal'a dokununca üstüne biner, kapatınca ağıla döner.
       if(G.care.open){ this.renderCare(); return; }
+      // Sağım yakın çekimi ("gece vardiyası" görevi, 2026-08-14): care ile
+      // AYNI öncelik — oyuncunun DOĞRUDAN dokunuşuyla açılan bir alt durum.
+      if(G.sagimYakin.open){ this.renderSagimYakin(); return; }
       // Paylaşım kartı önizlemesi (bkz. G.cardView) — kışlak/vinyetten ÖNCE:
       // oyuncu foto'ya dokunduğunda o an ne varsa (care'in aksine) her zaman açılabilir.
       if(G.cardView.open){ this.renderCardView(); return; }
+      // Takvim ("büyük tasarım turu", 2026-08-14): AYNI öncelik — oyuncunun
+      // DOĞRUDAN dokunuşuyla (hsTahta) açılan bir alt durum.
+      if(G.takvim.open){ this.renderTakvim(); return; }
       /* Kışlak kapanışı (ADIM 1): Save.d.kislakPending sezon sınırını
          GEÇMİŞ (ensureSeason) ama ritüeli henüz GÖRMEMİŞ demek — ağıl
          yerine bu sahne açılır, kapı dahil hiçbir hotspot çalışmaz
@@ -4785,6 +5044,45 @@ const Attract = {
     if(G.msgT > 0 && G.msg) textC(g, G.msg, W / 2, 168, PAL.bone, 1, PAL.ink);
   },
 
+  /* Sağım yakın çekimi ("gece vardiyası" görevi, 2026-08-14) — art/agil/
+     sagimyakin.json'un canlandırılmış hâli (bkz. SAGIM_YAKIN_LAYOUT/
+     SAGIM_YAKIN_FRAMES, drawSagimMeme/Gugum/Tel). Dört an otomatik akar
+     (openSagimYakin -> Attract.update -> finishSagimYakin), oyuncu yalnız
+     erken kapatabilir (hsSagimSkip, vinyet ile AYNI "atlanabilir" ilkesi).
+     Etkileşim YOK — bakım gibi sürüklenen nesne değil, vinyet gibi kısa
+     bir sinematik. */
+  renderSagimYakin(){
+    const S = SAGIM_YAKIN_LAYOUT;
+    const f = SAGIM_YAKIN_FRAMES[G.sagimYakin.frame];
+    /* Arka plan: ağıl panının duvar dibi + zemin şeridi (satır 108-152),
+       yakın çekimde GERİLİYOR — piksel sanatta bulanıklık yalan (tools/
+       sagimyakin.js'in kendi notu), ışıkla/perdeyle geri çekiliyor.
+       Perde alfası 0.52 — sagimyakin.json'un yazdığı 0.66 DEĞİL: json'un
+       kendisi asıl üretici kod (tools/sagimyakin.js sahne()) ile
+       tutarsızdı, basılıp onaylanan görüntüler 0.52'ydi. */
+    const foldImg = Assets.sheets.fold && Assets.sheets.fold.img;
+    if(foldImg) g.drawImage(foldImg, 0, 108, W, 44, 0, 0, W, H);
+    else px(g, 0, 0, W, H, PAL.hillFar);
+    px(g, 0, 0, W, H, 'rgba(24,18,34,0.52)');
+
+    /* Zemin gölgeleri (Görev 1 ilkesiyle AYNI — drawSheep/drawKangal'daki
+       teknik, tasarım turunun EK talimatı: bu sanat Görev 4/gölge işinden
+       ÖNCE onaylanmıştı, bugünün standardına göre denetlenip eklendi).
+       Kuzu emerken 18px sola kayıyor (bkz. aşağıdaki basım), gölgesi de
+       onunla birlikte kayıyor — ayrışıp "iki ayrı yerde duran nesne" gibi
+       görünmesin diye. */
+    const kuzuDX = f.kuzuEmiyor ? -18 : 0, kuzuDY = f.kuzuEmiyor ? 3 : 0;
+    ell(g, S.koyun.x + 92, S.zemin + 2, 42, 4, 'rgba(20,18,28,0.35)');
+    ell(g, S.kuzu.x + 33 + kuzuDX, S.zemin + 3, 21, 4, 'rgba(20,18,28,0.35)');
+
+    // Kuzu koyunun ARKASINDA çizilir (sagimyakin.json katman sırası).
+    blit(g, 'sagimham', 'kuzu', S.kuzu.x + kuzuDX, S.kuzu.y + kuzuDY);
+    blit(g, 'sagimham', 'koyun', S.koyun.x, S.koyun.y);
+    drawSagimMeme(g, f.kademe);
+    drawSagimGugum(g, f.dolu);
+    if(f.tel) drawSagimTel(g);
+  },
+
   /* Paylaşım kartı önizlemesi (bkz. G.cardView, CARD_VIEW_LAYOUT). Foto'ya
      dokununca ESKİDEN doğrudan navigator.share çağrılıyordu — kart hiç
      ekranda görünmüyordu (sahibi telefonda BASILDI, BULUNDU: iOS paylaşım
@@ -4822,6 +5120,32 @@ const Attract = {
     // Paylaşım hatası burada bildirilir (bkz. shareCard çağrısı) — alttaki
     // "PAYLAŞ" etiketiyle AYNI satıra denk gelmesin diye üstte, kartın hemen üzerinde.
     if(G.msgT > 0 && G.msg) textC(g, G.msg, W / 2, 4, PAL.bone, 1, PAL.ink);
+  },
+
+  /* Takvim (2026-08-14, "büyük tasarım turu" — bkz. TAKVIM_LAYOUT yorumu).
+     careClose/cardViewClose ile AYNI perde + X düğmesi; asıl içerik
+     drawFoldBoard'ın SC=4 çağrısı — ağıldaki KÜÇÜK tahtayla TAM AYNI
+     çizim kodu, yalnız büyütülmüş. Etkileşim YOK (sürüklenen nesne değil,
+     okunan bir referans panosu) — kapanış yalnız X düğmesiyle, cardView
+     ile aynı ilke (tap-anywhere değil: yanlışlıkla kapanmasın, oyuncu
+     takvimi OKUMAK için açıyor). */
+  renderTakvim(){
+    if(!blit(g, 'fold', 'fold', 0, 0)) px(g, 0, 0, W, H, PAL.hillFar);
+    px(g, 0, 0, W, H, 'rgba(16,16,24,0.72)');   // ağıl loşça arkada — care/cardView ile aynı perde
+
+    const u = U(), T = TAKVIM_LAYOUT;
+    textC(g, u.calTitle(Season.season, Season.day), W / 2, T.titleY, PAL.bone, 1, PAL.ink);
+    drawFoldBoard(g, T.board.x, T.board.y, Season.day || 1, this.t, T.sc);
+    textC(g, u.calLegend, W / 2, T.legendY, PAL.bone, 1, PAL.ink);
+
+    // Kapat — careClose/cardViewClose ile birebir aynı çizim.
+    {
+      const cl = T.close;
+      const ccx = cl.x + cl.w / 2, ccy = cl.y + cl.h / 2;
+      px(g, cl.x + 1, cl.y,     cl.w - 2, cl.h - 2, 'rgba(252,252,252,0.28)');
+      px(g, cl.x + 2, cl.y + 1, cl.w - 4, cl.h - 4, 'rgba(16,16,24,0.72)');
+      textC(g, 'X', ccx, ccy - 7, PAL.bone, 2, PAL.ink);
+    }
   },
 
   /* Kışlak — sezon kapanışı (ADIM 1, docs/mevsim-tasarim.md "Geçit ve
@@ -4918,7 +5242,41 @@ const Attract = {
 
     const u = U();
     const collarLeft = Save.d.kislakCollarOffer && !Save.d.collar;
-    const line = !S.notchDone ? u.kislakYonergeCentik : collarLeft ? u.kislakYonergeBogazlik : u.kislakDevam;
+    const ready = S.notchDone && !collarLeft;
+
+    /* Liderlik özeti (Görev 3, "gece vardiyası" turu, 2026-08-14) — ritüel
+       bitince (ready), "geçmişe göre nasıldın" — careClose/cardView'daki
+       perde dili (koyu, tam ekran) ile AYNI aile, yalnız içerik farklı.
+       Kaynak Save.d.seasonHist'in kendisi: ensureSeason() sezon sınırını
+       geçerken BİR KEZ ekliyor (bkz. yorum orada), burası yalnız OKUYUP
+       İKİ AYRI sıralı görünüm türetiyor (lbBySuru/lbByYara) — kışlak-anı
+       entegrasyonu bu; KALICI erişim (istediği an bakabilme) sahibine
+       AYRI bir KARAR GEREKİR olarak bırakıldı (yeni bir dokunma noktası
+       ağıldaki beş-nokta dengesini bozabilir). */
+    if(ready && Save.d.seasonHist.length){
+      const last = Save.d.seasonHist[Save.d.seasonHist.length - 1];
+      px(g, 0, 0, W, H, 'rgba(16,16,24,0.82)');
+      textC(g, u.lbBaslik, W / 2, 12, PAL.gold, 1, PAL.ink);
+      textC(g, u.lbBuSezon(last.flock, last.scars), W / 2, 24, PAL.bone, 1, PAL.ink);
+      const colX = [20, 165];
+      const cols = [
+        { title: u.lbSuruBaslik, rows: lbBySuru(5), val: r => r.flock },
+        { title: u.lbYaraBaslik, rows: lbByYara(5), val: r => r.scars },
+      ];
+      for(let c = 0; c < 2; c++){
+        text(g, cols[c].title, colX[c], 42, PAL.gold, 1, PAL.ink);
+        cols[c].rows.forEach((r, i) => {
+          const mine = r === last;
+          text(g, u.lbSatir(r.season, cols[c].val(r)), colX[c], 54 + i * 9,
+               mine ? PAL.gold : PAL.bone, 1, PAL.ink);
+        });
+      }
+      textC(g, u.kislakDevam, W / 2, 168, PAL.bone, 1, PAL.ink);
+      if(G.msgT > 0 && G.msg) textC(g, G.msg, W / 2, 158, PAL.bone, 1, PAL.ink);
+      return;
+    }
+
+    const line = !S.notchDone ? u.kislakYonergeCentik : u.kislakYonergeBogazlik;
     // İlk basımda y:172 metni alt kenarda KIRPIYORDU (H=180, glif 7px) —
     // yukarı alındı (BASILDI, BAKILDI).
     textC(g, line, W / 2, 168, PAL.bone, 1, PAL.ink);
@@ -5001,10 +5359,29 @@ const Attract = {
     drawSheep(g, W / 2 - 60, GROUND + 20, 1, 'alert', 0);
     drawSheep(g, W / 2 - 44, GROUND + 22, -1, 'alert', 1);
     drawKangal(g, W / 2 - 30, GROUND + 22, 1, 0, Save.d.scars || 0, false);
-    const wx = 268, wy = GROUND - 2;
+    /* Ölçek düzeltmesi (tasarım turu, Görev X, 2026-08-14): SC=2 ayak
+       hizasına göre ~3.6 kat fazla boy veriyordu (basılıp ölçüldü —
+       shots/dom/vinyetkurt0-tr.png, kurt köpeğin ~3 katıydı). SC=1.3
+       hâlâ perspektif payı taşıyor (vinyet.json'un "büyütme değil,
+       aynı referanstan yeniden indirme" notu — kurt köpek/koyundan
+       biraz daha YAKIN/iri durabilir) ama artık orantılı; yırtık kulak
+       hâlâ bu ölçekte okunuyor. Kompozisyona (sırtta silüet, tümseğin
+       üstü) DOKUNULMADI — yalnız ölçek. */
+    const wx = 246, wy = GROUND + 8;
     const kare = limping ? (frame === 1 ? 'aksak1' : 'aksak0')
                           : ['sinsi0', 'durus', 'bakis'][frame];
-    drawKurtBig(g, KURT_YIRTIK_SET, kare, wx, wy, -1);
+    drawKurtBig(g, KURT_YIRTIK_SET, kare, wx, wy, -1, 1.3);
+    /* Alt yazı (Görev Z, "gece vardiyası" 2026-08-14, docs/sabah-sorulari.md
+       1e) — YALNIZ 'kurt' vinyetinde (day 20, limping=false): 'aksak'
+       (day 24, dönüş) AYNI kadrajı paylaşıyor ama kendi bir sözü yok,
+       burada eklenmedi. Mevsim I'de İLK karşılaşma cümlesi, Mevsim II+'da
+       kurt artık TANIDIK — kısaltılmış vinyet süresi zaten VINYET.kurt.
+       sonra:'kisalt' ile kodda, yalnız bu iki metin eksikti. */
+    if(!limping){
+      const u = U();
+      const metin = (Save.d.season || 1) <= 1 ? u.vinyetKurtIlk : u.vinyetKurtTanidik;
+      textC(g, metin, W / 2, 162, PAL.bone, 1, PAL.ink);
+    }
   },
 
   /* 30. gün — "kar, sayım" vinyeti: gerçek kışlak.png (ADIM 1'in kendi
@@ -5068,13 +5445,20 @@ function startRun(){
      azığıyla AYNI desen (takvim donarken tüketilir, "hangi sabah ne kadar
      gitti" aynı anda belli olur) ama AYRI ve bağımsız bir gider — biri
      ötekine dokunmuyor (28-30. günlerde ikisi ÜST ÜSTE gider, sahibinin
-     kararı: "iki sistem aynı anda ayarlanmaz"). Yalnız kuzulamadan (12.
-     gün) sonra işliyor — ondan önce zaten ne süt var ne kiler sistemi
-     anlamlı (milkableCount 0). "Kimse aç kalmaz" (bağlayıcı): kiler
-     yetersizse yalnız Math.min ile KISILIR, ASLA negatife inmez ve BAŞKA
-     hiçbir cezaya bağlanmaz — yokluk köpeği/kuzuları TABAN (normal, cezasız)
-     durumda bırakır, tıpkı "sarma bedava" gerekçesindeki gibi. */
-  if(G.seasonDay != null && G.seasonDay >= SAGIM.kuzulamaDay){
+     kararı: "iki sistem aynı anda ayarlanmaz").
+     Görev B (2026-08-14) ÖNCESİ bu blok kuzulamadan (12. gün) sonra
+     başlıyordu — o zaman üretim de AYNI günde başladığı için tutarlıydı.
+     Üretim artık 1. günden (SAGIM.milkStartDay) başlıyor ama bu blok
+     kuzulamada kalsaydı 1-11. günler arası kiler HİÇ TÜKETİM GÖRMEDEN
+     dolar, 5. güne kalmadan tavana çakılırdı (ölçüldü: tools/sut.js).
+     Şimdi milkStartDay'den başlıyor — köpeğin payı (dogUpkeep) süt VARSA
+     hemen işlemeye başlar, kuzu payı (lambs, aşağıda) kuzulamadan önce
+     zaten 0 döndüğü için (lambCount) o kısım kendiliğinden pasif kalır.
+     "Kimse aç kalmaz" (bağlayıcı): kiler yetersizse yalnız Math.min ile
+     KISILIR, ASLA negatife inmez ve BAŞKA hiçbir cezaya bağlanmaz —
+     yokluk köpeği/kuzuları TABAN (normal, cezasız) durumda bırakır, tıpkı
+     "sarma bedava" gerekçesindeki gibi. */
+  if(G.seasonDay != null && G.seasonDay >= SAGIM.milkStartDay){
     const lambs = lambCount(Save.d.flock, G.seasonDay);
     // TEK yuvarlama (dogUpkeep + kuzu payı BİRLİKTE): dogUpkeep'in kesirli
     // olabilmesi için — güğüm fiziksel bir NESNE, kesirli olamaz, ama
@@ -5227,29 +5611,55 @@ const FLOCK = {
    SIFIRLANIYOR — yani döngü gerçek saatle değil OYNANAN SABAHLA ilerliyor
    ("4 saatte bir gel" mekaniği yasak, tasarımın kendi cümlesi). */
 const SAGIM = {
-  kuzulamaDay: 12,     // süt bu günden başlar
+  /* Görev B ("gece vardiyası" kalibrasyonu, 2026-08-14, sahibinin kararı —
+     KARAR GEREKİR değil, uygulanacak: mevsim-tasarim.md güncellendi).
+     Süt artık KUZULAMAYA bağlı DEĞİL: sağım milkStartDay'den (1. gün)
+     itibaren mümkün, hayatta kalan HER koyun sağılabilir (doğum şartı
+     kalktı). kuzulamaDay (12) yalnız kuzu TÜKETİMİNİ (lambCount, aşağıda)
+     ve kuzulama sahnesini/vinyetini başlatmaya devam ediyor — bu kısım
+     DEĞİŞMEDİ. Eskiden milkableCount === lambCount idi (aynı fonksiyon,
+     "yarısı kuzulu" varsayımı); artık ikisi AYRI: biri (üretim) gün 1'den,
+     öteki (tüketim) hâlâ gün 12'den. */
+  milkStartDay: 1,     // süt bu günden başlar
+  kuzulamaDay: 12,     // yalnız kuzu tüketimi + kuzulama sahnesi bu güne bağlı
   larderCap: 36,       // kiler kapasitesi — sanat ölçtü (3 kat x 6 güğüm x 2 sıra)
   besleCost: 1,        // besleme (ADIM 3) bir güğüm harcar
   /* AKIŞ (sahibinin kararı, 2026-08-12, "Kiler STOK değil AKIŞ" — bkz.
      docs/mevsim-tasarim.md): kiler durağan bir depo DEĞİL, her OYNANAN
-     sabah köpek + kuzular tarafından tüketilen bir kaynak. Rakamlar
-     tools/sut.js ile ölçülüp kabul kriterlerine göre kalibre edildi
-     (bkz. teslim raporu). dogUpkeep SABİT ("köpek sürü büyüdü diye daha
-     çok yemez"); lambUpkeepPer kuzu BAŞINA — sürü büyüyünce hem üretim
-     (milkableCount artar) hem tüketim (aynı sayı) artar, sistem kendi
-     kendini dengeler (tasarımın kendi gerekçesi). */
-  dogUpkeep: 0.44,
-  lambUpkeepPer: 0.31,
+     sabah köpek + kuzular tarafından tüketilen bir kaynak.
+     YENİDEN KALİBRE EDİLDİ (Görev B, 2026-08-14, tools/sut.js taraması —
+     10 tekrar): üretim penceresi (12->30, 18 gün) 1->30'a (29 gün) uzadı
+     VE üretim yarı sürüden TAM sürüye çıktı. Eski 0.44/0.31 bu yeni
+     kapasiteyle kileri 5-6. güne kadar tavana çakıyordu (ölçüldü).
+     0.44/0.31 -> 3.5/0.6: 4 kabul kriterinden 3'ü (sağım hâlâ anlamlı,
+     ortanca doluya yakın girer, zayıf asla sıfır) net karşılanıyor.
+     4.'sü (usta en erken ~25. günde tavana varır) YAPISAL bir gerilimle
+     KARŞILANAMIYOR — dogUpkeep SABİT (flock ile ÖLÇEKLENMİYOR, tasarımın
+     kendi kuralı) ama üretim artık flock ile ölçekleniyor VE flock sezon
+     içinde büyüyor (8->~14); sabit bir gider büyüyen bir kaynağı hiçbir
+     değerde geç tutamıyor — tarama günü 6-9 aralığında DUVARA TOSLUYOR,
+     dogUpkeep ne kadar yükseltilirse yükseltilsin (denendi: du=2..6,
+     lu=0.6..2.4, hiçbiri cap>=22 vermedi, yüksek du/lu ise kriter 2/3'ü
+     kırıyordu). Rapor edildi, dogUpkeep kuralına aykırı bir çözüm
+     (flock'a bağlı upkeep, ya da larderCap artışı) UYGULANMADI — bu
+     görevin kapsamı dışına taşardı. lambUpkeepPer kuzu BAŞINA — sürü
+     büyüyünce hem üretim hem tüketim artar (tasarımın kendi gerekçesi,
+     DEĞİŞMEDİ). */
+  dogUpkeep: 3.5,
+  lambUpkeepPer: 0.6,
 };
 function milkableCount(flock, day){
+  if(day == null || day < SAGIM.milkStartDay) return 0;
+  return Math.max(1, flock | 0);
+}
+/* Kuzu sayısı — kuzulamaya (12. gün) bağlı KALDI, milkableCount'tan artık
+   AYRI (bkz. yukarıdaki SAGIM notu). "Sürünün yarısı kuzulu" varsayımı
+   yalnız BURADA, tüketim tarafında yaşıyor — üretim artık tam sürüyü
+   sayıyor. */
+function lambCount(flock, day){
   if(day == null || day < SAGIM.kuzulamaDay) return 0;
   return Math.max(1, Math.floor(flock / 2));
 }
-/* Kuzu sayısı — AYNI koyun-kuzulu oranı (bir kuzulu koyunun bir kuzusu
-   var), yeni bir kimlik icat edilmedi. Süt akışının hem ÜRETİM (kaç koyun
-   sağılabilir) hem TÜKETİM (kaç kuzu içiyor) tarafı bilerek AYNI sayıyı
-   okuyor — "sürü büyüyünce ikisi birden artar" kendiliğinden çıkıyor. */
-const lambCount = milkableCount;
 
 /* --- geçit (Faz 3, docs/mevsim-tasarim.md "Geçit ve kışlak") -----------
    28-30. gün: üç göç sabahı, aynı fiiller (nişan al, ateş et, köpek
@@ -6085,9 +6495,16 @@ const MORNING = {
 
    Şimdi şafak sakin açılıyor, baskı yükseliyor, tepeye çıkıyor, gün ışırken
    yatışıyor. Aynı sayıda tehdit ama bir yay çiziyor. */
+/* Kalibrasyon (Görev A, "gece vardiyası" 2026-08-14 — sahibinin telefon
+   testi: "ilk günde kartal çok seyrek, 2 dakikada 5-6 tane, çok bekletiyor").
+   Ölçüldü (headless, gün 1, %60 isabet): eskiden şafak payı p<0.12'de 2.40x
+   ve 7200 karenin ilk ~864'ü (14.4sn) neredeyse sessizdi — İLK tehditten
+   İKİNCİYE 18 saniye boşluk ölçüldü, "ne oldu" hissinin kaynağı buydu.
+   Şafak penceresi kısaltıldı (0.12->0.07) ve payı hafifletildi (2.40->1.90);
+   ramp eğimi aynı tepeye (0.68, p=0.50) varacak şekilde yeniden hesaplandı. */
 function morningShape(p){
-  if(p < 0.12) return 2.40;                       // şafak: neredeyse sessiz
-  if(p < 0.50) return 2.40 - (p - 0.12) * 4.20;   // yükseliş
+  if(p < 0.07) return 1.90;                       // şafak: sakin ama artık sessiz değil
+  if(p < 0.50) return 1.90 - (p - 0.07) * 2.837;  // yükseliş
   if(p < 0.80) return 0.68;                       // tepe: asıl baskı
   if(p < 0.92) return 0.68 + (p - 0.80) * 1.50;   // gevşeme
   return 1.80;                                    // gün ışıdı, biterken sakin
@@ -6098,6 +6515,13 @@ function morningShape(p){
    takvimi"). 1-6: öğrenme payı — tehdit aralığı büyür, gün 7'de tabana
    döner. G.seasonDay null ise (takvim sorulmadı) MORNING.gapMax aynen
    döner -> eski davranışla birebir aynı. */
+/* Görev A: DENENDİ (20->10 ve 20->15 kare/gün, ikisi de) ve GERİ ALINDI.
+   16 tekrarlı temiz ölçüm (bkz. rapor): gapMax'a dokunmak DEVAM.md 2.10'un
+   rampa tablosunu tutarlı biçimde düşürüyordu (%25 kısıtta bile sabah 2'de
+   7.1->6.3, ~%11) — "BOZMA" kısıtına takılıyor. gapMax DOKUNULMADAN
+   bırakıldı; day1 iyileştirmesi yalnız morningShape'in şafak penceresinden
+   geliyor (aşağıda) — O tek başına aynı 16-tekrarlı ölçümde rampa
+   tablosunu gürültü payı içinde tutuyordu (7.1/6.4/5.9 -> 6.6/6.5/6.1). */
 function seasonGapMax(day){
   return (day != null && day >= 1 && day <= 6) ? MORNING.gapMax + (7 - day) * 20 : MORNING.gapMax;
 }
@@ -8394,6 +8818,8 @@ function initFoldHotspots(){
   // Kışlak (ADIM 1) — AYNI #foldBox kutusu, KISLAK_LAYOUT'tan.
   const kislakSpots = { hsKislakCentik:'centik', hsKislakBogazlik:'bogazlik', hsKislakDevam:'devam' };
   for(const [id, key] of Object.entries(kislakSpots)) place(id, KISLAK_LAYOUT[key], KISLAK_LAYOUT.w, KISLAK_LAYOUT.h);
+  // Takvim (büyük tasarım turu, 2026-08-14) — AYNI #foldBox kutusu, TAKVIM_LAYOUT'tan.
+  place('hsTakvimKapat', TAKVIM_LAYOUT.close, TAKVIM_LAYOUT.w, TAKVIM_LAYOUT.h);
 }
 initFoldHotspots();
 
@@ -8551,6 +8977,29 @@ function syncVinyetUI(){
   $('foldFoot').hidden = $('foldFoot').hidden || open;
 }
 $('hsVinyetSkip').addEventListener('click', closeVinyet);
+
+/* --- sağım yakın çekimi ("gece vardiyası" görevi, 2026-08-14) ----------
+   vinyet ile AYNI desen (frame/t zamanlayıcı, tam ekran atla), tek fark:
+   kapanışta finishSagimYakin() applySagim()'i ÇAĞIRIR — süt gerçekten
+   kilere gider, bu bir dekor DEĞİL, o sabahın İLK sağımının kendisi. */
+function openSagimYakin(){
+  G.sagimYakin.open = true; G.sagimYakin.frame = 0; G.sagimYakin.t = 0;
+  syncSagimYakinUI();
+}
+function finishSagimYakin(){
+  applySagim();
+  G.sagimYakin.open = false;
+  syncSagimYakinUI();
+}
+function syncSagimYakinUI(){
+  const open = G.sagimYakin.open;
+  if(open) for(const id of ['hsKapi', 'hsTahta', 'hsRaf', 'hsKangal', 'hsFoto', 'hsSuru']) $(id).hidden = true;
+  else syncCareUI();
+  $('hsSagimSkip').hidden = !open;
+  $('hsSagimSkip').setAttribute('aria-label', U().hsSagimSkip);
+  $('foldFoot').hidden = $('foldFoot').hidden || open;
+}
+$('hsSagimSkip').addEventListener('click', () => { if(G.sagimYakin.open) finishSagimYakin(); });
 
 /* ÇENTİK — uygulama (applySarma/applyBesleme ile AYNI desen: sürükleme
    yalnız BIRAKMA NOKTASINI hesaplar, gerçek işi adı konmuş bir fonksiyon
@@ -8725,7 +9174,18 @@ function applySagim(){
   showMsg(U().sagimDone, 120);
   syncSuruUI();
 }
-$('hsSuru').addEventListener('click', applySagim);
+/* Dokunuş tetiği: o SABAHIN İLK sağımı yakın çekimi açar (bkz. renderSagimYakin
+   — "20 saniyelik hızlı sağım işi" ile "bir kez görülen güzel an" arasındaki
+   gerilim, tasarım turunun kendi sorusu), geri kalan koyunlar eski hızlı
+   dokun-sağ ile devam eder — sürüde 8 koyun varsa yalnız BİRİ modal açar. */
+function onTapSuru(){
+  if(Season.day === null) Season.refresh();
+  const n = milkableCount(Save.d.flock, Season.day);
+  if((Save.d.milkedThisCycle || 0) >= n) return;
+  if((Save.d.milkedThisCycle || 0) === 0) openSagimYakin();
+  else applySagim();
+}
+$('hsSuru').addEventListener('click', onTapSuru);
 /* hsSuru görünürlüğü: sağılacak koyun (milkedThisCycle < milkableCount)
    kaldığında görünür. Ayrı bir fonksiyon — hem ağıla her dönüşte
    (refreshFoldUI) hem her sağımdan sonra çağrılıyor. */
@@ -8735,36 +9195,35 @@ function syncSuruUI(){
   $('hsSuru').hidden = (Save.d.milkedThisCycle || 0) >= n;
 }
 
-/* Tahta: 30 günlük takvim. Çentik = geçmiş gün, bugün vurgulu, kurt ayı
-   (20-27) ve geçit (28-30) işaretli — docs/mevsim-tasarim.md "eski menü
-   öğesi" tablosu. */
-function renderCalBoard(){
-  const u = U();
-  /* Season.refresh() BİLEREK burada YOK. Ağıl açılışta ve her dönüşte
-     (toMenu()) zaten tazeleniyor — tahtaya dokunmak ayrı bir tazeleme anı
-     DEĞİL, sadece o anki Season'ı OKUYOR. Burada bir refresh() çağrısı
-     "şimdi"yi (gerçek `new Date()`) kullanır ve ağıla girişte kurulan
-     günü SESSİZCE değiştirirdi — ölçüldü, tools/dom.js ile yakalandı. */
-  $('tCalTitle').textContent = u.calTitle(Season.season, Season.day);
-  $('calLegend').textContent = u.calLegend;
-  const grid = $('calGrid');
-  grid.textContent = '';
-  for(let d = 1; d <= 30; d++){
-    const cell = document.createElement('div');
-    let cls = 'calCell';
-    if(d < Season.day) cls += ' gecmis';
-    if(d === Season.day) cls += ' bugun';
-    if(d >= 20 && d <= 27) cls += ' kurt';
-    if(d >= 28 && d <= 30) cls += ' gecit';
-    cell.className = cls;
-    cell.textContent = String(d);
-    grid.appendChild(cell);
-  }
+/* Takvim (büyük tasarım turu, 2026-08-14) — eski #calGrid DOM ızgarası
+   yerine renderTakvim (bkz. Attract nesnesi) canvas'a çiziyor, careClose/
+   sağımYakın/cardView ile AYNI "ağılın içindeki alt durum" deseni.
+
+   Season.refresh() BİLEREK burada YOK. Ağıl açılışta ve her dönüşte
+   (toMenu()) zaten tazeleniyor — takvime dokunmak ayrı bir tazeleme anı
+   DEĞİL, sadece o anki Season'ı OKUYOR (renderTakvim her karede canlı
+   okur). Burada bir refresh() çağrısı "şimdi"yi (gerçek `new Date()`)
+   kullanır ve ağıla girişte kurulan günü SESSİZCE değiştirirdi — eski
+   #calGrid'de ölçüldü, tools/dom.js ile yakalandı; aynı tuzak burada da
+   geçerli, o yüzden AYNI KURAL korundu. */
+function openTakvim(){
+  G.takvim.open = true;
+  syncTakvimUI();
 }
-function openCalBoard(){ renderCalBoard(); $('calBoard').hidden = false; }
-function closeCalBoard(){ $('calBoard').hidden = true; }
-$('hsTahta').addEventListener('click', openCalBoard);
-$('btnCalClose').addEventListener('click', closeCalBoard);
+function closeTakvim(){
+  G.takvim.open = false;
+  syncTakvimUI();
+}
+function syncTakvimUI(){
+  const open = G.takvim.open;
+  if(open) for(const id of ['hsKapi', 'hsTahta', 'hsRaf', 'hsKangal', 'hsFoto', 'hsSuru']) $(id).hidden = true;
+  else syncCareUI();
+  $('hsTakvimKapat').hidden = !open;
+  $('hsTakvimKapat').setAttribute('aria-label', U().calClose);
+  $('foldFoot').hidden = $('foldFoot').hidden || open;
+}
+$('hsTahta').addEventListener('click', openTakvim);
+$('hsTakvimKapat').addEventListener('click', closeTakvim);
 
 function refreshFoldUI(){
   const u = U();
@@ -8781,9 +9240,7 @@ function refreshFoldUI(){
   $('careSargi').setAttribute('aria-label', u.careSargi);
   $('cardViewClose').setAttribute('aria-label', u.careClose);
   $('cardViewShare').setAttribute('aria-label', u.share);
-  $('tCalTitle').textContent = u.calTitle(Season.season, Season.day);
-  $('btnCalClose').textContent = u.calClose;
-  $('calLegend').textContent = u.calLegend;
+  $('hsTakvimKapat').setAttribute('aria-label', u.calClose);
 }
 
 /* --- dili arayüze uygula --- */
