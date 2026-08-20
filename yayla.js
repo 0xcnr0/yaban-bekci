@@ -1155,7 +1155,38 @@ const Yayla_ = {
     Y: ['sabah', 'yol', 'konak', 'gece'],
     B: ['sabah', 'buyukgun', 'konak', 'gece'],
   },
-  YUVA_GUN: { K: 3, Y: 1, B: 0 },   // gün tipine göre iş hakkı (kampanya.js ile AYNI model)
+  /* ===== GÜNÜN İŞ HAKKI — K 3'TEN 4'E ÇIKTI (2026-08-21) ==============
+     ÖLÇÜLDÜ, hissedilmedi. Yolculuğu uçtan uca dört ayrı oyuncu
+     politikasıyla koşturdum:
+
+       K=3, tam oyun (kırkım+bahçe+sağım)   -> 49 gün,  4 takılma
+       K=3, + her konakta BİR eğitim        -> 64 gün, 19 takılma
+       K=4, tam oyun                        -> 45 gün,  0 takılma
+       K=4, + her konakta BİR eğitim        -> 45 gün,  0 takılma
+
+     İKİNCİ SATIR SORUNUN KENDİSİ: köpeği eğitmek 15 gün ekliyordu.
+     Köpeğin dört komutu tehditlerin TASARLANMIŞ çözümü (ADR-021:
+     "çeşitlilik farklı ÇÖZÜMLERDEN gelir"); yani oyun, kendi çekirdek
+     mekaniğini kullanan oyuncuyu cezalandırıyordu. Eğitimi seçen
+     oyuncu ekonomik olarak batıyor, batınca konakta günler tekrarlıyor.
+
+     BÜTÇE ÇIKARILDI, tahmin yok:
+       azami gelir (K3 Y1 B0, her saat sağım) = 88
+       toplam gider (45 gün x 2 + 10 yol azığı x 3) = 120
+     Yani K=3'te ekonomi YAPISAL AÇIKTA ve açığı kapatan tek şey
+     TAKILMAK — takılma fazladan konak günü, fazladan konak günü
+     fazladan gelir. Oyun kendini tekrarlayarak dengeleniyordu.
+
+     Bu tam olarak üç bağımsız AI'nın "şişirme" dediği şey: aynı günü
+     tekrar ettirmek. Zorluk oradan değil GECEDEN gelmeli.
+
+     NİYE 4 SERBEST: bu sabit ölçülmüş bir sınır DEĞİL, tasarımın kendi
+     notuyla "his-düğmesi, haritada 3-5 arası". 4 o aralığın içinde.
+     (Sağım tavanı 5 ADR-019 ile ÖLÇÜLMÜŞ ve ona dokunulmadı.)
+
+     Kaybolan ekonomik baskı geceye devrediliyor; 45 gün de sahibinin
+     3-4 saat hedefine birebir oturuyor (45 x ~5dk = 3,75 saat). */
+  YUVA_GUN: { K: 4, Y: 1, B: 0 },   // gün tipine göre iş hakkı
 
   gun: null,   // { tip, sira:[], i, sahne }
 
