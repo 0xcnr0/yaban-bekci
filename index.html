@@ -7121,7 +7121,23 @@ const Attract = {
       /* ETİKET ARTIK ADAYA BAĞLI DEĞİL. Eskiden aday 'hedef' ise DENE, değilse
          NİŞAN yazıyordu; sahibi nesneyi 'hedef', etiketi NİŞAN seçti (2026-08-17)
          ve bağın kendisi kalktı. Bkz. STR.tr'deki gerekçe. */
-      foldTabela(g, u.foldEtiketNisan, ns.x + ns.w / 2, ns.y);
+      /* ===== İLK AÇILIŞTA TEK EYLEM (2026-08-21) =======================
+         Üç bağımsız AI'nın ortak tavsiyesi: ilk açılışta oyuncuya
+         seçenek sunma, TEK dokunuş ver, oyunun ne olduğunu oynayarak
+         öğrensin. Ekranda üç etiket vardı (GUARD, ROUTE, AIM) ve
+         üçü de aynı ağırlıkta.
+
+         SİLİNMİYOR, SUSUYOR. Nesneler yerinde duruyor ve dokunulabilir
+         kalıyor — meraklı oyuncu yine bulur. Sessizleşen tek şey
+         ETİKET: ilk gece oynanana kadar göz yalnız kapıyı görüyor.
+         İkinci sabah ikisi de geliyor.
+
+         AIM İSTİSNA: sensör bozuksa ilk andan itibaren görünür, çünkü
+         o durumda oyuncunun oraya gitmesi ŞART ve ilk gece de zaten
+         doğru oynanamaz. Kusuru saklamak keşfi kolaylaştırmaz. */
+      const ilkAcilis = !Save.d.mornings;
+      if(!ilkAcilis || G.sensorBad)
+        foldTabela(g, u.foldEtiketNisan, ns.x + ns.w / 2, ns.y);
 
       /* ===== İŞ VAR NOKTALARI (bkz. foldNokta) =========================
          Her satır, dokunuşun GERÇEKTEN bir şeyi değiştirdiğini bilerek
@@ -7237,7 +7253,12 @@ const Attract = {
       Cikin.ciz(g, Yayla, {
         tabela: foldTabela,
         yaz: (gg, metin, x, y, renk) => textC(gg, metin, x, y, renk, 1, PAL.ink),
-        metinHazir: u.cikinHazir, metinYolda: u.cikinYolda, metinBitti: u.cikinBitti,
+        /* İlk açılışta çıkının etiketi de susuyor — bkz. nişan
+           tabelasının yanındaki not. Boş dize verilince Cikin.ciz
+           tabelayı hiç çizmiyor; nesne yerinde, adı sonra geliyor. */
+        metinHazir: Save.d.mornings ? u.cikinHazir : '',
+        metinYolda: Save.d.mornings ? u.cikinYolda : '',
+        metinBitti: u.cikinBitti,
       });
     }
     /* Ağıl kampanyada KONAK oluyor: konak ayrı bir ekran değil, ağılın
