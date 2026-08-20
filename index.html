@@ -12543,6 +12543,24 @@ $('cardViewShare').addEventListener('click', async () => {
    deseni) — çağıranın (Attract.render) her karede sorması ZARARSIZ,
    çünkü ikinci soruşta Save.first() zaten false döner. */
 function pendingVinyet(){
+  /* VİNYETLER YOLCULUKTA SUSUYOR (2026-08-21) — takvim artıklarının
+     altıncı ve son vakası.
+
+     Vinyetler MEVSİM gününe bağlı sinematikler (kuzulama, kurt, aksak
+     köpek, kışlak). Mevsim günü gerçek tarihe göre ilerlediği için,
+     yolculuk oynayan bir oyuncuya takvimi denk geldiğinde alakasız bir
+     sinematik açılıyordu — en uç hâli MEVSİM SONU sinematiği, yani
+     mevsim diye bir şeyin kalmadığı bir oyunda "sezon kapanıyor" sahnesi.
+
+     Sistem SİLİNMEDİ, susturuldu: sinematiğin kendisi iyi bir araç ve
+     yolculuğun kendi anlarına (bölge geçişi, ilk kurt, ilk kayıp)
+     yeniden hedeflenebilir. Bu bir tasarım turu ister; sessizce yanlış
+     anda oynatmaktansa hiç oynatmamak doğru.
+
+     `Season.refresh()` çağrısı da bu yüzden artık yolculukta hiç
+     koşmuyor: bir ÇİZİM yolundan gerçek saati okuyup günü sessizce
+     değiştiren bir çağrıydı. */
+  if(typeof Yayla !== 'undefined' && Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti) return null;
   if(Season.day === null) Season.refresh();
   for(const key in VINYET){
     if(VINYET[key].day === Season.day && Save.first('vinyet.' + key + '.s' + Save.d.season)) return key;
