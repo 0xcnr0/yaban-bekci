@@ -11477,6 +11477,21 @@ function drawHUD(){
     const pr = 1 - G.reloadT / reloadCost();
     px(g, 5, H - 12, Math.round(cap * 7 - 3) * pr, 1, PAL.bone);
   }
+  /* TÜFEĞİN KİRİ ARTIK GÖRÜNÜYOR (2026-08-21).
+     `Alet.ciz` yazılmıştı ama oyunun HİÇBİR yerinden çağrılmıyordu —
+     yalnız testlerden. Yani oyuncunun tek geri bildirimi tutukluk
+     ANINDAKİ mesajdı: ceza başlamadan önce sıfır uyarı. Bu, takvim
+     sökümünde altı kez bulunan örüntünün aynısı: GÖRÜNMEYEN CEZA.
+
+     Yeri fişeklerin yanı, bilerek: oyuncunun "ateş edebilir miyim"
+     sorusunu sorduğu yer orası. Kir namlunun dibinden yukarı doğru
+     kurum olarak birikiyor — sayı yok, DOLULUK var; oyuncu "ne kadar
+     kirli" sorusunu bakışla cevaplıyor.
+
+     Yalnız kampanyada: kir mekaniği kampanyanın (bakım işi orada). */
+  if(G.yaylaAktif && typeof Alet !== 'undefined' && cfg.mode !== 'touch'){
+    Alet.ciz(g, 5 + cap * 7 + 3, H - 12, 10);
+  }
   /* Şarj bölgesi GÖRÜNÜR olmalı. Jiroskopta nişangâh ekran kenarında
      kilitleniyor, yani oyuncu namlusunu ne kadar indirdiğini göremiyordu —
      "şarj zor" şikâyetinin sebebi eşik değil, geri bildirim yokluğuydu.
