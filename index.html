@@ -813,7 +813,13 @@ html.tiny  #progNote{display:none}
   <button class="cta ghost" id="btnShare" style="margin-top:2px"></button>
   <button class="cta" id="btnAd" hidden style="margin-top:2px"></button>
   <p class="note" id="adNote" hidden style="margin-top:-2px;opacity:.7"></p>
-  <button class="linkish" id="btnReport" style="margin-top:4px"></button>
+  <!-- OYNANIS RAPORU — GELISTIRME ARACI, oyuncunun yolunda degil.
+       `hidden` bilerek: bu dugme yayina da gidiyordu ve gercek oyuncu
+       safak raporunda 'Copy playtest report' goruyordu. Sensor tanisiyla
+       ayni sinif — arac oldugu belli olmayan bir arac.
+       Gorunur kilan tek yer ==GUNATLA== blogu, ve o blok yayin
+       derlemesinde tools/gunatla-cikar.js ile SOKULUYOR. -->
+  <button class="linkish" id="btnReport" hidden style="margin-top:4px"></button>
   <div style="display:none">
   </div>
 </section>
@@ -1428,6 +1434,9 @@ const STR = {
       /* Bitişten sonra yeniden yola çıkınca. Yeni sürü olduğunu SÖYLÜYOR:
          oyuncu eski sürüsünün geri geldiğini sanmamalı. */
       yeniYolculuk:'A NEW FLOCK - THE ROAD STARTS AGAIN',
+      /* Safak raporunun TEK dugmesi. 'AGAIN' yanlis sey vaat ediyordu:
+         yolculukta gece tekrar oynanmiyor, yolculuk DEVAM ediyor. */
+      devamEt:'BACK TO CAMP',
       /* YOLCULUK AKISININ OYUNCUYA GORUNEN MESAJLARI. Bunlar kodun icine
          TURKCE gomulmustu ve tek dil kararindan (2026-08-20) sonra da
          oyle kalmisti — dis dosyalar cevrildi, gomulu blogun kampanya
@@ -6575,13 +6584,20 @@ function seasonCarry(endFlock){
    tek satır değişir (bkz. teslim raporu). */
 /* EN metinler sahibinin 2026-08-12 kararıyla KESİNLEŞTİ (mevsim-tasarim.md
    sözlüğüne girdi) — artık yer tutucu değil. */
+/* `etki` (2026-08-21): kuralin ADI yaziliyordu ama ETKISI yazmiyordu.
+   'CRIMSON SKY' guzel bir ad ama zirhli kus sayisini IKIYE KATLADIGINI
+   oyuncunun bilmesinin hicbir yolu yoktu — apply icindeki carpan gercek
+   ve gorunmezdi. Bu deponun kendi yasagi: gorunmeyen carpan yok.
+
+   Ad KALIYOR (oyunun havasini o tasiyor), yanina ne yaptigi yaziliyor.
+   Kisa tutuldu: ucuncu satir 320px'i ad + tire + etki ile paylasiyor. */
 const DAY_RULES = [
-  { id:'sisli',   tr:'SİSLİ SABAH',     en:'FOGGY MORNING' },
-  { id:'yorgun',  tr:'YORGUN UYANDIN',  en:'HE WOKE STIFF',      apply:{ forceSore:true } },
-  { id:'kizil',   tr:'KIZIL GÖKYÜZÜ',   en:'CRIMSON SKY',        apply:{ armoredMul:2 } },
-  { id:'sessiz',  tr:'SESSİZ ŞAFAK',    en:'TOO QUIET',          apply:{ gapMul:1.8, armoredForce:0.95 } },
-  { id:'ruzgar',  tr:'RÜZGÂRLI',        en:'WINDY',              apply:{ diveMul:1.35 } },
-  { id:'daginik', tr:'DAĞINIK SÜRÜ',    en:'FLOCK STRAYED WIDE', apply:{ spreadMul:1.35 } },
+  { id:'sisli',   tr:'SİSLİ SABAH',     en:'FOGGY MORNING',      etki:'HARDER TO SEE' },
+  { id:'yorgun',  tr:'YORGUN UYANDIN',  en:'HE WOKE STIFF',      etki:'YOUR DOG IS TIRED',      apply:{ forceSore:true } },
+  { id:'kizil',   tr:'KIZIL GÖKYÜZÜ',   en:'CRIMSON SKY',        etki:'MORE ARMORED BIRDS',     apply:{ armoredMul:2 } },
+  { id:'sessiz',  tr:'SESSİZ ŞAFAK',    en:'TOO QUIET',          etki:'FEWER BUT TOUGHER',      apply:{ gapMul:1.8, armoredForce:0.95 } },
+  { id:'ruzgar',  tr:'RÜZGÂRLI',        en:'WINDY',              etki:'THEY DIVE FASTER',       apply:{ diveMul:1.35 } },
+  { id:'daginik', tr:'DAĞINIK SÜRÜ',    en:'FLOCK STRAYED WIDE', etki:'HARDER TO KEEP TOGETHER',apply:{ spreadMul:1.35 } },
 ];
 const isThemedDay = d => (d >= 7 && d <= 9) || d === 10 || (d >= 12 && d <= 14) ||
                           (d >= 17 && d <= 19) || (d >= 20 && d <= 27) || (d >= 28 && d <= 30);
@@ -7181,7 +7197,8 @@ const Attract = {
          üç satır azınlıkta kalıyor. Kaldırılamaz: G.dayRule.apply GERÇEK
          bir çarpan, ve bu depoda görünmeyen çarpan yasak. */
       const kural = gunKurali();
-      if(kural) textC(g, kural.en, k.x + k.w / 2, k.y + 16, PAL.bone, 1, PAL.ink);
+      if(kural) textC(g, kural.en + (kural.etki ? ' - ' + kural.etki : ''),
+                      k.x + k.w / 2, k.y + 16, PAL.bone, 1, PAL.ink);
     }
 
     // Raf/Kangal dokunuşundan gelen kısa not — dünyaya ait metin, HTML değil.
@@ -9070,14 +9087,35 @@ function showMorningEnd(){
   const tmw = tomorrowNote();
   $('overTmw').textContent = tmw;
   $('overTmw').hidden = !tmw;
-  $('overMeta').textContent = u.sMeta(Save.d.mornings, Save.d.bestFlock);
+  /* ===== ŞAFAK RAPORU TEK MODA GÖRE (2026-08-21) =====================
+     Bu ekran, oyuncunun geceden sonra HER SABAH gördüğü yer — yani en
+     çok görülen ikinci ekran. Ve tek mod kararına (2026-08-20) hiç
+     güncellenmemişti; üstünde mevsim modundan kalma üç şey duruyordu:
+
+     1. İKİ DÜĞME, AYNI İŞ. 'AGAIN' ve 'MENU' ikisi de toMenu() çağırıyor
+        — farklı etiket, birebir aynı davranış. Ve 'AGAIN' yanlış şey
+        vaat ediyor: yolculukta gece tekrar oynanmıyor, yolculuk DEVAM
+        ediyor. Artık tek düğme ve adı ne yaptığını söylüyor.
+     2. PAYLAŞ. Ana ekrandan sökülmüştü ama buradan her sabah teklif
+        ediliyordu. Anlatacak hikâye yolculuğun SONUNDA oluşuyor;
+        her sabah kart teklif etmek o anın değerini harcıyor.
+     3. MEVSİM İSTATİSTİĞİ ('Mornings 14 · Largest flock 13'). Mevsim
+        kabı kalktı; 'kaç sabah' ve 'en büyük sürü' artık hiçbir şeyin
+        ölçüsü değil. Yolculuğun ölçüsü nerede olduğun ve kaç hayvanın
+        kaldığı — ikisi de zaten yukarıda yazıyor. */
+  const yolculukta = typeof Yayla !== 'undefined' && Yayla.aktif &&
+                     Yayla.sefer && !Yayla.sefer.bitti;
+  $('overMeta').textContent = yolculukta ? '' : u.sMeta(Save.d.mornings, Save.d.bestFlock);
+  $('overMeta').hidden = yolculukta;
   $('overPerks').textContent = '';
   $('overUnlock').textContent = '';
   $('overDiag').hidden = true;
   $('btnPractice').hidden = true;
   $('btnAd').hidden = true;
   $('adNote').hidden = true;
-  $('btnShare').hidden = false;
+  $('btnShare').hidden = yolculukta;
+  $('btnMenu2').hidden = yolculukta;
+  if(yolculukta) $('btnAgain').textContent = u.devamEt;
   /* Kartın verisi sabah sonu ekranıyla AYNI kaynaktan gelir; ayrı hesap
      yapılırsa ikisi zamanla ayrışır ve hangisinin doğru olduğu bilinmez. */
   G.card = { kept: m.kept, scars: Save.d.scars || 0, mornings: Save.d.mornings,

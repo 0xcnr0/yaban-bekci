@@ -316,7 +316,20 @@ const Konak_ = {
          parlak bez rengiyle ve üst satırın hizasından çiziliyordu; karede
          harflerin arasına giren bir '|' işareti gibi okundu. */
       if(alt) this.px(g, x, y0 + 7, 1, 3, this.PAL.ahsapLt);
-      o.yaz(g, d[i].en, x, alt ? y0 + 9 : y0, this.PAL.bez);
+      /* ETİKET RENGİ DURUMU SÖYLÜYOR (2026-08-21).
+         Aletin kendisi zaten dört hâli çiziyor (hazır / bitti / yok /
+         yuvasız) ama etiketler HEPSİ aynı parlaklıkta yazılıyordu. Oysa
+         oyuncunun okuduğu şey etiket: yedi ad yan yana, hepsi aynı, ve
+         hangisine dokunabileceği yalnız ikonun tonundan çıkarılabiliyor.
+
+         İkon tonu tek başına yetmiyor çünkü ray GÖĞE karşı çiziliyor —
+         ekranın en aydınlık yeri. Koyu bir alet orada zaten silüet gibi
+         duruyor, "sönük" ile "hazır" arasındaki fark yutuluyor (basıldı,
+         bakıldı: konak 1'de üç iş hazırken yedisi de siluet okunuyordu).
+
+         Yazı bedava taşıyor: hazır olan parlak, olmayan sönük. */
+      o.yaz(g, d[i].en, x, alt ? y0 + 9 : y0,
+            d[i].hal === 'hazir' ? this.PAL.bez : this.PAL.sonuk);
     }
   },
 

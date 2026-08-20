@@ -1494,39 +1494,39 @@ const Yayla_ = {
     2:  { zemin:'ova',      dagilma:1.0, cekis: 0.00, dizilis:'genis',
           geceToplanir:true,  ise:'dur',     yanlis:null ,
           yer:'OPEN PLAIN', suruUyari:'THEY SPREAD WIDE', isUyari:'FIRST NIGHT OUT' ,
-          gece:{ r:1.15, dikey:1.15, titrek:0.00, uyari:  0 } },
+          gece:{ r:1.30, dikey:1.15, titrek:0.00, uyari:  0 } },
     3:  { zemin:'gecit',    dagilma:1.8, cekis:-0.05, dizilis:'tekSira',
           geceToplanir:true,  ise:'getir',   yanlis:null ,
           yer:'A NARROW PASS', suruUyari:'SINGLE FILE', isUyari:'WATCH THE TAIL' ,
-          gece:{ r:1.00, dikey:2.60, titrek:0.00, uyari:  0 } },
+          gece:{ r:0.70, dikey:2.60, titrek:0.00, uyari:  0 } },
     4:  { zemin:'agachat',  dagilma:1.3, cekis: 0.00, dizilis:'serbest',
           geceToplanir:true,  ise:'getir',   yanlis:'dur' ,
           yer:'THICK TREES', suruUyari:'THEY VANISH', isUyari:'DO NOT HOLD STILL' ,
-          gece:{ r:0.90, dikey:1.60, titrek:0.00, uyari:-30 } },
+          gece:{ r:0.80, dikey:1.70, titrek:0.00, uyari:-30 } },
     5:  { zemin:'yayla',    dagilma:1.2, cekis:-0.10, dizilis:'genis',
           geceToplanir:true,  ise:null,      yanlis:null ,
           yer:'HIGH PASTURE', suruUyari:'THEY GRAZE WIDE', isUyari:'REST, BUT WATCH' ,
-          gece:{ r:1.10, dikey:1.30, titrek:0.00, uyari:  0 } },
+          gece:{ r:1.22, dikey:1.30, titrek:0.00, uyari:  0 } },
     6:  { zemin:'dere',     dagilma:1.1, cekis:-0.25, dizilis:'serbest',
           geceToplanir:true,  ise:'sus',     yanlis:'savur' ,
           yer:'A RIVER CROSSING', suruUyari:'THEY FEAR WATER', isUyari:'QUIET THE DOG' ,
-          gece:{ r:0.95, dikey:1.60, titrek:0.00, uyari:-45 } },
+          gece:{ r:0.82, dikey:1.55, titrek:0.00, uyari:-45 } },
     7:  { zemin:'gecit2',   dagilma:1.6, cekis: 0.25, dizilis:'tekSira',
           geceToplanir:true,  ise:'dur',     yanlis:'savur' ,
           yer:'THE PASS AGAIN', suruUyari:'THEY RUSH AHEAD', isUyari:'HOLD THE FRONT' ,
-          gece:{ r:1.00, dikey:2.40, titrek:0.10, uyari:-20 } },
+          gece:{ r:0.85, dikey:2.10, titrek:0.25, uyari:-20 } },   // rüzgâr ateşi hem KIRPAR hem YER (yan oturumun önerisi, 2026-08-21)
     8:  { zemin:'zirve',    dagilma:1.4, cekis: 0.00, dizilis:'serbest',
           geceToplanir:false, ise:'savur',   yanlis:null ,
           yer:'COLD HIGH GROUND', suruUyari:'THEY WILL SCATTER', isUyari:'A LONG NIGHT' ,
-          gece:{ r:0.90, dikey:1.50, titrek:0.00, uyari: 45 } },
+          gece:{ r:0.88, dikey:1.45, titrek:0.00, uyari: 45 } },
     9:  { zemin:'bozkir',   dagilma:1.9, cekis:-0.15, dizilis:'genis',
           geceToplanir:true,  ise:'sus',     yanlis:'savur' ,
           yer:'OPEN GROUND AGAIN', suruUyari:'THEY ARE TIRED', isUyari:'STORM COMING' ,
-          gece:{ r:1.00, dikey:1.30, titrek:0.18, uyari:-50 } },
+          gece:{ r:1.05, dikey:1.60, titrek:0.18, uyari:-50 } },   // fırtına ışığı yere yatırır (yan oturumun önerisi, 2026-08-21)
     10: { zemin:'kislak',   dagilma:1.5, cekis: 0.35, dizilis:'serbest',
           geceToplanir:true,  ise:'dur',     yanlis:'savur' ,
           yer:'THE LAST SLOPE', suruUyari:'THEY RUN FOR HOME', isUyari:'HOLD THEM BACK' ,
-          gece:{ r:1.15, dikey:1.30, titrek:0.00, uyari:  0 } },
+          gece:{ r:1.35, dikey:1.25, titrek:0.00, uyari:  0 } },
   },
   /* Bulunulan bölgenin tanımı. Tanımsız bölüm için nötr taban döner —
      bir bölge eklenirse oyun ÇÖKMEZ, yalnız farksız olur. */
@@ -1691,8 +1691,34 @@ const Yayla_ = {
                Yalnız rüzgârlı/fırtınalı bölgelerde, ve KÜÇÜK — tehdidin
                gözden kaybolup çıkması "zar haksız hissettirir"e
                düşmemeli.
-       r       yarıçap çarpanı. Bilerek 0.90-1.15 arasında tutuldu;
-               ağır işi biçim yapıyor, sayı değil.
+       r       yarıçap çarpanı. BANDI AÇILDI (2026-08-21): eskiden
+               0.88-1.15 idi, on bölge için 0.27 birimlik bir bant —
+               ölçüldü ve on bölge yalnız DÖRT ayırt edilebilir gece
+               görüntüsü üretiyordu. Şimdi 0.70-1.35, ve her değerin
+               gerekçesi COĞRAFYA + O BÖLGENİN HAVASI (`SEFER[i].hava`),
+               keyfî değil:
+
+                 1  kışlak, açık .. alçak duvar ateşi koruyor, sakin  1.00
+                 2  ova, ilk gece  . hiçbir engel yok, ışık yayılıyor 1.30
+                 3  geçit, SİS ... duvar ışığı keser, sis yutar       0.70
+                 4  ağaç hattı ... gövdeler keser                     0.80
+                 5  yayla, açık .. yüksek ve açık                     1.22
+                 6  dere, YAĞMUR . nemli hava ışığı yer               0.82
+                 7  geçit, RÜZGÂR  duvar var ama asıl iş rüzgârda:
+                                   ışık 3 kadar küçülmez, KIRPAR      0.85
+                 8  zirve, gece .. aysız, yansıyacak hiçbir şey yok   0.88
+                 9  bozkır, fırtına açıklık yardım eder, fırtına yer  1.05
+                10  kışlak, KAR .. kar her şeyi yansıtır, en aydınlık 1.35
+
+               3 ile 7'yi ayıran şey bu: ikisi de geçit, ama birinde SİS
+               birinde RÜZGÂR var. Sis ışığı küçültür, rüzgâr titretir.
+               Fark uydurulmadı, `hava` alanı zaten oradaydı.
+
+               ŞİŞİRME KORUMASI BANT DEĞİL ORTALAMA: bant genişledi ama
+               ortalama 1.00'da tutuluyor (test sınıyor). Yani oyun genel
+               olarak ne kolaylaştı ne zorlaştı — yalnız bölgeler
+               birbirinden ayrıştı. Dar bir bant "çeşitlilik yok"
+               demekti; kayan bir ortalama "zorluk ayarı" demek olurdu.
        uyari   telgraf kaç kare ERKEN/GEÇ. Dere ve fırtına duymayı
                zorlaştırıyor (eksi); soğuk ve durgun zirvede ses uzağa
                gidiyor (artı) — en zor bölgenin kendi ödülü.
@@ -1706,9 +1732,16 @@ const Yayla_ = {
 
   isikR(){
     const a = this.ATES, g = this.geceBicim();
-    const taban = a.odunsuzR + a.odunBasiR * Math.max(0, this.atesOdun);
+    /* BÖLGE ÇARPANI YALNIZ ATEŞİN MENZİLİNE, tabana DEĞİL.
+       `odunsuzR` "ateş yok, yalnız köpeğin dibi" demek — kendi çevreni
+       görmen coğrafyaya bağlı olmamalı. İlk yazımda çarpan her şeye
+       biniyordu ve bandı açınca ortaya çıktı: 3. bölgede odunsuz ateş
+       22 yerine 15 piksel görüyordu, ve "toplanan odun henüz yanmıyor"
+       testi kırıldı. Testin kırılması doğruydu — kırılan şey benim
+       formülümdü. */
     const nabiz = g.titrek ? (1 + g.titrek * Math.sin((this.kare || 0) / 11)) : 1;
-    return Math.min(a.maxR, taban * (g.r || 1) * nabiz);
+    const menzil = a.odunBasiR * Math.max(0, this.atesOdun) * (g.r || 1) * nabiz;
+    return Math.min(a.maxR, a.odunsuzR + menzil);
   },
 
   /* Odun at: elden ateşe. Ateş büyür, sırttaki yük azalır. */
