@@ -1680,6 +1680,36 @@ const RUN = {
      zaman var, round 11'de verilen kart ölü karttır.
      Denge etkisi ölçüldü ("denge tabani"): yeni havuzun yarısı puan
      ekseninde olduğu için ortalama koşu gücü sabit kaldı.                */
+  /* ================================================================
+     ⚠ BU KATMAN ULAŞILAMAZ — ÖLÇÜLDÜ (2026-08-21)
+
+     `draftAfter` round 2/4/7/10'da perk draft'ı açıyor. Ama gece HİÇ
+     round ilerletmiyor: bir gece koşturuldu (20.000 kare) ve sonuç
+
+         görülen roundlar : 1
+         görülen fazlar   : intro, play, over
+         draft fazı       : 0 kare
+         G.mods           : hep varsayılan
+
+     Gece `finishMorning('dawn')` ile bitiyor; `finishRun` yalnız
+     `roundEnd` dalından çağrılıyor ve o dala hiç girilmiyor. Yani ÖLÜ
+     olan şey yalnız perkler değil: `roundEnd` fazı, `draft` fazı,
+     `startDraft`, `RUN.rounds`, `finishRun` ve `G.mods`'un perk
+     alanlarının TAMAMI.
+
+     SEBEBİ ESKİ: çoban oyunu, round yapılı avcılık oyununun ÜSTÜNE
+     kuruldu ve perkler öksüz kaldı. Bu turda üretilmedi, bu turda
+     GÖRÜLDÜ.
+
+     NİYE SİLİNMİYOR: 30'dan fazla perk gerçek içerik ve silmek ya da
+     yolculuğa taşımak sahibinin kararı (docs/plan-tek-mod.md'nin açık
+     kalan tek maddesi). Teşhis ve öneri yürüyor: docs/perk-karari.md.
+
+     NİYE İŞARETLENİYOR: `G.mods.slowmo` gibi alanlar oynanış kodunun
+     her yerinden okunuyor ve HEP varsayılan dönüyor. Okuyan biri
+     perklerin çalıştığını sanıyor — bu işaret olmadan bir sonraki
+     oturum burada olmayan bir sistemi ayarlamaya çalışır.
+     ================================================================ */
   draftAfter:[2,4,7,10],
   // Geçme çizgisi bir YAPI kararıdır, his tablosu değil. ROM eğrisini doğrudan
   // eşlemek ilk 6 round'u düz bırakıyordu; run için kendi yayımızı yazıyoruz.
@@ -1902,7 +1932,13 @@ const Save = {
          Kayıt kalıcı (Save) — uygulama ritüel bitmeden kapanırsa bir
          sonraki açılışta sahne yeniden açılır (kaybolmaz). */
       collar: raw.collar === true,
-      kislakPending: raw.kislakPending === true,
+      /* KIŞLAK RİTÜELİ EMEKLİ (2026-08-20). Alanlar şemada duruyor ki
+         eski kayıtlar bozulmasın, ama bayrak yüklenirken TEMİZLENİYOR:
+         eski bir kayıtta `true` kalmış olabilir ve o değer bugün hiçbir
+         yerden okunmuyor — bayat bir `true` bir gün birinin "demek ki
+         ritüel hâlâ bekliyor" diye okumasına yol açar.
+         Ölçüldü: `G.kislak` ve ritüel kapıları kodda SIFIR canlı satır. */
+      kislakPending: false,
       kislakFrom: Math.max(0, num(raw.kislakFrom, 0)),
       kislakTo: Math.max(0, num(raw.kislakTo, 0)),
       kislakCollarOffer: raw.kislakCollarOffer === true,
