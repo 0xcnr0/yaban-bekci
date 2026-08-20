@@ -1724,11 +1724,16 @@ const Yayla_ = {
     const W = 320;
     const evre = ((this.kare || 0) >> 3) & 7;
     if(evre > 3) return true;                  // yanıp sönüyor: sürekli değil
-    const ton = ['#38282e', '#483436', '#604342', '#483436'][evre];
-    const y = Math.max(6, Math.min(170, Math.round(atesY) - 10));
-    const x = sag ? W - 3 : 0;
-    px(g, x, y - 6, 3, 13, ton);
-    px(g, sag ? W - 5 : 2, y - 2, 2, 5, ton);
+    /* TON ATEŞ AİLESİNDEN, ve bu basılıp bakılarak düzeltildi: ilk
+       yazımda '#38282e' ile başlıyordu ve gece zemininin (#0b0a0e)
+       üstünde neredeyse hiç okunmuyordu — yani "uyarı var ama
+       görünmüyor", düzeltmeye çalıştığım kusurun ta kendisi. Ateşin
+       kendi rengi olunca "ışık bir şeye çarptı" diye okunuyor. */
+    const ton = ['#604342', '#89615a', '#c99474', '#89615a'][evre];
+    const y = Math.max(8, Math.min(168, Math.round(atesY) - 10));
+    const x = sag ? W - 4 : 0;
+    px(g, x, y - 8, 4, 17, ton);
+    px(g, sag ? W - 7 : 4, y - 3, 3, 7, ton);
     return true;
   },
 

@@ -1428,6 +1428,23 @@ const STR = {
       /* Bitişten sonra yeniden yola çıkınca. Yeni sürü olduğunu SÖYLÜYOR:
          oyuncu eski sürüsünün geri geldiğini sanmamalı. */
       yeniYolculuk:'A NEW FLOCK - THE ROAD STARTS AGAIN',
+      /* YOLCULUK AKISININ OYUNCUYA GORUNEN MESAJLARI. Bunlar kodun icine
+         TURKCE gomulmustu ve tek dil kararindan (2026-08-20) sonra da
+         oyle kalmisti — dis dosyalar cevrildi, gomulu blogun kampanya
+         kancalari atlanmisti. Oyuncu Ingilizce bir oyunda 'YOLA
+         CIKILAMADI' goruyordu. */
+      /* Eksik anahtarlari yayla.js TURKCE uretiyor ('azik', 'kopek') ve
+         dogrudan oyuncuya yaziliyordu. Cevirisi BURADA, cunku o anahtarlar
+         yayla.js'in IC dili — orada Ingilizceye cevirmek kaydi ve testleri
+         de kirardi. Bilinmeyen bir anahtar gelirse ham hali gecer:
+         sessizce kaybolmasindan iyidir. */
+      eksikAd: { azik:'FOOD', kopek:'A RESTED DOG', suru:'SHEEP' },
+      yolaCikilamadi(eksik){
+        const ad = (eksik || []).map(k => this.eksikAd[k] || k).join(' + ');
+        return 'CANNOT SET OUT: NEED ' + ad;
+      },
+      geriCekildin:'DRIVEN BACK - RETURNED TO THE LAST CAMP',
+      karaayakGeldi:'BLACKFOOT',
       sagimSahne:'Not now - you can milk them at camp.',
       sagimYok:'No hours left today.',
       sagimBitti:'All milked for today.',
@@ -13118,7 +13135,10 @@ function yaylaSahneIlerlet(){
   const atlanan = yaylaOynanmayanlariAtla();
   s = Yayla.sahne();
   if(s){
-    if(atlanan.length) showMsg('atlandi: ' + atlanan.join(', ') + ' (sahne henuz yok)', 160);
+    /* GELISTIRME NOTU, oyuncuya degil: atlanan sahneler henuz yazilmamis
+       olanlar. Ceviri gerekmiyor cunku normal oyunda hic gorunmemeli —
+       gorunuyorsa eksik sahne var demektir. */
+    if(atlanan.length) showMsg('skipped: ' + atlanan.join(', ') + ' (scene not written yet)', 160);
     yaylaDurumYaz();
     return { sahne: s, atlanan };
   }
@@ -13130,9 +13150,8 @@ function yaylaSahneIlerlet(){
   });
   if(!r) return null;
   if(r.olay === 'vardi' || r.olay === 'bitis'){ yaylaDurumYaz(); return r; }
-  if(r.olay === 'takilma') showMsg('YOLA CIKILAMADI: ' + (r.eksik || []).join('+') +
-                                   ' — konakta bir gun daha', 200);
-  if(r.olay === 'gericekilme') showMsg('GERI CEKILDIN — bir onceki konaga donuldu', 220);
+  if(r.olay === 'takilma') showMsg(U().yolaCikilamadi(r.eksik), 200);
+  if(r.olay === 'gericekilme') showMsg(U().geriCekildin, 220);
   if(r.olay === 'gecis' || r.olay === 'vardi'){
     /* BÖLÜM SONU TÖRENİ (ADR-024): çentik ELLE atılır, kışlak töreninin
        dili. Rota tahtası açılır ve yalnız yeni kazanılan durağı hedef
@@ -13182,7 +13201,7 @@ function karaOrt(){
 function karaSpawnDene(){
   if(!G.yaylaAktif || !KARAAYAK.gelmeliMi(Yayla)) return;
   KARAAYAK.basla(karaOrt(), KARAAYAK.kipFor(Yayla));
-  showMsg('KARAAYAK', 220);
+  showMsg(U().karaayakGeldi, 220);
 }
 
 /* --- TEHDİT KÖPRÜSÜ ---------------------------------------------------
