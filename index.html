@@ -13104,62 +13104,46 @@ $('hsFoto').addEventListener('click', () => {
    ELLE: her dokunuş BİR koyunu sağar. hsSuru zaten yalnız sağılacak
    koyun kaldığında görünür (syncSuruUI) — "gerek yoksa gösterme". */
 function applySagim(){
+  /* TEK MOD (2026-08-20, docs/plan-tek-mod.md): sağımın MEVSİM yolu
+     silindi. Eskiden burada iki yol vardı — kampanya kileri (Yayla.kiler)
+     ve sonsuz modun kileri (Save.d.larder) — ve hangisine gideceği
+     `Yayla.aktif` kapısıyla seçiliyordu. Sonsuz mod kalktığı için ikinci
+     yol artık ulaşılamaz koddu; silmek yerine bırakmak, ileride birinin
+     "iki kiler var" sanmasına yol açardı. Tek kaynak: Yayla.kiler.
+
+     Yolculuk bittiyse sağım da yok: sürüsü olmayan ya da eve varmış
+     çobanın sağacak koyunu yok. Sessiz dönüş burada doğru, çünkü o hâlde
+     ekranda zaten bitiş ekranı duruyor ve sürüye dokunulamıyor. */
+  if(!Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return;
   Telemetry.milkedOne();
-  /* KAMPANYA KANCASI (==YAYLA-AKIS==): sefer açıkken süt kampanyanın
-     KENDİ kilerine gider, ana modun kilerine DEĞİL (ADR-027). Kapılar da
-     kampanyanın: günlük yuva hakkı + sağım tavanı 5. Bu ayrım olmadan
-     kampanyada sağmak sonsuz modun kilerini şişirirdi ve kampanyanın
-     kileri hiç dolmazdı — ölçüldü (tools/kosum.js: 504 denemenin 8'i).
-     Yalnız KONAK sahnesinde: sabahın ortasında sağım yok. */
-  if(Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti){
-    /* SESSİZ RED YOK (oyuncu raporu 2026-08-20). Bu iki satır eskiden
-       çıplak `return`'dü: kampanyada yanlış sahnede ya da günlük hakkı
-       bitmişken dokunan oyuncu hiçbir cevap almıyordu. Sebep her zaman
-       vardı, ama oyuncuya HİÇ söylenmiyordu. */
-    if(Yayla.sahne() !== 'konak'){ showMsg(U().sagimSahne, 120); return; }
-    if(!Yayla.sag(Save.d.flock | 0)){ showMsg(U().sagimYok, 120); return; }
-    Snd.sagimGugum(); buzz(6);
-    G.sagim.flashT = 46;
-    showMsg(U().sagimDone, 120);
-    syncSuruUI();
-    if(typeof yaylaDurumYaz === 'function') yaylaDurumYaz();
-    return;
-  }
-  if(Season.day === null) Season.refresh();
-  const n = milkableCount(Save.d.flock, Season.day);
-  if((Save.d.milkedThisCycle || 0) >= n){ showMsg(U().sagimBitti, 120); return; }
-  Save.d.milkedThisCycle = (Save.d.milkedThisCycle || 0) + 1;
-  Save.d.larder = Math.min(SAGIM.larderCap, (Save.d.larder || 0) + 1);
-  Save.put();
-  /* Anın İNMESİ — applySarma/applyBesleme ile AYNI desen ve AYNI gerekçe:
-     hitStop() ve shake() BİLEREK yok (ikisi de yalnız sabahın update()/
-     render() döngüsünde tüketiliyor, ağıl Attract üzerinden çiziliyor —
-     buraya konsalardı cetvelin saydığı ama oyuncunun hiç hissetmediği
-     sinyaller olurdu). Snd ve buzz doğrudan çalışıyor.
-     buzz 6: bakımın 8/10'undan hafif — sağım günlük ve tekrarlayan bir
-     iş, bakım ise seyrek ve içli. */
+  /* SESSİZ RED YOK (oyuncu raporu 2026-08-20): yanlış sahnede ya da
+     günlük iş hakkı bitmişken dokunan oyuncu sebebini duyuyor. */
+  if(Yayla.sahne() !== 'konak'){ showMsg(U().sagimSahne, 120); return; }
+  if(!Yayla.sag(Save.d.flock | 0)){ showMsg(U().sagimYok, 120); return; }
+  /* Anın İNMESİ: hitStop() ve shake() BİLEREK yok — ikisi de yalnız
+     sabahın update()/render() döngüsünde tüketiliyor, ağıl ise Attract
+     üzerinden çiziliyor. Buraya konsalardı cetvelin saydığı ama oyuncunun
+     hiç hissetmediği sinyaller olurlardı. */
   Snd.sagimGugum(); buzz(6);
   G.sagim.flashT = 46;              // rafın üstünde sönen parıltı (~0.75 sn)
   showMsg(U().sagimDone, 120);
   syncSuruUI();
+  if(typeof yaylaDurumYaz === 'function') yaylaDurumYaz();
 }
 /* Dokunuş tetiği: o SABAHIN İLK sağımı yakın çekimi açar (bkz. renderSagimYakin
    — "20 saniyelik hızlı sağım işi" ile "bir kez görülen güzel an" arasındaki
    gerilim, tasarım turunun kendi sorusu), geri kalan koyunlar eski hızlı
    dokun-sağ ile devam eder — sürüde 8 koyun varsa yalnız BİRİ modal açar. */
 function onTapSuru(){
-  /* Kampanyada sağılabilirliğin kararı Yayla'nın (yuva + tavan), ana
-     modun mevsim sayacının DEĞİL. Yakın çekim günün İLK sağımında. */
-  if(Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti){
-    if(Yayla.sahne() !== 'konak' || Yayla.yuvaKalan <= 0) return;
-    if(Yayla.sagimBugun === 0) openSagimYakin();
-    else applySagim();
-    return;
-  }
-  if(Season.day === null) Season.refresh();
-  const n = milkableCount(Save.d.flock, Season.day);
-  if((Save.d.milkedThisCycle || 0) >= n) return;
-  if((Save.d.milkedThisCycle || 0) === 0) openSagimYakin();
+  /* TEK MOD: mevsim yolu silindi (bkz. applySagim notu). Sağılabilirliğin
+     kararı tamamen Yayla'nın: konak sahnesi + günlük iş hakkı + sağım
+     tavanı. Yakın çekim günün İLK sağımında açılır, sonrakiler hızlı
+     gider — "20 saniyelik iş" ile "günde bir kez görülen güzel an"
+     arasındaki denge bu. */
+  if(!Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return;
+  if(Yayla.sahne() !== 'konak'){ showMsg(U().sagimSahne, 120); return; }
+  if(Yayla.yuvaKalan <= 0){ showMsg(U().sagimYok, 120); return; }
+  if(Yayla.sagimBugun === 0) openSagimYakin();
   else applySagim();
 }
 $('hsSuru').addEventListener('click', onTapSuru);
@@ -13209,10 +13193,12 @@ function syncSuruUI(){
       Her karede çağrılan bir yerde ise ayrıca ağır. Nokta bir SORU
       soruyor, durum kurmuyor: gün bilinmiyorsa cevabı "hayır". */
 function sagilabilirVar(){
-  if(typeof Yayla !== 'undefined' && Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti)
-    return Yayla.sahne() === 'konak' && Yayla.yuvaKalan > 0;
-  if(Season.day == null) return false;   // refresh ETME — bkz. yukarıdaki 2. madde
-  return (Save.d.milkedThisCycle || 0) < milkableCount(Save.d.flock, Season.day);
+  /* TEK MOD: tek kapı, Yayla. (Eski mevsim dalı silindi — bkz. applySagim.)
+     `typeof` koruması duruyor: bu fonksiyon ÇİZİM yolundan çağrılıyor ve
+     tarayıcı ilk kareyi harici betikler yorumlanmadan basabiliyor. Bir kez
+     bütün oyunu dondurdu (2026-08-20). */
+  if(typeof Yayla === 'undefined' || !Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return false;
+  return Yayla.sahne() === 'konak' && Yayla.yuvaKalan > 0;
 }
 
 /* Takvim (büyük tasarım turu, 2026-08-14) — eski #calGrid DOM ızgarası
@@ -13321,24 +13307,46 @@ function applyLang(){
 
 Assets.load().then(() => { if(Assets.ready) console.info('atlas yuklendi'); });
 
-/* ===== KAMPANYA KAYDINI GERİ YÜKLE (==YAYLA-AKIS==) ====================
-   Bu satır olmadan oyuncu uygulamayı kapatınca 45 günlük seferini
-   KAYBEDİYORDU — `Yayla.kaydet()`/`yukle()` yazılmıştı ama hiçbir yerden
-   çağrılmıyordu. 10-12 saatlik bir oyunda bu tek başına oyunu
-   oynanamaz kılar.
-   Burada, dosyanın SONUNDA: `Yayla` harici bir dosyada ve gömülü blok
-   ondan önce koşuyor. */
-try{
-  if(Save.d.campaign){
-    Yayla.yukle(Save.d.campaign);
+/* ===== YOLCULUĞA AÇ — oyunun TEK giriş noktası =========================
+   Sahibinin kararı, 2026-08-20 (docs/plan-tek-mod.md): oyunun tek bir
+   oynanış biçimi var, sonsuz/mevsim modu kalkıyor. Yolculuk artık
+   "açılabilen bir seçenek" değil OYUNUN KENDİSİ — kaydı yoksa burada
+   başlar, oyuncuya sorulmaz. Soracak ikinci bir şey kalmadı.
+
+   ÖNCEKİ HÂLİ KOŞMUYORDU, VE BU BİR YAZIM HATASI DEĞİL YER HATASIYDI.
+   Aynı kod burada, gömülü <script> bloğunun sonunda, DOĞRUDAN
+   çağrılıyordu. O blok harici dosyalardan ÖNCE koşuyor; yani satır
+   çalıştığında `Yayla` henüz hiç tanımlı değil ve ReferenceError
+   atıyordu. Hata bir try/catch içinde yutuluyordu, ekranda hiçbir iz
+   bırakmıyordu: oyuncu uygulamayı her kapattığında yolculuğunu
+   kaybediyor ve sebebini hiç göremiyordu. Üstündeki eski yorum
+   "bu satır olmadan oyuncu seferini kaybeder" diye uyarıyordu —
+   satır yazılmıştı, ama koşamayacağı yere konmuştu.
+
+   ARTIK ÇAĞRISI BURADA DEĞİL: prototype/boot.js harici betiklerin EN
+   SONUNDA yükleniyor ve bu fonksiyonu oradan çağırıyor. Gerekçesi
+   boot.js'in kendi başında yazılı.
+
+   Hata artık YUTULMUYOR, console.error'a düşüyor: bu fonksiyon
+   çökerse oynanacak oyun kalmıyor, sessiz kalması kabul edilemez. */
+function yolculugaAc(){
+  try{
+    if(Save.d.campaign) Yayla.yukle(Save.d.campaign);
+    if(!Yayla.sefer){
+      Yayla.ac(G);
+      Yayla.seferBasla();
+      if(typeof TEHDIT !== 'undefined') TEHDIT.seferSifirla();
+    }
     if(Yayla.sefer && !Yayla.sefer.bitti){
       Yayla.ac(G);
       Yayla.gunuBaslat();
       if(typeof yaylaOynanmayanlariAtla === 'function') yaylaOynanmayanlariAtla();
       syncKomutHUD();
+      if(typeof yaylaDurumYaz === 'function') yaylaDurumYaz();
     }
-  }
-}catch(e){ console.warn('kampanya kaydi yuklenemedi:', e && e.message); }
+    Save.put();
+  }catch(e){ console.error('YABAN: yolculuk acilamadi', e); }
+}
 
 Attract.reset();
 /* Başlatma adımları TEK TEK korunuyor — bu bir "her ihtimale karşı" değil,
@@ -13912,5 +13920,8 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
 <!-- TEHDİT: vaşak · sırtlan · ayı · hırsız · fırtına. yayla.js ve
      karaayak.js'ten SONRA. -->
 <script src="tehdit.js"></script>
+<!-- BOOT: oyunun tek giris noktasi. EN SONDA olmak ZORUNDA — yolculugu
+     acan cagri Yayla/TEHDIT tanimliyken kosmali. Sebebi boot.js'in ici. -->
+<script src="boot.js"></script>
 </body>
 </html>

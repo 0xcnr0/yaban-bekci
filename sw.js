@@ -7,7 +7,7 @@
 /* SHELL listesi ELLE TUTULMAZ — tools/build.js diskteki gerçek dosyalardan
    üretir. Elle tutulduğunda atlas asset'leri listeye girmemişti ve çevrimdışı
    ilk açılışta oyun prosedürel sanata düşüyordu. */
-const CACHE = 'yaban-69b62080';
+const CACHE = 'yaban-e331e79a';
 /* ==SHELL-START== */
 const SHELL = [
   './',
@@ -51,6 +51,7 @@ const SHELL = [
   './icons/icon-maskable-512.png',
   './alet.js',
   './bitis.js',
+  './boot.js',
   './cikin.js',
   './iz.js',
   './karaayak.js',
