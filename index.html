@@ -7237,21 +7237,35 @@ const Attract = {
 
          `typeof Yayla` koruması bilerek: tarayıcı ilk kareyi harici
          betikler yorumlanmadan boyayabiliyor ve bu tam olarak bir kez
-         açılışta çökmeye yol açtı (Cikin.ciz, 2026-08-19). */
-      const yolda = typeof Yayla !== 'undefined' && Yayla.sefer && !Yayla.sefer.bitti;
+         açılışta çökmeye yol açtı (Cikin.ciz, 2026-08-19).
 
-      // Kapı — oyunun kendisi. Hiç oynanmamışsa tek gerçek iş bu.
-      if(!Save.d.mornings) foldNokta(g, kp, idle, -7, 5);
-      // Köpek — yaralıysa bakım bekliyor (applySarma gerçekten iyileştiriyor).
-      if((Save.d.sore || 0) > 0) foldNokta(g, k, idle, -5, 0);
-      // Sürü — sağılacak koyun varsa. sagilabilirVar() sağımın KENDİ
-      // kapısını okuyor, ayrı bir kopya hesap değil.
-      if(sagilabilirVar()) foldNokta(g, FOLD_LAYOUT.suru, idle, -8, 3);
-      // Nişan köşesi — yalnız sensör bozuksa; ayar kurcalamak "iş" değil.
-      if(G.sensorBad) foldNokta(g, ns, idle, -5, 0);
-      // Çıkın — yolculuk henüz başlamadıysa başlatılabilir.
-      if(typeof Yayla !== 'undefined' && !yolda && !(Yayla.sefer && Yayla.sefer.bitti))
-        foldNokta(g, FOLD_LAYOUT.cikin, idle, -5, 2);
+         TAMAMI try/catch İÇİNDE, ve bu bir temkin değil ÖDENMİŞ BİR
+         BEDEL. İlk yazımda `sagilabilirVar()` Yayla'yı korumasız
+         okuyordu; ilk karede Yayla henüz yokken atılan ReferenceError
+         renderFold'un ORTASINDA patladı ve fonksiyonun geri kalanı —
+         durum şeridi, kampanya katmanı, yol çıkını — hiç koşmadı.
+         Sahibinin telefonunda ekran yarım kalmış bir ağıl gibi göründü.
+
+         Kök sebep onarıldı (bkz. sagilabilirVar). Ama ders şu: NOKTALAR
+         SÜSTÜR, EKRAN DEĞİLDİR. Bir süsün bütün ağılı düşürebilmesi
+         yanlış bir bağımlılık yönü. Buradaki bir hata artık yalnız
+         noktayı kaybettirir; kapı, çıkın ve durum şeridi çizilmeye
+         devam eder. Aynı desen applyLang'de de var, aynı gerekçeyle. */
+      try{
+        const yolda = typeof Yayla !== 'undefined' && Yayla.sefer && !Yayla.sefer.bitti;
+        // Kapı — oyunun kendisi. Hiç oynanmamışsa tek gerçek iş bu.
+        if(!Save.d.mornings) foldNokta(g, kp, idle, -7, 5);
+        // Köpek — yaralıysa bakım bekliyor (applySarma gerçekten iyileştiriyor).
+        if((Save.d.sore || 0) > 0) foldNokta(g, k, idle, -5, 0);
+        // Sürü — sağılacak koyun varsa. sagilabilirVar() sağımın KENDİ
+        // kapısını okuyor, ayrı bir kopya hesap değil.
+        if(sagilabilirVar()) foldNokta(g, FOLD_LAYOUT.suru, idle, -8, 3);
+        // Nişan köşesi — yalnız sensör bozuksa; ayar kurcalamak "iş" değil.
+        if(G.sensorBad) foldNokta(g, ns, idle, -5, 0);
+        // Çıkın — yolculuk henüz başlamadıysa başlatılabilir.
+        if(typeof Yayla !== 'undefined' && !yolda && !(Yayla.sefer && Yayla.sefer.bitti))
+          foldNokta(g, FOLD_LAYOUT.cikin, idle, -5, 2);
+      }catch(e){ console.error('YABAN: is-var noktalari cizilemedi', e); }
     }
 
     if(dk > 0.002) px(g, 0, 0, W, H, 'rgba(' + DAWN.night + ',' + (dk * DAWN.entityMul).toFixed(3) + ')');
@@ -13172,10 +13186,32 @@ function syncSuruUI(){
 /* Sağılacak koyun var mı — hem noktanın (foldNokta) hem de sağım
    reddinin okuduğu TEK kaynak. İki yerde ayrı ayrı hesaplanırsa nokta
    "iş var" derken dokunuş "iş yok" diyebilir. */
+/* İKİ KUSUR BURADAYDI, İKİSİ DE ÇİZİM YOLUNDAN ÇAĞRILDIĞI İÇİN AĞIR
+   (sahibinin telefonu, 2026-08-20 — ağıl ekranı "patlamış" görünüyordu,
+   arka plan yok, çıkın yok, hiçbir yere dokunulamıyor):
+
+   1. `Yayla` KORUMASIZ OKUNUYORDU. Tarayıcı ilk kareyi harici betikler
+      yorumlanmadan boyayabiliyor; o karede Yayla henüz YOK ve bu satır
+      ReferenceError atıyordu. Hata renderFold'un ORTASINDA patlıyordu:
+      nesneler ve tabelalar çizilmiş oluyor, ama fonksiyonun geri kalanı
+      — durum şeridi, kampanya katmanı, YOL ÇIKINI — hiç koşmuyordu.
+      Ekran yarım kalmış bir ağıl gibi duruyordu ve hata her karede
+      yeniden atıldığı için kendini hiç toparlamıyordu.
+
+      Bu ÇÖKME SINIFI DAHA ÖNCE YAŞANDI (Cikin.ciz, 2026-08-19) ve
+      dersi yazılıydı; noktaları koyarken `typeof` korumasını çağıran
+      satırlara koydum ama çağrılan fonksiyonun İÇİNE koymayı atladım.
+      Koruma en dışta değil, DIŞARIYA BAKAN HER SATIRDA olmalı.
+
+   2. ÇİZİMİN İÇİNDEN `Season.refresh()` ÇAĞRILIYORDU. Bu deponun
+      openTakvim'de yazılı uyarısı tam bunu yasaklıyor: refresh() gerçek
+      "şimdi"yi okur ve ağıla girişte kurulmuş günü SESSİZCE değiştirir.
+      Her karede çağrılan bir yerde ise ayrıca ağır. Nokta bir SORU
+      soruyor, durum kurmuyor: gün bilinmiyorsa cevabı "hayır". */
 function sagilabilirVar(){
-  if(Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti)
+  if(typeof Yayla !== 'undefined' && Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti)
     return Yayla.sahne() === 'konak' && Yayla.yuvaKalan > 0;
-  if(Season.day === null) Season.refresh();
+  if(Season.day == null) return false;   // refresh ETME — bkz. yukarıdaki 2. madde
   return (Save.d.milkedThisCycle || 0) < milkableCount(Save.d.flock, Season.day);
 }
 
