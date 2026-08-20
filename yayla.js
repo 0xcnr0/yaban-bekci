@@ -1458,34 +1458,44 @@ const Yayla_ = {
   BOLGE: {
     1:  { zemin:'kislak',   dagilma:0.6, cekis:-0.20, dizilis:'serbest',
           geceToplanir:true,  ise:null,      yanlis:null ,
-          yer:'THE HOME PEN', suruUyari:'THEY STAY PUT', isUyari:'GET THEM MOVING' },
+          yer:'THE HOME PEN', suruUyari:'THEY STAY PUT', isUyari:'GET THEM MOVING' ,
+          gece:{ r:1.00, dikey:1.40, titrek:0.00, uyari:  0 } },
     2:  { zemin:'ova',      dagilma:1.0, cekis: 0.00, dizilis:'genis',
           geceToplanir:true,  ise:'dur',     yanlis:null ,
-          yer:'OPEN PLAIN', suruUyari:'THEY SPREAD WIDE', isUyari:'FIRST NIGHT OUT' },
+          yer:'OPEN PLAIN', suruUyari:'THEY SPREAD WIDE', isUyari:'FIRST NIGHT OUT' ,
+          gece:{ r:1.15, dikey:1.15, titrek:0.00, uyari:  0 } },
     3:  { zemin:'gecit',    dagilma:1.8, cekis:-0.05, dizilis:'tekSira',
           geceToplanir:true,  ise:'getir',   yanlis:null ,
-          yer:'A NARROW PASS', suruUyari:'SINGLE FILE', isUyari:'WATCH THE TAIL' },
+          yer:'A NARROW PASS', suruUyari:'SINGLE FILE', isUyari:'WATCH THE TAIL' ,
+          gece:{ r:1.00, dikey:2.60, titrek:0.00, uyari:  0 } },
     4:  { zemin:'agachat',  dagilma:1.3, cekis: 0.00, dizilis:'serbest',
           geceToplanir:true,  ise:'getir',   yanlis:'dur' ,
-          yer:'THICK TREES', suruUyari:'THEY VANISH', isUyari:'DO NOT HOLD STILL' },
+          yer:'THICK TREES', suruUyari:'THEY VANISH', isUyari:'DO NOT HOLD STILL' ,
+          gece:{ r:0.90, dikey:1.60, titrek:0.00, uyari:-30 } },
     5:  { zemin:'yayla',    dagilma:1.2, cekis:-0.10, dizilis:'genis',
           geceToplanir:true,  ise:null,      yanlis:null ,
-          yer:'HIGH PASTURE', suruUyari:'THEY GRAZE WIDE', isUyari:'REST, BUT WATCH' },
+          yer:'HIGH PASTURE', suruUyari:'THEY GRAZE WIDE', isUyari:'REST, BUT WATCH' ,
+          gece:{ r:1.10, dikey:1.30, titrek:0.00, uyari:  0 } },
     6:  { zemin:'dere',     dagilma:1.1, cekis:-0.25, dizilis:'serbest',
           geceToplanir:true,  ise:'sus',     yanlis:'savur' ,
-          yer:'A RIVER CROSSING', suruUyari:'THEY FEAR WATER', isUyari:'QUIET THE DOG' },
+          yer:'A RIVER CROSSING', suruUyari:'THEY FEAR WATER', isUyari:'QUIET THE DOG' ,
+          gece:{ r:0.95, dikey:1.60, titrek:0.00, uyari:-45 } },
     7:  { zemin:'gecit2',   dagilma:1.6, cekis: 0.25, dizilis:'tekSira',
           geceToplanir:true,  ise:'dur',     yanlis:'savur' ,
-          yer:'THE PASS AGAIN', suruUyari:'THEY RUSH AHEAD', isUyari:'HOLD THE FRONT' },
+          yer:'THE PASS AGAIN', suruUyari:'THEY RUSH AHEAD', isUyari:'HOLD THE FRONT' ,
+          gece:{ r:1.00, dikey:2.40, titrek:0.10, uyari:-20 } },
     8:  { zemin:'zirve',    dagilma:1.4, cekis: 0.00, dizilis:'serbest',
           geceToplanir:false, ise:'savur',   yanlis:null ,
-          yer:'COLD HIGH GROUND', suruUyari:'THEY WILL SCATTER', isUyari:'A LONG NIGHT' },
+          yer:'COLD HIGH GROUND', suruUyari:'THEY WILL SCATTER', isUyari:'A LONG NIGHT' ,
+          gece:{ r:0.90, dikey:1.50, titrek:0.00, uyari: 45 } },
     9:  { zemin:'bozkir',   dagilma:1.9, cekis:-0.15, dizilis:'genis',
           geceToplanir:true,  ise:'sus',     yanlis:'savur' ,
-          yer:'OPEN GROUND AGAIN', suruUyari:'THEY ARE TIRED', isUyari:'STORM COMING' },
+          yer:'OPEN GROUND AGAIN', suruUyari:'THEY ARE TIRED', isUyari:'STORM COMING' ,
+          gece:{ r:1.00, dikey:1.30, titrek:0.18, uyari:-50 } },
     10: { zemin:'kislak',   dagilma:1.5, cekis: 0.35, dizilis:'serbest',
           geceToplanir:true,  ise:'dur',     yanlis:'savur' ,
-          yer:'THE LAST SLOPE', suruUyari:'THEY RUN FOR HOME', isUyari:'HOLD THEM BACK' },
+          yer:'THE LAST SLOPE', suruUyari:'THEY RUN FOR HOME', isUyari:'HOLD THEM BACK' ,
+          gece:{ r:1.15, dikey:1.30, titrek:0.00, uyari:  0 } },
   },
   /* Bulunulan bölgenin tanımı. Tanımsız bölüm için nötr taban döner —
      bir bölge eklenirse oyun ÇÖKMEZ, yalnız farksız olur. */
@@ -1634,9 +1644,40 @@ const Yayla_ = {
   /* Işık çemberinin yarıçapı — TEK KAYNAK. Çizim de, görünürlük hükmü de,
      testler de buradan okuyor; ikinci bir yerde hesaplanırsa senkronsuz
      kalır (bu oturumda iki kez o hatanın bedeli ödendi). */
+  /* ===== BÖLGE FARKI GECEYE İNİYOR ===================================
+     Bölgeler defterde ve haritada ayrışmıştı ama GECEDE ayrışmıyordu —
+     ve oyuncunun zamanının çoğu gecede geçiyor.
+
+     ŞİŞİRME DEĞİL, BİÇİM. Aynı geceyi daha kalabalık dalgayla tekrar
+     etmek bölge farkı değildir (üç danışmanın da uyarısı). Gecenin
+     mekaniği zaten SAYI değil BİLGİ EKSİKLİĞİ (ADR-020). O yüzden
+     bölgeler gecede ışığın MİKTARINI değil BİÇİMİNİ değiştiriyor:
+
+       dikey   ışığın dikey ezilmesi. Dar geçitte duvarlar ışığı ince
+               uzun bir şeride sıkıştırıyor (2.6); açık ovada havuz
+               yuvarlağa yakın (1.15). Aynı odun, bambaşka bir görüş.
+       titrek  rüzgâr ateşi kırpıyor: yarıçap nabız gibi inip çıkıyor.
+               Yalnız rüzgârlı/fırtınalı bölgelerde, ve KÜÇÜK — tehdidin
+               gözden kaybolup çıkması "zar haksız hissettirir"e
+               düşmemeli.
+       r       yarıçap çarpanı. Bilerek 0.90-1.15 arasında tutuldu;
+               ağır işi biçim yapıyor, sayı değil.
+       uyari   telgraf kaç kare ERKEN/GEÇ. Dere ve fırtına duymayı
+               zorlaştırıyor (eksi); soğuk ve durgun zirvede ses uzağa
+               gidiyor (artı) — en zor bölgenin kendi ödülü.
+
+     Titremede `kare` kullanılıyor, rastgele DEĞİL: ölçüm yapılabilsin
+     ve aynı kare aynı sonucu versin. */
+  geceBicim(){
+    const g = this.bolge().gece;
+    return g || { r: 1, dikey: 1.6, titrek: 0, uyari: 0 };
+  },
+
   isikR(){
-    const a = this.ATES;
-    return Math.min(a.maxR, a.odunsuzR + a.odunBasiR * Math.max(0, this.atesOdun));
+    const a = this.ATES, g = this.geceBicim();
+    const taban = a.odunsuzR + a.odunBasiR * Math.max(0, this.atesOdun);
+    const nabiz = g.titrek ? (1 + g.titrek * Math.sin((this.kare || 0) / 11)) : 1;
+    return Math.min(a.maxR, taban * (g.r || 1) * nabiz);
   },
 
   /* Odun at: elden ateşe. Ateş büyür, sırttaki yük azalır. */
@@ -1651,7 +1692,9 @@ const Yayla_ = {
      merkez yapmak "köpeği gönderince ortalık kararıyor" gibi tuhaf bir
      davranış üretirdi. */
   gorunur(nesneX, nesneY, atesX, atesY){
-    const dx = nesneX - atesX, dy = (nesneY - atesY) * 1.6;  // dikeyde daha dar: ışık yerde yayılır
+    /* Dikey ezme artık BÖLGEDEN geliyor (eskiden sabit 1.6). Işık yerde
+       yayılır, ama dar geçitte duvarlar onu şeride çevirir. */
+    const dx = nesneX - atesX, dy = (nesneY - atesY) * this.geceBicim().dikey;
     return Math.hypot(dx, dy) <= this.isikR();
   },
 

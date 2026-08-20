@@ -101,6 +101,15 @@ const TEHDIT = {
                      Kartal Gölgesi'nin bedeli: gözün yukarıda)
        Bekleme tabana çakılmıyor: telgraf penceresi tümüyle kaybolursa
        "zar haksız hissettirir" kuralı çiğnenirdi. */
+    /* BÖLGENİN GECESİ de telgrafı kaydırıyor (2026-08-21). Dere ve
+       fırtına duymayı zorlaştırıyor, soğuk durgun zirvede ses uzağa
+       gidiyor. İzin etkisiyle AYNI yerden geçiyor ki iki kaydırma
+       birbirini yiyip taban sınırını delmesin. */
+    const bl = (ort.Yayla && typeof ort.Yayla.geceBicim === 'function')
+      ? ort.Yayla.geceBicim() : null;
+    if(bl && this.d && typeof this.d.bekle === 'number')
+      this.d.bekle = Math.max(60, this.d.bekle - (bl.uyari || 0));
+
     const iz = ort.Iz ? ort.Iz.etki() : null;
     if(iz && this.d && typeof this.d.bekle === 'number'){
       const yerde = (k === 'vasak' || k === 'sirtlan' || k === 'ayi' || k === 'hirsiz');

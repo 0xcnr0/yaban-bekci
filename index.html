@@ -1422,6 +1422,12 @@ const STR = {
          oyuncuya NEDEN olmadığını söylüyor; "olmadı" demek yetmez, çünkü
          cevapsız bir dokunuş bozukluk gibi okunuyor. Bitmap fontta eğik
          tırnak/em-tire yok — ASCII. */
+      /* Gecenin amacı — ilk iki gecede bir kez. Bkz. çağrı yeri.
+         Kısa tutuldu: sc=2 ile çiziliyor, yani 320px'e ~26 harf sığıyor. */
+      geceAmac:'PROTECT THEM UNTIL DAWN',
+      /* Bitişten sonra yeniden yola çıkınca. Yeni sürü olduğunu SÖYLÜYOR:
+         oyuncu eski sürüsünün geri geldiğini sanmamalı. */
+      yeniYolculuk:'A NEW FLOCK - THE ROAD STARTS AGAIN',
       sagimSahne:'Not now - you can milk them at camp.',
       sagimYok:'No hours left today.',
       sagimBitti:'All milked for today.',
@@ -5091,6 +5097,35 @@ function kapiEtiketi(u){
   return kapiIsi() === 'gunukapat' ? u.foldEtiketGunSonu : u.foldEtiketKapi;
 }
 
+/* ===== "SIRADAKİ NE" — Alto'nun asıl numarası ==========================
+   Alto's Adventure'ın ana ekranında her zaman üç hedef yazar ("geriye
+   takla at", "50 madeni para topla"). Oyunun öğreticisi yoktur çünkü
+   HEDEF LİSTESİ öğreticidir: oyuncu ne yapacağını hiç düşünmez, ekranda
+   yazar, ve her hedef tamamlanınca yenisi gelir.
+
+   Üç AI da Alto'yu andı ama hiçbiri bu numarayı söylemedi; manzarayı
+   konuştular. Oysa bizim eksiğimiz manzara değildi — oyuncu raporundaki
+   çözülmemiş madde "ne yapacağımı çözmem zaman aldı"ydı.
+
+   Bizdeki karşılığı üç hedef değil TEK satır, ve sebebi kısıt: 320px'lik
+   bitmap fontta üç hedef sığmaz. Tek satır da yeter, çünkü bu oyunda o
+   an yapılacak şey zaten tektir.
+
+   İLK GÜN AYRI: oyuncunun ilk gördüğü satır oyunun NE OLDUĞUNU söylüyor.
+   Bu tek cümle, "ağıl kendini anlatmıyor" şikâyetinin doğrudan cevabı —
+   oyuncu kim olduğunu ve neyi koruduğunu başka hiçbir yerden
+   öğrenemiyordu. */
+function foldSiradaki(){
+  if(typeof Yayla === 'undefined' || !Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return '';
+  const S = Yayla.sefer;
+  if(S.bolum === 1 && S.gun === 1) return 'TAKE YOUR FLOCK TO THE HIGHLAND';
+  if(Yayla.sahne() === 'konak') return 'SPEND YOUR HOURS, THEN REST';
+  const tip = Yayla.gunTipi();
+  if(tip === 'B') return 'A HARD NIGHT AHEAD';
+  if(tip === 'Y') return 'MOVING ON TODAY';
+  return 'KEEP WATCH TONIGHT';
+}
+
 function foldDurumSatiri(){
   const koyun = Math.max(0, Save.d.flock | 0);
   const kampanya = typeof Yayla !== 'undefined' && Yayla.aktif &&
@@ -7041,7 +7076,14 @@ const Attract = {
       const k = FOLD_LAYOUT.kural;
       const durum = foldDurumSatiri();
       if(durum) textC(g, durum, k.x + k.w / 2, k.y, PAL.bone, 1, PAL.ink);
-      if(Season.rule) textC(g, Season.rule.en, k.x + k.w / 2, k.y + 8, PAL.gold, 1, PAL.ink);
+      /* İkinci satır: ŞU AN NE YAPMALIYIM (bkz. foldSiradaki). Ekranın
+         "anlaşılmıyor" denen yanının doğrudan cevabı bu satır. */
+      const sira = foldSiradaki();
+      if(sira) textC(g, sira, k.x + k.w / 2, k.y + 8, PAL.gold, 1, PAL.ink);
+      /* Günün kuralı VARSA üçüncü satırda. Kural her gün yok, o yüzden
+         üç satır azınlıkta kalıyor. Kaldırılamaz: G.dayRule.apply GERÇEK
+         bir çarpan, ve bu depoda görünmeyen çarpan yasak. */
+      if(Season.rule) textC(g, Season.rule.en, k.x + k.w / 2, k.y + 16, PAL.bone, 1, PAL.ink);
     }
 
     // Raf/Kangal dokunuşundan gelen kısa not — dünyaya ait metin, HTML değil.
@@ -10686,6 +10728,21 @@ function update(){
     if(G.t > G.introLen){
       G.phase = 'play'; G.t = 0;
       hint(cfg.mode === 'touch' ? 'aimTouch' : 'aim');   // metin MODA göre
+      /* GECENİN AMACI İLK GECELERDE YAZILIYOR (2026-08-20).
+         Oyuncu raporunun çözülmemiş son maddesi buydu:
+         *"oyuna girince ne zamana kadar oynayacağım ne yapacağımı çözmem
+         biraz zaman aldı."*
+
+         Ağıl artık kendini anlatıyor (durum şeridi + "sıradaki ne"), ama
+         kapıdan geçtikten SONRASI anlatmıyordu. Gecenin iki bilinmeyeni
+         vardı: ne yapacağım, ve ne zaman bitecek. Tek cümle ikisini de
+         söylüyor — 'until dawn' bitişin nerede olduğunu veriyor, ve sağ
+         üstteki şeridin ne olduğunu da o cümle adlandırıyor.
+
+         YALNIZ İLK İKİ GECE. Bilen oyuncuya her gece tekrarlamak
+         gürültüdür; öğreten şey tekrar değil, doğru anda söylenmesi.
+         nişan ipucuyla (hint) çakışmıyor: o kenarda, bu ortada. */
+      if((Save.d.mornings | 0) < 2) showMsg(U().geceAmac, 150);
       /* GÖRÜNÜR HÂLLER — ikisi de sabahın başında BİR KEZ söylenir.
          Gizli çarpan yasak (yaylanın dersi): köpeğin yavaşlığının sebebi
          ekranda yazılı olmalı.
@@ -13060,9 +13117,49 @@ $('hsCikin').addEventListener('click', () => {
      bırakabiliyordu (testte yakalandı). */
   if(G.rotaToren) return;
   if(Cikin.seferVar(Yayla)){ G.rotaAcik = !G.rotaAcik; return; }
-  if(Cikin.seferBitti(Yayla)) return;      // bitiş ekranı zaten çizili
+  if(Cikin.seferBitti(Yayla)){ yeniYolculuk(); return; }
   seferBaslat();
 });
+
+/* ===== YENİ YOLCULUK — bitişten sonra çıkış yolu ======================
+   BURASI BİR ÇIKMAZDI. Yolculuk bitince (ister eve varılmış olsun ister
+   sürü tükenmiş) çıkına dokunmak hiçbir şey yapmıyordu: satır
+   `return`'dü ve yorumu "bitiş ekranı zaten çizili" diyordu. Doğruydu
+   ama eksikti — ekran çiziliyordu, oyuncunun ORADAN ÇIKACAK bir yolu
+   yoktu. Oyun bitiyor ve bir daha başlamıyordu.
+
+   Sahibinin kararı (docs/plan-tek-mod.md): sürü biterse SERT SON, ve
+   "yeni yolculuk aynı sürünün geri gelmesi değil, YENİ bir sürüyle ayrı
+   bir seferdir".
+
+   NE SIFIRLANIYOR, NE KALIYOR — ayıran çizgi tek:
+   **kalıcı olan GÜÇ değil BİLGİ olsun.**
+   Gerekçe: kalıcı güç birikirse oyuncunun ikinci turu "bu sefer daha
+   güçlüyüm" olur, "bu sefer başka türlü gideceğim" değil — ve oyun
+   sessizce bir roguelite'a döner. O yüzden sürü, kiler ve köpeğin
+   öğrendiği komutlar sıfırlanıyor; oynanmış olmanın kaydı (mornings,
+   scars) duruyor.
+
+   İZLER (Iz) BİLEREK ELLENMEDİ: aynı çizgiyle çelişiyor olabilirler ve
+   teşhisi ayrı yürüyor (docs/iz-karari.md). Burada sessizce karar
+   vermek, açık bir tasarım sorusunu koda gömmek olurdu. */
+function yeniYolculuk(){
+  Save.d.flock = FLOCK_START;
+  Save.d.sore = 0;
+  Save.put();
+  Yayla.ac(G);
+  Yayla.seferBasla();
+  Yayla.kiler = 0;
+  if(Array.isArray(Yayla.ogrenilen)) Yayla.ogrenilen.length = 0;
+  if(Yayla.bireyler) Yayla.bireyler = {};
+  if(typeof TEHDIT !== 'undefined') TEHDIT.seferSifirla();
+  Yayla.gunuBaslat();
+  if(typeof yaylaOynanmayanlariAtla === 'function') yaylaOynanmayanlariAtla();
+  syncKomutHUD();
+  if(typeof yaylaDurumYaz === 'function') yaylaDurumYaz();
+  Save.put();
+  showMsg(U().yeniYolculuk, 240);
+}
 
 /* Kaybedilen koyunların ADLARI. Bitiş ekranıyla AYNI kaynak: kimlik
    haritasında olup hayatta olmayanlar. Sayı değil isim — ADR-008'in
