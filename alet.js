@@ -74,12 +74,35 @@ const Alet_ = {
 
   /* Görsel/anlatı durumu — dört kademe. Sayı DEĞİL, bir hâl.
      Konak ekranı bunu okuyup tüfeği ona göre çiziyor. */
+  /* Durum, RİSKİN KENDİSİNDEN türetiliyor — eşik sayısından değil.
+     Eskiden `kir < TEMIZ_ESIK` diye bakıyordu ve kir tam 6 iken durum
+     'kirli' oluyordu, oysa o noktada tutukluk şansı hâlâ TAM SIFIR.
+     Bir adım erken "tehlikedesin" diyordu; artık tehlike başlayınca
+     diyor. */
   hal(){
     if(this.kir === 0) return 'temiz';
-    if(this.kir < this.TEMIZ_ESIK) return 'tozlu';       // hâlâ tutukluk yok
-    if(this.tutuklukSansi() < this.SANS_TAVAN) return 'kirli';
+    const s = this.tutuklukSansi();
+    if(s <= 0) return 'tozlu';                           // hâlâ tutukluk YOK
+    if(s < this.SANS_TAVAN) return 'kirli';
     return 'tikali';
   },
+
+  /* OYUNCUYA SÖYLENECEK TEK SATIR — ateş etmeden ÖNCE.
+     Sebebi ölçüldü (docs/gece-okunabilirlik.md): tüfeğin kiri oyunda
+     HİÇBİR YERDE çizilmiyordu (`Alet.ciz` yalnız testten çağrılıyor) ve
+     tek geri bildirim tutukluk anındaki mesajdı. Yani ceza başlamadan
+     önce hiçbir uyarı yoktu — bu deponun "görünmeyen ceza" yasağının ta
+     kendisi.
+
+     Metin ASCII: bitmap fontta em-tire ve Türkçe harf yok. */
+  UYARI: {
+    tozlu:  'THE RIFLE IS GETTING DIRTY',
+    kirli:  'THE RIFLE MAY JAM. CLEAN IT',
+    tikali: 'THE RIFLE JAMS OFTEN NOW',
+  },
+  uyari(){ return this.UYARI[this.hal()] || ''; },
+  /* Tutukluk şansı yüzde olarak — çağıran isterse gösterir. */
+  riskYuzde(){ return Math.round(this.tutuklukSansi() * 100); },
 
   /* Konakta asılı tüfeğin kir göstergesi — namlu boyunca ilerleyen bir
      kurum bandı. Sayı yazılmıyor: bant ne kadar yükselirse o kadar kirli.

@@ -348,7 +348,14 @@ const TEHDIT = {
     /* GÖRÜNÜRLÜK SÖZLEŞMESİ: çemberin dışındaki tehdit ÇİZİLMEZ.
        Bu bir kusur değil mekaniğin kendisi (tehdit-sanat.md lider notu).
        Şart: çembere girdiğinde OKUNMASI. */
-    if(ates && !Y.gorunur(d.x, d.y, ates.x, ates.y)) return;
+    /* Çemberin dışındayken tehdit ÇİZİLMEZ — mekaniğin kendisi. Ama
+       oyuncu tamamen bilgisiz kalmaz: hangi taraftan geldiği ekranın
+       kenarında görünür. Eskiden bu bilgi yalnız SESTE vardı ve sessiz
+       oynayan oyuncu hiç haber almıyordu. */
+    if(ates && !Y.gorunur(d.x, d.y, ates.x, ates.y)){
+      if(Y.cizDuyulan) Y.cizDuyulan(g, d.x, ates.x, ates.y);
+      return;
+    }
     Y.cizTehdit(g, 'sirtlan', d.x, d.y, d.dir);
   },
 
@@ -456,7 +463,10 @@ const TEHDIT = {
   ciz_ayi(ort, g, d){
     if(d.evre === 'bitti') return;
     const Y = ort.Yayla;
-    if(Y.geceMi && Y.geceMi() && ort.gece && !Y.gorunur(d.x, d.y, ort.gece.x, ort.gece.y)) return;
+    if(Y.geceMi && Y.geceMi() && ort.gece && !Y.gorunur(d.x, d.y, ort.gece.x, ort.gece.y)){
+      if(Y.cizDuyulan) Y.cizDuyulan(g, d.x, ort.gece.x, ort.gece.y);
+      return;
+    }
     /* ŞAHA KALKMA — yalnız KÖPEĞE YÖNELDİĞİNDE. Ayı sahneyi geçmeyi
        bırakıp sana döndüğü an bu; ADR-021'in "vurulmayan bir GÜÇ"
        tanımının görsel karşılığı. Geçip giderken duruş pozunda kalıyor,

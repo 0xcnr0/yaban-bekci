@@ -1705,6 +1705,33 @@ const Yayla_ = {
     return nesneX < atesX ? 'sol' : 'sag';
   },
 
+  /* DUYULANIN GÖRÜNTÜSÜ — ve bu 2026-08-21'e kadar YOKTU.
+     `duyulanYon` yazılmıştı ama oyunda HİÇBİR YERDEN çağrılmıyordu
+     (yalnız testten). Yani karanlıkta dolanan tehdit hakkında oyuncuya
+     verilen tek bilgi SESTİ, ve sahibinin bağlayıcı kuralı şu:
+     *"insanlar toplu taşımada kulaklığı olmadığında sessiz de
+     oynayabilmeli."* Sessizde bu tehdit hiç haber vermiyordu.
+
+     Ne çizilir: ekranın o yanında, ateşin hizasında, nabız gibi soluk
+     bir kenar işareti. MESAFE VERİLMEZ — verilirse karanlığın anlamı
+     kalmaz (`duyulanYon`un kendi yorumu). Yalnız "şu taraftan".
+
+     Nabız `kare`ye bağlı, rastgele değil: ölçülebilir olmayan bir uyarı
+     ayarlanamaz. */
+  cizDuyulan(g, nesneX, atesX, atesY){
+    if(!this.aktif) return false;
+    const sag = this.duyulanYon(nesneX, atesX) === 'sag';
+    const W = 320;
+    const evre = ((this.kare || 0) >> 3) & 7;
+    if(evre > 3) return true;                  // yanıp sönüyor: sürekli değil
+    const ton = ['#38282e', '#483436', '#604342', '#483436'][evre];
+    const y = Math.max(6, Math.min(170, Math.round(atesY) - 10));
+    const x = sag ? W - 3 : 0;
+    px(g, x, y - 6, 3, 13, ton);
+    px(g, sag ? W - 5 : 2, y - 2, 2, 5, ton);
+    return true;
+  },
+
   /* ===== GECE PERDESİ — çizim ==========================================
      Kural: görsel çember ile görünürlük hükmü (gorunur) AYNI kaynaktan
      okur — isikR(). Ayrışırlarsa oyun yalan söyler: "görüyorum ama
@@ -1782,7 +1809,14 @@ const Yayla_ = {
          karede y=52'de dikiş görünüyordu (gök açık, dünya koyu, düz çizgi). */
       const gd = (y - K.gokSinir) / 12;
       const pay = gd <= 0 ? K.gokPay : gd >= 1 ? 1 : K.gokPay + (1 - K.gokPay) * gd;
-      const dy = (y - atesY) * 1.6;                 // sözleşmeyle AYNI basıklık
+      /* SÖZLEŞMEYLE AYNI BASIKLIK — ve bu satır 2026-08-21'de KIRILMIŞTI.
+         Bölge farkını geceye indirirken `gorunur()`u bölgenin `dikey`
+         değerine bağladım ama BURAYI unuttum: perde sabit 1.6 ile
+         çiziliyordu. Dosyanın kendi uyarısı tam bunu söylüyor — "görsel
+         çember ile görünürlük hükmü AYNI kaynaktan okur; ayrışırlarsa
+         oyun YALAN SÖYLER". Dar geçitte oyuncu yuvarlak bir havuz görüp
+         şeridin dışındaki tehdide ateş edemeyecekti. */
+      const dy = (y - atesY) * this.geceBicim().dikey;
       const kesit = r => { const q = r * r - dy * dy; return q <= 0 ? 0 : Math.sqrt(q); };
       const x3 = kesit(r3), x2 = kesit(r2), x1 = kesit(r1);
       const seg = (a, b, koyu) => {
@@ -1811,7 +1845,7 @@ const Yayla_ = {
     const r3 = this.isikR() + tit;
     const W = 320, H = 180;
     for(let y = 0; y < H; y++){
-      const dy = (y - atesY) * 1.6;
+      const dy = (y - atesY) * this.geceBicim().dikey;
       const q = r3 * r3 - dy * dy;
       const x3 = q <= 0 ? 0 : Math.sqrt(q);
       const seg = (a, b) => {

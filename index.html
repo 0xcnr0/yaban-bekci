@@ -5118,8 +5118,25 @@ function kapiEtiketi(u){
 function foldSiradaki(){
   if(typeof Yayla === 'undefined' || !Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return '';
   const S = Yayla.sefer;
-  if(S.bolum === 1 && S.gun === 1) return 'TAKE YOUR FLOCK TO THE HIGHLAND';
-  if(Yayla.sahne() === 'konak') return 'SPEND YOUR HOURS, THEN REST';
+  /* İLK GÜN AMACI, AMA KONAK SAHNESİNDEN ÖNCE. Sıra bilerek böyle:
+     oyuncunun GÖRDÜĞÜ İLK ekran açılış sahnesi (sabah) ve orada
+     okuması gereken şey oyunun ne olduğu. Konağa geldiğinde artık
+     amacı biliyor, ihtiyacı olan şey o günün kısıtı.
+     Önce ters sıradaydı ve basılınca görüldü: 1. günün konağında ekran
+     saati söylemek yerine amacı tekrarlıyordu. */
+  if(S.bolum === 1 && S.gun === 1 && Yayla.sahne() !== 'konak')
+    return 'TAKE YOUR FLOCK TO THE HIGHLAND';
+  /* Durak gununde satir GENEL bir ogut degil, gunun KISITI. Halkalar
+     kalan hakki gosteriyordu ama soylemiyordu; ilk kez oynayan biri sapa
+     gecirilmis halkalardan "gunde uc is yapabilirim" sonucunu cikaramaz.
+     Ve bu oyunun ASIL karari o kisit — bir kural ancak oyuncu onu
+     BILIYORSA karar olur.
+     Konak katmani kendi satirini cizmiyor: dorduncu satir agilin ust
+     bandindaki kuralla cakisiyordu (basildi, goruldu). */
+  if(Yayla.sahne() === 'konak'){
+    const h = Yayla.yuvaKalan | 0;
+    return h <= 0 ? 'NO HOURS LEFT - REST' : h === 1 ? 'LAST HOUR TODAY' : h + ' HOURS LEFT TODAY';
+  }
   const tip = Yayla.gunTipi();
   if(tip === 'B') return 'A HARD NIGHT AHEAD';
   if(tip === 'Y') return 'MOVING ON TODAY';
@@ -6560,6 +6577,46 @@ function dayRuleFor(season, day){
   return DAY_RULES[Math.floor(h / 3) % DAY_RULES.length];   // 6 kuraldan biri (sisli dahil, eşit ağırlık)
 }
 
+/* ===== GÜNÜN KURALI ARTIK TAKVİMDEN DEĞİL YOLCULUKTAN ==================
+   Takvim artıklarının en ETKİLİSİ buydu ve en sona kaldı: kurallar
+   gerçek gerçek çarpanlar taşıyor (zırhlı x2, boşluk x1.8, dalış x1.35,
+   dağılma x1.35, "köpek tutuk uyandı"). Hangisinin geleceğini
+   `ruleSeed(season, day)` seçiyordu — yani GERÇEK TAKVİM TARİHİ.
+
+   Sonucu: yolculuğun bir gecesi zor, ötekisi kolay oluyordu ve sebebi
+   oyuncunun telefonundaki tarihti. Aynı bölgeyi iki oyuncu iki farklı
+   zorlukta yaşıyordu.
+
+   SİLMEK YANLIŞ OLURDU: kurallar İYİ içerik. Üç bağımsız AI da "aynı
+   geceyi tekrar etmek şişirmedir" dedi; kurallar tam da geceleri
+   birbirinden ayıran şey. O yüzden kaldırılmadı, TOHUMU DEĞİŞTİ —
+   takvim yerine yolculuğun konumu (bölge + o bölgedeki gün).
+
+   Böylece kural hâlâ sürprizli ama artık YERE bağlı: aynı yolculuk
+   noktası her oyuncuda aynı kuralı veriyor, ve bölge farkının üstüne
+   biniyor onu silmiyor.
+
+   'sisli' kuralı ADAYLIKTAN ÇIKARILDI: sis artık bölgenin havasından
+   geliyor (bkz. bolgeSis). İkisi birden olsaydı aynı şeyin iki kaynağı
+   olurdu — bu deponun "çift kaynak" yasağı. */
+function yolcuKural(){
+  if(typeof Yayla === 'undefined' || !Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return null;
+  const S = Yayla.sefer;
+  const h = ruleSeed(S.bolum | 0, S.gun | 0);
+  if(h % 3 !== 0) return null;                    // ~2/3 gece sakin, eski oranla aynı
+  const aday = DAY_RULES.filter(r => r.id !== 'sisli');
+  return aday[Math.floor(h / 3) % aday.length];
+}
+
+/* Bu gecenin kuralı — ağıl önizlemesi de sabah başlangıcı da BURAYI
+   okuyor. İki ayrı yerden okunursa ağıl bir kural gösterip gece başka
+   bir kural uygular. */
+function gunKurali(){
+  if(typeof Yayla !== 'undefined' && Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti)
+    return yolcuKural();
+  return Season.rule;
+}
+
 /* Ağıl ve sabah başlangıcının okuduğu TEK kaynak. refresh() ağıla her
    dönüşte ve açılışta çağrılır; sabah G.seasonDay/G.dayRule'ı BAŞTA donar
    (yorgunluk gibi — ortasında değişmez, oyuncu neyin değiştiğini anlamalı). */
@@ -7106,7 +7163,8 @@ const Attract = {
       /* Günün kuralı VARSA üçüncü satırda. Kural her gün yok, o yüzden
          üç satır azınlıkta kalıyor. Kaldırılamaz: G.dayRule.apply GERÇEK
          bir çarpan, ve bu depoda görünmeyen çarpan yasak. */
-      if(Season.rule) textC(g, Season.rule.en, k.x + k.w / 2, k.y + 16, PAL.bone, 1, PAL.ink);
+      const kural = gunKurali();
+      if(kural) textC(g, kural.en, k.x + k.w / 2, k.y + 16, PAL.bone, 1, PAL.ink);
     }
 
     // Raf/Kangal dokunuşundan gelen kısa not — dünyaya ait metin, HTML değil.
@@ -7917,7 +7975,7 @@ function startRun(){
      Season.refresh() hiç çağrılmadıysa Season.day/rule null kalır ve
      aşağıdaki her şey eskisiyle birebir aynı davranır). */
   G.seasonDay = Season.day;
-  G.dayRule = Season.rule;
+  G.dayRule = gunKurali();   // bkz. gunKurali: eskiden GERÇEK TAKVİME bağlıydı
   G.fog = guncelSis(G.seasonDay);   // bkz. guncelSis: eskiden GERÇEK TAKVİME bağlıydı
   const ap = G.dayRule && G.dayRule.apply;
   /* Geçit (28-30, Faz 3): sabit nokta — sabah İÇİNDE değişmez (yorgunluk

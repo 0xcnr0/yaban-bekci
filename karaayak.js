@@ -267,7 +267,12 @@ const KARAAYAK = {
        parlıyordu — tasarımın kendi uyarısı (§5 sanat notu). Çember
        dışındaysa hiç çizilmiyor; ses ve dünya işaretleri kalıyor. */
     if(Y.geceMi && Y.geceMi() && ort.gece){
-      if(!Y.gorunur(d.x, d.y, ort.gece.x, ort.gece.y)) return true;
+      if(!Y.gorunur(d.x, d.y, ort.gece.x, ort.gece.y)){
+        /* Görünmeyen ama YAKLAŞAN lider: yönü kenarda belirir. Sessizde
+           oynayan oyuncu da haber alsın (bkz. Yayla.cizDuyulan). */
+        if(Y.cizDuyulan) Y.cizDuyulan(g, d.x, ort.gece.x, ort.gece.y);
+        return true;
+      }
     }
     Y.cizTehdit(g, 'karaayak', d.x, d.y, d.dir);
     return true;
