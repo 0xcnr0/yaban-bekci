@@ -6895,11 +6895,34 @@ const Attract = {
          FOLD ONLY. The wintering count-in (drawKislak) keeps its own cap:
          counting the flock in IS that screen's ceremony and it needs its
          own treatment. */
-      const n = milkableCount(Save.d.flock, Season.day);
+      /* KAÇ KOYUN ÇİZİLİYOR — iki kusur, ikisi de takvim artığı (2026-08-21).
+
+         1. `milkableCount(flock, Season.day)` gün NULL ise 0 döndürüyor
+            ("takvim hiç sorulmadı" hâli). Takvim ekranı silindiği için o
+            hâle artık daha kolay düşülüyor, ve düşülürse ağılda HİÇ
+            koyun çizilmiyor — sürü 8 olsa bile. Oyuncu boş bir ağıl
+            görür ve sebebini bilmesinin yolu yoktur.
+            (Eşiğin kendisi 1, yani "ilk günler" sorunu YOK — ilk yazdığım
+            yorum bunu yanlış söylüyordu, ölçülüp düzeltildi.)
+
+         2. Sağılmış koyunların işareti `Save.d.milkedThisCycle`'dan
+            okunuyordu. O sayaç MEVSİM sağımınındı ve tek mod kararından
+            sonra hiçbir yerden artmıyor — sağım artık Yayla.sag()'dan
+            geçiyor. Yani oyuncu koyunu sağıyor, güğüm doluyor, ama
+            ağıldaki koyun hâlâ "sağılmamış" duruyordu. Karşılığı
+            görünmeyen bir eylem.
+
+         Çizim ile izin aynı şey değil: hayvanlar orada duruyor, sağılıp
+         sağılamayacakları ayrı bir soru ve onu sagilabilirVar()
+         cevaplıyor. İkisini birbirine bağlamak, "yapacak iş yok" ile
+         "hayvan yok"u aynı resme çizmekti. */
+      const yolcu = typeof Yayla !== 'undefined' && Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti;
+      const n = yolcu ? Math.max(0, Save.d.flock | 0)
+                      : milkableCount(Save.d.flock, Season.day);
       if(n > 0){
         const s = FOLD_LAYOUT.suru;
         const shown = n;
-        const milked = Math.min(Save.d.milkedThisCycle || 0, shown);
+        const milked = Math.min(yolcu ? (Yayla.sagimBugun | 0) : (Save.d.milkedThisCycle || 0), shown);
         /* KAYBEDİLENİN YERİ AÇIK KALIR (BULGU A, seçenek C, sahibinin kararı
            2026-08-15). Sıra eskiden HER ZAMAN kutuyu baştan sona dolduruyordu:
            bir hayvan kaybedilince adım büyüyor, kalanlar yeniden yayılıyor ve
@@ -8345,8 +8368,22 @@ function birthEvery(n){
    kaydırıyoruz. G.seasonDay null ise (takvim sorulmadı) birebir eski
    birthEvery() ile aynı. */
 const BIRTH_TIERS = [2, 3, 5, 7];
+/* KUZULAMA HIZI DA TAKVİMDEN KOPARILDI (2026-08-21) — aynı sınıfın
+   dördüncü vakası. Doğum aralığı mevsimin 12-14. gününde kısalıyordu,
+   yani sürünün büyüme hızı oyuncunun GERÇEK TAKVİMİNE bağlıydı.
+
+   Yolculukta eşik KUZU_BOLUM: kuzuların doğduğu bölge (bkz. yolcuKuzu).
+   Tüketim tarafı zaten oraya bağlanmıştı; üretim tarafının ayrı bir
+   takvime bakması, aynı olayın iki farklı saate göre işlemesiydi. */
 function seasonBirthEvery(n){
   const base = birthEvery(n);
+  if(typeof Yayla !== 'undefined' && Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti){
+    if((Yayla.sefer.bolum | 0) === KUZU_BOLUM){
+      const i0 = BIRTH_TIERS.indexOf(base);
+      return BIRTH_TIERS[Math.max(0, i0 - 1)];
+    }
+    return base;
+  }
   const d = G.seasonDay;
   if(d != null && d >= 12 && d <= 14){
     const i = BIRTH_TIERS.indexOf(base);
