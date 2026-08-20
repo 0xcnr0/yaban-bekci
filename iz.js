@@ -39,7 +39,7 @@
      sagimTavan   : günlük sağım tavanına eklenen fark (-)
      savurYipranma: SAVUR'un köpeği yıpratma çarpanına eklenen fark (+)
      yerGecikme   : yer tehdidinin fark edilmesi kaç kare GECİKİR (+)
-     suruToplanir : büyük tehditte sürü kendiliğinden toplanır (bool) */
+     disKalanIsaret: sürünün en dıştakileri İŞARETLENİR (bool, BİLGİ) */
 /* TEK DİL: İngilizce (2026-08-20). Ve asıl iş çeviri değil SADELEŞTİRME:
    cümleler artık ne KAZANDIĞINI ve ne KAYBETTİĞİNİ düz söylüyor.
 
@@ -59,10 +59,19 @@ const IZLER = {
     etki: { erkenUyari: 45, sagimTavan: -1 },
   },
   ayiKorkusu: {
+    /* GÜÇ -> BİLGİ (2026-08-21, docs/iz-karari.md, lider onayı).
+       Eskiden `suruToplanir` vardı: büyük tehditte sürü KENDİLİĞİNDEN
+       toplanıyordu, yani iz işi oyuncunun YERİNE yapıyordu. Sahibinin
+       kararı "kalıcı olan güç değil BİLGİ olsun" ve bu onu çiğniyordu —
+       üç izin ihlal eden tek tanesiydi.
+
+       Yerine bilgi: sürünün en DIŞTA kalan hayvanları işaretleniyor.
+       Kimi toplaman gerektiğini görüyorsun, toplamayı sen yapıyorsun.
+       Aynı karşılaşma, aynı his, ama iş oyuncuda kalıyor. */
     en: 'Bear Fear', kaynak: 'ayi',
-    verir: { en: 'Your flock huddles together when a big threat comes.' },
+    verir: { en: 'You see which sheep have strayed furthest.' },
     alir:  { en: 'Your dog is jumpy. CHARGE tires it out faster.' },
-    etki: { suruToplanir: true, savurYipranma: 0.5 },
+    etki: { disKalanIsaret: true, savurYipranma: 0.5 },
   },
   kartalGolgesi: {
     en: 'Eagle Shadow', kaynak: 'kartal',
@@ -113,7 +122,7 @@ const Iz_ = {
 
   /* --- ETKİ — takılı izlerin toplamı ------------------------------- */
   etki(){
-    const o = { erkenUyari: 0, sagimTavan: 0, savurYipranma: 0, yerGecikme: 0, suruToplanir: false };
+    const o = { erkenUyari: 0, sagimTavan: 0, savurYipranma: 0, yerGecikme: 0, disKalanIsaret: false };
     for(const k of this.takili){
       const e = IZLER[k] && IZLER[k].etki;
       if(!e) continue;
@@ -121,7 +130,7 @@ const Iz_ = {
       if(e.sagimTavan) o.sagimTavan += e.sagimTavan;
       if(e.savurYipranma) o.savurYipranma += e.savurYipranma;
       if(e.yerGecikme) o.yerGecikme += e.yerGecikme;
-      if(e.suruToplanir) o.suruToplanir = true;
+      if(e.disKalanIsaret) o.disKalanIsaret = true;
     }
     return o;
   },

@@ -63,6 +63,9 @@ const TEHDIT = {
      bölüm 8'in üç konak gününün üçünde de hırsız çıkıyordu — "tek
      seferlik ahlaki an" (ADR-021) günlük bir taciz oluyordu. Sefer
      boyunca yaşıyor, sifirla ile temizleniyor. */
+  /* Bölgenin telgraf imzasından iz sonrası korunan asgari pay. */
+  BOLGE_PAYI: 0.6,
+
   olanlar: {},
   seferSifirla(){ this.olanlar = {}; this.sabahSifirla(); },
 
@@ -101,20 +104,35 @@ const TEHDIT = {
                      Kartal Gölgesi'nin bedeli: gözün yukarıda)
        Bekleme tabana çakılmıyor: telgraf penceresi tümüyle kaybolursa
        "zar haksız hissettirir" kuralı çiğnenirdi. */
-    /* BÖLGENİN GECESİ de telgrafı kaydırıyor (2026-08-21). Dere ve
-       fırtına duymayı zorlaştırıyor, soğuk durgun zirvede ses uzağa
-       gidiyor. İzin etkisiyle AYNI yerden geçiyor ki iki kaydırma
-       birbirini yiyip taban sınırını delmesin. */
+    /* ===== TELGRAF KAYMASI — bölge + iz, KIRPILARAK ===================
+       İki şey `bekle`yi kaydırıyor: bölgenin gecesi (dere geç duyar,
+       soğuk zirvede ses uzağa gider) ve oyuncunun izleri (erken uyarı).
+       Artı = telgraf ERKEN, eksi = GEÇ.
+
+       KIRPMA ŞART, ve sebebi ÖLÇÜLDÜ (docs/iz-karari.md): düz toplamda
+       Riverside'ın −45'i, tek bir izin +45'iyle TAM SIFIRLANIYORDU.
+       Bölgeyi bölge yapan şey yok oluyordu — yani bölge farkı turunun
+       bütün işi bir izle geri alınıyordu.
+
+       Kural: iz bölgenin etkisini AZALTABİLİR, TERSİNE ÇEVİREMEZ, ve
+       bölgenin payının en az %60'ı hep kalır.
+
+       İLK YAZDIĞIM FORMÜL YANLIŞTI ve liderin düzeltmesiyle değişti:
+         net = b*0.6 + (iz + b*0.4)     -> sadeleşince  b + iz
+       yani düz toplamın kendisiydi, hiçbir şey korumuyordu. Doğrusu bir
+       toplama değil bir KIRPMA. */
     const bl = (ort.Yayla && typeof ort.Yayla.geceBicim === 'function')
       ? ort.Yayla.geceBicim() : null;
-    if(bl && this.d && typeof this.d.bekle === 'number')
-      this.d.bekle = Math.max(60, this.d.bekle - (bl.uyari || 0));
-
     const iz = ort.Iz ? ort.Iz.etki() : null;
-    if(iz && this.d && typeof this.d.bekle === 'number'){
+    if(this.d && typeof this.d.bekle === 'number'){
       const yerde = (k === 'vasak' || k === 'sirtlan' || k === 'ayi' || k === 'hirsiz');
-      const kaydir = (iz.erkenUyari || 0) - (yerde ? (iz.yerGecikme || 0) : 0);
-      this.d.bekle = Math.max(60, this.d.bekle - kaydir);
+      const b = bl ? (bl.uyari || 0) : 0;
+      const izK = iz ? ((iz.erkenUyari || 0) - (yerde ? (iz.yerGecikme || 0) : 0)) : 0;
+      let net = b + izK;
+      if(b < 0) net = Math.min(net, b * this.BOLGE_PAYI);
+      else if(b > 0) net = Math.max(net, b * this.BOLGE_PAYI);
+      /* Telgraf penceresi tümüyle kaybolmuyor: "zar haksız hissettirir". */
+      this.d.bekle = Math.max(60, this.d.bekle - net);
     }
     return this.d;
   },

@@ -6815,7 +6815,7 @@ const Attract = {
     }
     // Sisli gün (17-19): "ağıl sisir" — aynı FOG kaynağı, dünya payı burada
     // (nesnelerden ÖNCE), hafif varlık payı nesnelerden SONRA (aşağıda).
-    const fog = seasonFog(Season.day);
+    const fog = guncelSis(Season.day);   // bkz. guncelSis
     if(fog > 0.002) px(g, 0, 0, W, H, 'rgba(' + FOG.color + ',' + (fog * (1 - FOG.entityMul)).toFixed(3) + ')');
 
     // idle: this.t Attract'in kendi kare sayacı — aşağıdaki blok içinde
@@ -7895,7 +7895,7 @@ function startRun(){
      aşağıdaki her şey eskisiyle birebir aynı davranır). */
   G.seasonDay = Season.day;
   G.dayRule = Season.rule;
-  G.fog = seasonFog(G.seasonDay);
+  G.fog = guncelSis(G.seasonDay);   // bkz. guncelSis: eskiden GERÇEK TAKVİME bağlıydı
   const ap = G.dayRule && G.dayRule.apply;
   /* Geçit (28-30, Faz 3): sabit nokta — sabah İÇİNDE değişmez (yorgunluk
      gibi). Azık burada, TAKVİM DONARKEN tüketilir: "hangi sabahın geçit
@@ -7903,7 +7903,23 @@ function startRun(){
   /* KARAAYAK sabah başına sıfırlanır: bir sabahta tek sürü. */
   KARAAYAK.sabahSifirla();
   TEHDIT.sabahSifirla();
-  G.gecitMode = isGecitDay(G.seasonDay);
+  /* GEÇİT SAHNESİ ARTIK TAKVİME DEĞİL YOLCULUĞA BAĞLI (2026-08-21).
+     Eskiden `isGecitDay(G.seasonDay)` idi: mevsimin 28-30. günü. Mevsim
+     günü GERÇEK TARİHE göre ilerlediği için, oyuncunun gerçek takvimi o
+     aralığa denk geldiğinde yolculuğun HER gecesi göç sahnesine
+     dönüşüyordu — durak gecesinde bile.
+
+     İkinci ve daha sinsi sonucu aşağıdaki blokta: geçit modu açıkken
+     Save.d.larder'dan yol azığı düşülüyor ve yetmezse `gecitHungry`
+     açılıyor (köpek o sabah yorgun/yavaş). Kiler artık HİÇ dolmuyor
+     (tek ekonomi Yayla.kiler), yani o günlerde gecitHungry HER ZAMAN
+     açılıyordu: köpek sebepsiz yavaşlıyor ve oyuncu nedenini hiçbir
+     yerden göremiyordu. Görünmeyen ceza — bu deponun yasakladığı şey.
+
+     Yolculuk açıkken tek kaynak yolculuğun kendi sahnesi (aşağıda,
+     `Yayla.sahne() === 'yol'`). Yolculuk yokken eski davranış duruyor. */
+  G.gecitMode = (typeof Yayla !== 'undefined' && Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti)
+    ? false : isGecitDay(G.seasonDay);
   /* YOL SAHNESİ (==YAYLA-AKIS==): kampanyanın göç günü. Mevcut göç
      makinesini (gecitMode, layGecitFlock, drawGocScene) YENİDEN
      YAZMIYOR — üstüne iki şey ekliyor: geride kalanlar ve hız takası.
@@ -7915,7 +7931,11 @@ function startRun(){
   } else if(G.yaylaAktif){
     Yayla.yol = null;
   }
-  if(G.gecitMode){
+  /* Yol azığının bedeli YOLCULUKTA burada ödenmiyor: Yayla.yolAzik()
+     ödüyor, ve iki yerden birden ödemek zaten bir kez sefer kilidine yol
+     açmıştı (docs/kosum-raporu.md, "göç azığı iki kez sayılıyordu").
+     Bu blok yalnız yolculuk YOKKEN çalışıyor. */
+  if(G.gecitMode && !(typeof Yayla !== 'undefined' && Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti)){
     const have = Save.d.larder || 0;
     // Geçide GİRERKEN kiler — "ay boyu biriktirdiğiyle mi giriyor" sorusu
     if(G.seasonDay === 28 && Save.first('tel.pass.s' + Save.d.season)) Telemetry.passEntered(have);
@@ -8176,6 +8196,34 @@ function milkableCount(flock, day){
 function lambCount(flock, day){
   if(day == null || day < SAGIM.kuzulamaDay) return 0;
   return Math.max(1, Math.floor(flock / 2));
+}
+
+/* ===== KUZU SAYISI ARTIK YOLCULUĞUN KENDİ İLERLEMESİNE BAĞLI ==========
+   GERÇEK BİR HATA BULUNDU (2026-08-21). Yolculuğun günlük kuzu tüketimi
+   `lambCount(flock, G.seasonDay)` ile hesaplanıyordu — yani MEVSİM
+   gününe. Mevsim günü GERÇEK TAKVİM TARİHİNE göre ilerliyor.
+
+   Sonucu şuydu: oyuncunun ekonomisi, oyunu hangi gün İNDİRDİĞİNE göre
+   değişiyordu. Yolculuğa mevsimin 3. gününde başlayan biri 45 gün
+   boyunca hiç kuzu beslemiyor (eşik 12); 20. gününde başlayan biri ilk
+   günden besliyor. Aynı yolculuk, iki farklı ekonomi, ve sebebi oyunun
+   içinde hiçbir yerde görünmüyor.
+
+   Takvim silindiğinde (docs/plan-tek-mod.md) bu bağ anlamsız kaldı ama
+   kopmadı: gösterge gitti, bağımlılık kaldı. Sessiz kalan bir bağ,
+   silinmiş bir sistemin en tehlikeli artığı.
+
+   Artık eşik BÖLGE: yolculuk KUZU_BOLUM'a varınca kuzular doğmuş sayılır
+   ve beslenmeye başlar. 4 seçildi çünkü eski eşiğin yerine denk geliyor
+   (bölüm 4 ≈ 13. gün, eski eşik 12) — davranış korunuyor, dayanağı
+   değişiyor. */
+const KUZU_BOLUM = 4;
+function yolcuKuzu(){
+  if(typeof Yayla !== 'undefined' && Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti){
+    return (Yayla.sefer.bolum | 0) >= KUZU_BOLUM
+      ? Math.max(1, Math.floor((Save.d.flock | 0) / 2)) : 0;
+  }
+  return lambCount(Save.d.flock, G.seasonDay);
 }
 
 /* --- geçit (Faz 3, docs/mevsim-tasarim.md "Geçit ve kışlak") -----------
@@ -9071,6 +9119,35 @@ function dawnP(){
    değerini okuyacak (bkz. ADIM: ağıl=menü). */
 function seasonFog(day){
   return (day != null && day >= 17 && day <= 19) ? 0.5 : 0;
+}
+
+/* ===== SİS ARTIK BÖLGENİN HAVASINDAN ===================================
+   Üçüncü vaka, ve bu seferki iki taraflı:
+
+   1. Sis `seasonFog(G.seasonDay)` ile geliyordu — mevsimin 17-19. günü,
+      yani GERÇEK TAKVİM. Yolculukta sis, oyuncunun o gün hangi tarihte
+      olduğuna göre iniyordu. Sis görüşü kapatır, yani zorluk; zorluğun
+      kaynağı takvim olamaz.
+
+   2. Bunun tersi de doğruydu ve daha çarpıcı: yolculuğun HER BÖLGESİNİN
+      zaten bir havası TANIMLI (`SEFER[i].hava`: sis, yağmur, rüzgâr,
+      fırtına, kar...). Alan yazılmış ama **hiçbir yerden okunmuyordu** —
+      `grep '\.hava'` tek bir tüketici bulmuyor. Yani bölgeler havasını
+      beyan ediyor, oyun onu duymuyordu.
+
+   İki kusur birbirinin cevabı: takvimden kopar, bölgeye bağla.
+   Boğaz Girişi ('sis') artık gerçekten sisli; ve sisli oluşu oyuncunun
+   takvimine değil NEREDE OLDUĞUNA bağlı. */
+const HAVA_SIS = { sis: 0.5, firtina: 0.35, kar: 0.30, yagmur: 0.18 };
+function bolgeSis(){
+  if(typeof Yayla === 'undefined' || !Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return null;
+  const b = Yayla.seferBolum();
+  return b ? (HAVA_SIS[b.hava] || 0) : 0;
+}
+/* Tek kapı: yolculuk açıksa bölgenin havası, değilse eski mevsim sisi. */
+function guncelSis(gun){
+  const b = bolgeSis();
+  return b == null ? seasonFog(gun) : b;
 }
 const FOG = {
   color: '214,214,222',   // soğuk gri-beyaz pus
@@ -12935,7 +13012,7 @@ function yaylaSahneIlerlet(){
   /* Gün doldu: tüketim + yeterlilik kapısı + azık, hepsi tek yerden. */
   const r = Yayla.gunuKapat({
     suru: Save.d.flock | 0,
-    kuzu: lambCount(Save.d.flock, G.seasonDay),
+    kuzu: yolcuKuzu(),   // bkz. yolcuKuzu: eski hâli GERÇEK TAKVİME bağlıydı
     kopekYuruyebilir: (Save.d.sore || 0) < DOGRUN.soreMornings,
   });
   if(!r) return null;
