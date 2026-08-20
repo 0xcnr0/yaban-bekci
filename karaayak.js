@@ -228,7 +228,7 @@ const KARAAYAK = {
       a.kopuk = true;                      // GETİR'in okuyacağı işaret
     });
     this.bolduMu = true;
-    if(ort.showMsg) ort.showMsg('SURU BOLUNDU — kopanlari topla', 200);
+    if(ort.showMsg) ort.showMsg('THE FLOCK SPLIT. BRING THE STRAYS BACK', 200);
     if(ort.Snd && ort.Snd.bark) ort.Snd.bark();
     return kopan.length;
   },
@@ -249,7 +249,7 @@ const KARAAYAK = {
     d.kHamle = Math.max(d.kHamle || 0, 60);
     if(ort.shake) ort.shake(3);
     if(ort.Snd && ort.Snd.ping) ort.Snd.ping();
-    if(ort.showMsg && d.hitsTaken === 1) ort.showMsg('KARAAYAK — durmuyor', 170);
+    if(ort.showMsg && d.hitsTaken === 1) ort.showMsg('BLACKFOOT IS NOT BACKING DOWN', 170);
     return true;
   },
 
@@ -271,6 +271,20 @@ const KARAAYAK = {
     }
     Y.cizTehdit(g, 'karaayak', d.x, d.y, d.dir);
     return true;
+  },
+
+  /* İZ BIRAKTI MI (ADR-020'nin üçüncü kanalı). Karaayak bölüm 4'te bir
+     koyun alıp kaçarken iz bırakıyor — harita "bölüm 4: iz sürme
+     açılıyor" diyor.
+
+     ADR-010 KORUNUYOR: iz KARŞILAŞMAYLA kazanılıyor, ustalıkla DEĞİL.
+     İyi nişancı daha çok iz almıyor; sürü ile karşılaşan alıyor. Hatta
+     tersi bile denebilir — koyunu kaptıran iz alıyor. Bilerek: iz bir
+     ödül değil, bir İZ. */
+  izBirakti(ort){
+    if(this.kip !== 'dogrudan') return false;
+    if(!ort.Iz) return false;
+    return ort.Iz.kazan('karaayakIzi');
   },
 
   /* Sabah bitti: bu sürüden geriye kalan ne? Bölüm dökümü ve rota

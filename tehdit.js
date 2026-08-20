@@ -79,6 +79,19 @@ const TEHDIT = {
     this.aktif = k; this.geldi = true; this.olanlar[k] = true;
     const kur = this['kur_' + k];
     this.d = kur ? kur.call(this, ort) : null;
+    /* İZLERİN VERDİĞİ TARAF (ADR-020). Bedeli zaten sağımda ve SAVUR'da
+       ısırıyor; karşılığı burada ödeniyor, yoksa iz salt ceza olurdu.
+         erkenUyari  tehdit bu kadar KARE önce belli olur (bekleme kısalır)
+         yerGecikme  yer tehdidi bu kadar GEÇ fark edilir (bekleme uzar —
+                     Kartal Gölgesi'nin bedeli: gözün yukarıda)
+       Bekleme tabana çakılmıyor: telgraf penceresi tümüyle kaybolursa
+       "zar haksız hissettirir" kuralı çiğnenirdi. */
+    const iz = ort.Iz ? ort.Iz.etki() : null;
+    if(iz && this.d && typeof this.d.bekle === 'number'){
+      const yerde = (k === 'vasak' || k === 'sirtlan' || k === 'ayi' || k === 'hirsiz');
+      const kaydir = (iz.erkenUyari || 0) - (yerde ? (iz.yerGecikme || 0) : 0);
+      this.d.bekle = Math.max(60, this.d.bekle - kaydir);
+    }
     return this.d;
   },
 
@@ -144,7 +157,7 @@ const TEHDIT = {
          öğretilmesinin gerekçesi tam olarak bu. */
       if(ort.komut() === 'sus' && Math.abs(ort.dog.x - d.x) < this.VASAK.susR){
         d.evre = 'bitti'; d.bozuldu = true;
-        if(ort.showMsg) ort.showMsg('vasak pusuyu bozdu — cekildi', 170);
+        if(ort.showMsg) ort.showMsg('THE LYNX GAVE UP AND LEFT', 170);
         return;
       }
       if(d.t < d.bekle) return;
@@ -175,15 +188,14 @@ const TEHDIT = {
      hiçbir şey çizilmiyor — görünmezlik sözleşmenin kendisi. */
   ciz_vasak(ort, g, d){
     if(d.evre === 'isaret'){
-      const Y = ort.Yayla, p = Y.TEHDIT.vasak.pal;
-      /* Yalnız kulaklar: iki püskül, çalının üstünde. Titreşim BİLEREK
-         var — sabit iki piksel arka planda kaybolur, kıpırdayan gözü
-         çeker (telgrafın işi görülmek). */
+      /* ÜRETİLEN PUSU KARESİ (tehditsanat.js). Elle çizilmiş dört
+         pikselin yerini aldı. tehdit-sanat.md ölçmüştü: vaşağın kimliği
+         kürk deseninde değil KULAK SİLUETİNDE — üretim onu tutturdu.
+         Titreşim BİLEREK duruyor: sabit bir siluet arka planda kaybolur,
+         kıpırdayan gözü çeker (telgrafın işi görülmek). */
       const k = (d.t >> 2) & 1;
-      ort.px(g, d.x - 3, d.y - 5 - k, 2, 4, p.c);
-      ort.px(g, d.x + 2, d.y - 5 - k, 2, 4, p.c);
-      ort.px(g, d.x - 3, d.y - 7 - k, 1, 2, p.a);
-      ort.px(g, d.x + 3, d.y - 7 - k, 1, 2, p.a);
+      const sp = (typeof TehditSanat !== 'undefined') && TehditSanat.Y_VASAK_PUSU;
+      if(sp) ort.Yayla.cizSprite(g, sp, d.x, d.y - k, 1, 'pusu');
       return;
     }
     if(d.evre === 'sicrama') ort.Yayla.cizTehdit(g, 'vasak', d.x, d.y, 1);
@@ -194,7 +206,7 @@ const TEHDIT = {
     if(d.evre === 'sicrama' && d.t > 10) return false;      // ilk ~10 kare
     if(Math.abs(x - d.x) > 12 || Math.abs(y - d.y) > 14) return false;
     d.evre = 'bitti'; d.vuruldu = true;
-    if(ort.showMsg) ort.showMsg('VASAK KACIRILDI', 180);
+    if(ort.showMsg) ort.showMsg('THE LYNX TOOK A SHEEP', 180);
     if(ort.Snd && ort.Snd.hit) ort.Snd.hit();
     return true;
   },
@@ -307,7 +319,7 @@ const TEHDIT = {
     if(ates && !ort.Yayla.gorunur(d.x, d.y, ates.x, ates.y)) return false;
     if(Math.abs(x - d.x) > 16 || Math.abs(y - d.y) > 16) return false;
     d.evre = 'bitti'; d.vuruldu = true;
-    if(ort.showMsg) ort.showMsg('SIRTLAN KACIRILDI', 180);
+    if(ort.showMsg) ort.showMsg('THE HYENA TOOK A SHEEP', 180);
     if(ort.Snd && ort.Snd.hit) ort.Snd.hit();
     return true;
   },
@@ -340,7 +352,7 @@ const TEHDIT = {
   gun_ayiGorulme(ort, d){
     d.t++;
     d.x += d.dir * this.AYI.hiz * 1.4;
-    if(d.t === 40 && ort.showMsg) ort.showMsg('uzakta bir seY var', 200);
+    if(d.t === 40 && ort.showMsg) ort.showMsg('SOMETHING IS OUT THERE', 200);
     /* Sürü onu görüyor — ve oyuncu sürüden anlıyor. Mekanik yok, his var. */
     ort.aliveFlock().forEach(a => { if(a.alarm < 8) a.alarm = 8; a.state = 'alert'; });
     if(d.x < -40 || d.x > ort.W + 40) d.evre = 'bitti';
@@ -403,6 +415,15 @@ const TEHDIT = {
     if(d.evre === 'bitti') return;
     const Y = ort.Yayla;
     if(Y.geceMi && Y.geceMi() && ort.gece && !Y.gorunur(d.x, d.y, ort.gece.x, ort.gece.y)) return;
+    /* ŞAHA KALKMA — yalnız KÖPEĞE YÖNELDİĞİNDE. Ayı sahneyi geçmeyi
+       bırakıp sana döndüğü an bu; ADR-021'in "vurulmayan bir GÜÇ"
+       tanımının görsel karşılığı. Geçip giderken duruş pozunda kalıyor,
+       yoksa şaha kalkma sıradanlaşır ve anlamını yitirir.
+       ADAY B kurulu (üçgen siluet, açık göbek, gece okunurluğu çözülmüş);
+       aday A `art/gen/tehdit/ayi-saha-a.png`'de duruyor — GEÇİCİ, sahibi
+       telefonda bakacak (docs/tehdit-sanat-uretim.md KARAR GEREKİR md.1). */
+    const sp = d.hedefKopek && (typeof TehditSanat !== 'undefined') && TehditSanat.Y_AYI_SAHA;
+    if(sp){ Y.cizSprite(g, sp, d.x, d.y, d.dir, 'saha'); return; }
     Y.cizTehdit(g, 'ayi', d.x, d.y, d.dir);
   },
 
@@ -416,7 +437,7 @@ const TEHDIT = {
     d.x -= d.dir * 2;                       // irkilir, geri adım — sonra gelir
     if(ort.shake) ort.shake(3);
     if(ort.Snd && ort.Snd.ping) ort.Snd.ping();
-    if(d.vurusSay === 1 && ort.showMsg) ort.showMsg('AYI SANA DONDU', 200);
+    if(d.vurusSay === 1 && ort.showMsg) ort.showMsg('THE BEAR TURNED ON YOU', 200);
     return true;
   },
 
@@ -451,7 +472,7 @@ const TEHDIT = {
   gun_hirsiz(ort, d){
     d.t++;
     if(d.evre === 'farket'){
-      if(d.t === 30 && ort.showMsg) ort.showMsg('surunun kenarinda biri var', 220);
+      if(d.t === 30 && ort.showMsg) ort.showMsg('SOMEONE IS AT THE EDGE OF THE FLOCK', 220);
       if(d.t > 60){ d.evre = 'pencere'; d.t = 0; }
       return;
     }
@@ -466,14 +487,14 @@ const TEHDIT = {
       if(Math.abs(ort.dog.x - d.x) < this.HIRSIZ.kopekR &&
          (ort.komut() === 'savur' || ort.dogTask)){
         d.cozum = 'kopek'; d.evre = 'kacti';
-        if(ort.showMsg) ort.showMsg('kopegi gordu — koyunu birakti', 220);
+        if(ort.showMsg) ort.showMsg('HE SAW YOUR DOG AND DROPPED THE SHEEP', 220);
         if(ort.Snd && ort.Snd.bark) ort.Snd.bark();
         return;
       }
       if(d.t > this.HIRSIZ.pencere){
         d.cozum = 'gitti'; d.evre = 'bitti';
         if(a) ort.kap(a);                       // koyun gitti — kalıcı (ADR-008)
-        if(ort.showMsg) ort.showMsg('koyun goturuldu', 220);
+        if(ort.showMsg) ort.showMsg('HE GOT AWAY WITH A SHEEP', 220);
       }
       return;
     }
@@ -485,15 +506,15 @@ const TEHDIT = {
 
   ciz_hirsiz(ort, g, d){
     if(d.evre === 'bitti') return;
-    /* İnsan sprite'ı henüz üretilmedi (PixelLab kotası). GEÇİCİ silüet —
-       kodda böyle işaretli, sanat gelince değişecek. Silüet bilerek
-       tanınabilir: dik duran, sürüden uzun, tek renk. */
+    /* ÜRETİLEN SİLUET (tehditsanat.js). Geçici dört dikdörtgenin yerini
+       aldı. Duruşu tehditkâr DEĞİL telaşlı — bu bir düşman değil,
+       kaçırılacak biri (ADR-021: öldürme yok). */
+    const sp = (typeof TehditSanat !== 'undefined') && TehditSanat.Y_HIRSIZ;
+    if(sp){ ort.Yayla.cizSprite(g, sp, d.x, d.y, d.dir, 'kacar'); return; }
     const p = ort.Yayla.TEHDIT.karaayak.pal;
-    ort.px(g, d.x - 2, d.y - 16, 4, 12, p.a);      // gövde
-    ort.px(g, d.x - 2, d.y - 20, 4, 4, p.b);       // baş
-    ort.px(g, d.x - 5, d.y - 14, 3, 2, p.a);       // kol (koyunu çekiyor)
-    ort.px(g, d.x - 2, d.y - 4, 2, 4, p.a);        // bacak
-    ort.px(g, d.x + 1, d.y - 4, 2, 4, p.a);
+    ort.px(g, d.x - 2, d.y - 16, 4, 12, p.a);
+    ort.px(g, d.x - 2, d.y - 20, 4, 4, p.b);
+    ort.px(g, d.x - 2, d.y - 4, 2, 4, p.a);
   },
 
   /* HAVAYA ATEŞ: insanın belirgin biçimde ÜSTÜNE. İnsanın kendisine
@@ -504,13 +525,13 @@ const TEHDIT = {
     if(y > d.y - this.HIRSIZ.havaEsik){
       /* İnsana nişan alındı: atış geçersiz, ve oyun bunu SÖYLÜYOR —
          sessizce yutmak "oyun bozuk" öğretir. */
-      if(ort.showMsg) ort.showMsg('insana ates etmiyoruz', 200);
+      if(ort.showMsg) ort.showMsg('WE DO NOT SHOOT PEOPLE', 200);
       return true;
     }
     d.cozum = 'hava'; d.evre = 'kacti';
     const a = d.tgt && ort.koyun(d.tgt);
     if(a){ a.alarm = 60; }
-    if(ort.showMsg) ort.showMsg('HAVAYA ATES — kacti, koyun kaldi', 220);
+    if(ort.showMsg) ort.showMsg('WARNING SHOT. HE RAN, THE SHEEP STAYED', 220);
     return true;
   },
 
@@ -534,7 +555,7 @@ const TEHDIT = {
   gun_firtina(ort, d){
     d.t++;
     if(d.evre === 'yaklasan'){
-      if(d.t === 30 && ort.showMsg) ort.showMsg('hava doniyor — barinaga', 240);
+      if(d.t === 30 && ort.showMsg) ort.showMsg('THE WEATHER IS TURNING. GET TO SHELTER', 240);
       if(ort.Snd && ort.Snd.startWind && d.t === 30) ort.Snd.startWind();
       if(d.t > this.FIRTINA.uyari){ d.evre = 'firtina'; d.t = 0; }
       return;
@@ -555,7 +576,7 @@ const TEHDIT = {
         });
         d.evre = 'bitti'; d.bitti = true;
         if(ort.Snd && ort.Snd.stopWind) ort.Snd.stopWind();
-        if(ort.showMsg) ort.showMsg('firtina gecti — ' + d.kurtarilan + ' barinakta', 260);
+        if(ort.showMsg) ort.showMsg('THE STORM PASSED. SAFE IN SHELTER: ' + d.kurtarilan + ' barinakta', 260);
       }
     }
   },

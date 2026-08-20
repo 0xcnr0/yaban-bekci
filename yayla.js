@@ -37,10 +37,10 @@ const Y_KOMUT = {
   /* seans: kaç eğitim seansı ister (his-düğmesi, ölçüm değil — oynanışta
      ayarlanacak). Sıraya göre ağırlaşıyor: köpek zorlaşan işleri daha
      geç kavrıyor, ve geç komutların bedeli (yuva) daha yüksek. */
-  dur:   { tr:'DUR',   en:'STAY',    bolum:2, seans:2 },
-  getir: { tr:'GETİR', en:'FETCH',   bolum:3, seans:3 },
-  sus:   { tr:'SUS',   en:'QUIET',   bolum:6, seans:3 },
-  savur: { tr:'SAVUR', en:'DRAW',    bolum:8, seans:4 },
+  dur:   { en:'STAY',   bolum:2, seans:2 },
+  getir: { en:'FETCH',  bolum:3, seans:3 },
+  sus:   { en:'QUIET',  bolum:6, seans:3 },
+  savur: { en:'CHARGE', bolum:8, seans:4 },
 };
 const Y_SLOT = 3;                       // ölçülmüş sınır, keyfi değil
 
@@ -303,7 +303,7 @@ const Y_IKON = {
    yapılmıştı — tabanın toynakları ZATEN #2e2028, yani karartmak yerine
    AÇILMIŞTI. Palet okuyarak değil basıp bakınca çıktı. */
 const Y_BIREY = {
-  cingirakli: { tr:'Çıngıraklı', en:'Bell', w:17, h:11,
+  cingirakli: { en:'Bell', w:17, h:11,
     pal:{ a:'#dfd6c7', b:'#e7be95', c:'#ddab91', d:'#483436', e:'#c99474', f:'#38282e', g:'#89615a', h:'#d39273', i:'#e8b830', j:'#2e2028' },
     rows:[
       '....aaaaa........',
@@ -318,7 +318,7 @@ const Y_BIREY = {
       '.f.j......jf.....',
       '.g.d......dg.....',
     ]},
-  karaayakli: { tr:'Karaayaklı', en:'Blackfoot', w:17, h:11,
+  karaayakli: { en:'Blackfoot', w:17, h:11,
     pal:{ a:'#dfd6c7', b:'#e7be95', c:'#ddab91', d:'#483436', e:'#c99474', f:'#38282e', g:'#89615a', h:'#d39273', i:'#2e2028', j:'#101018' },
     rows:[
       '....aaaaa........',
@@ -333,7 +333,7 @@ const Y_BIREY = {
       '.j.j......jj.....',
       '.j.j......jj.....',
     ]},
-  benekli: { tr:'Benekli', en:'Speckle', w:17, h:11,
+  benekli: { en:'Speckle', w:17, h:11,
     pal:{ a:'#dfd6c7', b:'#e7be95', c:'#89615a', d:'#ddab91', e:'#483436', f:'#c99474', g:'#38282e', h:'#d39273', i:'#2e2028' },
     rows:[
       '....aaaaa........',
@@ -348,7 +348,7 @@ const Y_BIREY = {
       '.g.i......ig.....',
       '.c.e......ec.....',
     ]},
-  topal: { tr:'Topal', en:'Limp', w:17, h:11,
+  topal: { en:'Limp', w:17, h:11,
     pal:{ a:'#dfd6c7', b:'#e7be95', c:'#ddab91', d:'#483436', e:'#c99474', f:'#38282e', g:'#89615a', h:'#d39273', i:'#2e2028' },
     rows:[
       '....aaaaa........',
@@ -363,7 +363,7 @@ const Y_BIREY = {
       '.f.i.....d.f.....',
       '.g.d.......g.....',
     ]},
-  kuzuluana: { tr:'Kuzulu Ana', en:'Ewe', w:17, h:11,
+  kuzuluana: { en:'Ewe', w:17, h:11,
     pal:{ a:'#dfd6c7', b:'#e7be95', c:'#ddab91', d:'#483436', e:'#c99474', f:'#38282e', g:'#89615a', h:'#d39273', i:'#2e2028' },
     rows:[
       '....aaaaa........',
@@ -378,7 +378,7 @@ const Y_BIREY = {
       '.f.i......if.....',
       '.g.d......dg.....',
     ]},
-  karayuz: { tr:'Karayüz', en:'Blackface', w:17, h:11,
+  karayuz: { en:'Blackface', w:17, h:11,
     pal:{ a:'#dfd6c7', b:'#e7be95', c:'#ddab91', d:'#38282e', e:'#483436', f:'#89615a', g:'#d39273', h:'#c99474', i:'#2e2028' },
     rows:[
       '....aa.aa........',
@@ -393,7 +393,7 @@ const Y_BIREY = {
       '.d.i......id.....',
       '.f.e......ef.....',
     ]},
-  koc: { tr:'Koç', en:'Ram', w:17, h:11,
+  koc: { en:'Ram', w:17, h:11,
     pal:{ a:'#dfd6c7', b:'#89615a', c:'#e7be95', d:'#ddab91', e:'#483436', f:'#c99474', g:'#38282e', h:'#d39273', i:'#2e2028' },
     rows:[
       '....aaaaa........',
@@ -408,7 +408,7 @@ const Y_BIREY = {
       '.g.i......ig.....',
       '.b.e......eb.....',
     ]},
-  kuzu: { tr:'Kuzu', en:'Lamb', w:9, h:7,
+  kuzu: { en:'Lamb', w:9, h:7,
     pal:{ a:'#dfd6c7', b:'#483436', c:'#ddab91', d:'#38282e', e:'#d39273' },
     rows:[
       '...aaaa..',
@@ -629,6 +629,35 @@ const Yayla_ = {
     this.harcanan = 0;
     this.sagimBugun = 0;
     this.birak();               // dünkü komut sabaha taşınmaz
+    this.egitimHazirla();
+  },
+
+  /* SIRASI GELEN KOMUTU GÜNÜN BAŞINDA SEÇ.
+
+     NİYE BURADA: konak ekranı "eğitim yapılabilir mi" sorusunu
+     `this.egitim` dolu mu diye soruyor. Seçim yalnız DOKUNUŞTA yapılsaydı
+     ekran hep "eğitim yok" derdi ve dokunmak da mümkün olmazdı — tavuk
+     yumurta. Ölçüldü: oyuncu HİÇBİR komutu öğrenemiyordu.
+
+     SEÇİM MENÜ DEĞİL SIRA: harita komutları bölümlere bağlıyor
+     (DUR@2, GETİR@3, SUS@6, SAVUR@8), yani cevap zaten belli. Bir seçim
+     ekranı ADR-024'ün yasakladığı menü katmanını geri getirirdi.
+
+     Süren bir eğitim varsa DOKUNULMUYOR — seanslar boşa yanmasın. */
+  egitimAdayi(){
+    if(!this.sefer) return null;
+    const bolum = this.sefer.bolum;
+    const sira = Object.keys(Y_KOMUT)
+      .filter(k => !this.ogrenilen.includes(k) && Y_KOMUT[k].bolum <= bolum)
+      .sort((a, b) => Y_KOMUT[a].bolum - Y_KOMUT[b].bolum);
+    return sira.length ? sira[0] : null;
+  },
+
+  egitimHazirla(){
+    if(this.egitim) return this.egitim.k;
+    const k = this.egitimAdayi();
+    if(k) this.egitimSec(k);
+    return k;
   },
 
   /* Bir yuva harca. tur: 'sagim' | 'egitim' | 'bakim' | 'bahce'.
@@ -688,6 +717,12 @@ const Yayla_ = {
      sürüsü biten oyuncu yuvasını da kaybederdi. */
   sag(suru){
     if(this.sagimBugun >= Math.max(0, suru | 0)) return false;
+    /* İZİN BEDELİ (ADR-007: bedava güç yok). Karaayak izi sürüyü tedirgin
+       ediyor — günlük sağım tavanı bir eksiliyor. Takas BURADA acıtıyor,
+       yoksa iz bedava bir güç olurdu. */
+    const iz = this.Iz ? this.Iz.etki() : null;
+    const tavan = this.YUVA.sagimTavan + (iz ? iz.sagimTavan : 0);
+    if(this.sagimBugun >= Math.max(1, tavan)) return false;
     if(!this.yuvaHarca('sagim')) return false;
     this.kiler++;
     return { kiler: this.kiler, sagim: this.sagimBugun };
@@ -970,7 +1005,13 @@ const Yayla_ = {
       if(sur(s2.x, s2.y)){
         s2.t = 0;                          // tehdit köpekle meşgul
         this.savurKare = (this.savurKare || 0) + 1;
-        if(this.savurKare % 30 === 0) G.dogHurt = Math.max(G.dogHurt || 0, 24);
+        /* İZİN BEDELİ: Ayı Korkusu köpeği ürkek yapıyor, SAVUR onu daha
+           çok yıpratıyor (ADR-007). */
+        if(this.savurKare % 30 === 0){
+          const iz = this.Iz ? this.Iz.etki() : null;
+          const carpan = 1 + (iz ? iz.savurYipranma : 0);
+          G.dogHurt = Math.max(G.dogHurt || 0, Math.round(24 * carpan));
+        }
       }
       return true;
     }
@@ -1045,6 +1086,11 @@ const Yayla_ = {
   kaydet(){
     return { ogrenilen: this.ogrenilen.slice(), tasinan: this.tasinan.slice(),
              kiler: this.kiler, kirkimYapildi: this.kirkimYapildi,
+             /* Alet ve izler kendi modüllerinde yaşıyor; şemaları onların.
+                Kampanya kaydı TEK yerden geçiyor (Save.put) — ikinci bir
+                kayıt kapısı açmak birinin unutulması demekti. */
+             alet: (typeof Alet !== 'undefined') ? Alet.kaydet() : null,
+             iz: (typeof Iz !== 'undefined') ? Iz.kaydet() : null,
              bahce: { ekili: this.bahce.ekili, kayip: this.bahce.kayip, hasat: this.bahce.hasat },
              egitim: this.egitim ? { k: this.egitim.k, seans: this.egitim.seans } : null,
              sefer: this.sefer ? JSON.parse(JSON.stringify(this.sefer)) : null };
@@ -1063,6 +1109,8 @@ const Yayla_ = {
     /* Kiler: negatif ya da sayı olmayan kayıt sıfıra düşer (kurcalama). */
     this.kiler = Math.max(0, Number(d.kiler) || 0);
     this.kirkimYapildi = d.kirkimYapildi === true;
+    if(typeof Alet !== 'undefined') Alet.yukle(d.alet);
+    if(typeof Iz !== 'undefined') Iz.yukle(d.iz);
     /* Bahçe: kurcalanmış kayıt tavanı aşamaz, kayıp ekiliyi geçemez. */
     const bh = (d.bahce && typeof d.bahce === 'object') ? d.bahce : {};
     const ekili = Math.max(0, Math.min(this.BAHCE.tavan, Number(bh.ekili) || 0));
@@ -1084,6 +1132,8 @@ const Yayla_ = {
     this.odun = 0; this.atesOdun = 0; this.egitim = null; this.sefer = null;
     this.yuvaKalan = 0; this.harcanan = 0; this.sagimBugun = 0; this.kiler = 0;
     this.kirkimYapildi = false; this.bahce = { ekili: 0, kayip: 0, hasat: false };
+    if(typeof Alet !== 'undefined') Alet.sifirla();
+    if(typeof Iz !== 'undefined') Iz.sifirla();
     this.gun = null; this.geceZorla = false; this.yol = null; this._tohum = 12345;
   },
 
@@ -1344,16 +1394,19 @@ const Yayla_ = {
      Sahnelerin GÖRSELİ HUD araştırmasını bekliyor; buradaki şey akışın
      kendisi. Tehdit/yan iş bağlantıları kendi sahneleriyle gelecek. */
   SEFER: [
-    { ad:'Kışlak Eşiği',   gunler:'KKY',    hava:'acik' },
-    { ad:'Ova Konağı',     gunler:'KKKB',   hava:'ilkgece' },
-    { ad:'Boğaz Girişi',   gunler:'KYKYB',  hava:'sis' },
-    { ad:'Ağaç Hattı',     gunler:'KKYKB',  hava:'karisik' },
-    { ad:'Yayla',          gunler:'YKKKKB', hava:'acik' },
-    { ad:'Dere Konağı',    gunler:'YKKB',   hava:'yagmur' },
-    { ad:'Boğaz Dönüşü',   gunler:'YKKKB',  hava:'ruzgar' },
-    { ad:'İkinci Zirve',   gunler:'KKYKB',  hava:'gece' },
-    { ad:'Son Bozkır',     gunler:'YKKB',   hava:'firtina' },
-    { ad:'Kışlak (dönüş)', gunler:'YKKB',   hava:'kar' },
+    /* Durak adları İngilizce (2026-08-20, oyunun tamamı İngilizce oldu).
+       Sonuncusu bilerek 'Home' — "Kışlak (dönüş)" yerine, yolculuğun eve
+       döndüğü tek bakışta anlaşılsın diye. */
+    { ad:'Winter Camp',   gunler:'KKY',    hava:'acik' },
+    { ad:'The Flatlands', gunler:'KKKB',   hava:'ilkgece' },
+    { ad:'Canyon Mouth',  gunler:'KYKYB',  hava:'sis' },
+    { ad:'Treeline',      gunler:'KKYKB',  hava:'karisik' },
+    { ad:'The Highland',  gunler:'YKKKKB', hava:'acik' },
+    { ad:'Riverside',     gunler:'YKKB',   hava:'yagmur' },
+    { ad:'Canyon Return', gunler:'YKKKB',  hava:'ruzgar' },
+    { ad:'Second Peak',   gunler:'KKYKB',  hava:'gece' },
+    { ad:'Last Plain',    gunler:'YKKB',   hava:'firtina' },
+    { ad:'Home',          gunler:'YKKB',   hava:'kar' },
   ],
 
   sefer: null,   // { bolum, gun, takilma, centik:[], bitti:null|'vardi'|'suru-bitti' }
@@ -1464,6 +1517,10 @@ const Yayla_ = {
     odunBasiR: 9,     // her odun çemberi bu kadar büyütür
     maxR: 108,        // tavan — ekranın yarısını aşarsa gece gece olmaz
     sonme: 0.02,      // her gece diliminde tükenen odun oranı ölçüsü
+    /* SIRTTA TAŞINAN ODUNUN TAVANI. Yolculuk çıkını sınırlı (ADR-004):
+       odun yer kaplıyor, sonsuz biriktirilemiyor. 10 odun ışığı tavana
+       (maxR 108) çıkarmaya yetiyor — daha fazlası zaten işe yaramaz. */
+    tasimaTavan: 10,
   },
 
   odun: 0,            // elde taşınan odun
@@ -1803,6 +1860,29 @@ const Yayla_ = {
      ana kodun `drawKurt`u da basabilir; bu sarmalayıcı yalnız yön ve
      ölçek için var (drawKurt'a bağlanmadan da çalışsın diye — ART
      bloğunun izolasyon kuralı). */
+  /* Herhangi bir {w,h,pal,kare} sprite'ını çizer — üretilen sanat
+     (tehditsanat.js) da bu biçimde geldiği için ikinci bir çizici
+     yazılmadı. `poz` verilmezse 'dur'. */
+  cizSprite(g, t, x, y, dir, poz){
+    if(!t) return false;
+    const kare = t.kare[poz || 'dur'] || t.kare[Object.keys(t.kare)[0]];
+    if(!kare) return false;
+    const yon = dir < 0 ? -1 : 1;
+    for(let ry = 0; ry < t.h; ry++){
+      const row = kare[ry];
+      if(!row) continue;
+      for(let rx = 0; rx < t.w; rx++){
+        const ch = row[rx];
+        if(ch === '.' || ch === undefined) continue;
+        const c = t.pal[ch];
+        if(!c) continue;
+        const px0 = yon > 0 ? (x + rx - (t.w >> 1)) : (x - rx + (t.w >> 1));
+        px(g, px0, y + ry - t.h, 1, 1, c);
+      }
+    }
+    return true;
+  },
+
   cizTehdit(g, k, x, y, dir){
     const t = this.TEHDIT[k];
     if(!t) return false;
@@ -1841,6 +1921,8 @@ const Yayla_ = {
     return true;
   },
 
+  get Alet(){ return (typeof Alet !== 'undefined') ? Alet : null; },
+  get Iz(){ return (typeof Iz !== 'undefined') ? Iz : null; },
   IKON: Y_IKON,
   KOMUT: Y_KOMUT,
   SLOT: Y_SLOT,

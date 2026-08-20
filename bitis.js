@@ -79,7 +79,8 @@ const Bitis_ = {
         if(yasayanId[id]) yasiyor = true;
       }
       if(!atandi) continue;              // bu sefer bu kimlik hiç dağıtılmamış
-      bireyler.push({ k, ad: B[k] && B[k].tr, en: B[k] && B[k].en, yasiyor });
+      /* Tek dil (2026-08-20): Y_BIREY'de artik yalniz `en` var. */
+      bireyler.push({ k, ad: (B[k] && B[k].en) || k, yasiyor });
     }
     return {
       son: sf.bitti || null,
@@ -137,7 +138,7 @@ const Bitis_ = {
         this.cizSprite(g, sp, x - 1, y, P.oyukKenar, true);
       }
       if(typeof o.yaz === 'function'){
-        const ad = (o.dil === 'en' ? b.en : b.ad) || b.k;
+        const ad = b.ad || b.k;
         o.yaz(g, ad, x + ((sp && sp.w) || 17) / 2, S.y + 4, b.yasiyor ? P.ad : P.adKayip);
       }
     }

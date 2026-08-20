@@ -37,6 +37,31 @@ const Konak_ = {
      gibi duruyordu. Hat kısaldı, aletler büyüdü. */
   HAT: { x0: 74, x1: 230, y: 44 },
   ALET_Y: 52,                       // aletlerin asıldığı üst kenar
+  /* Üretilmiş sprite'ı bul — global ya da modül. */
+  spriteAl(k){
+    const ad = this.SPRITE[k];
+    if(!ad) return null;
+    const kaynak = (typeof TehditSanat !== 'undefined') ? TehditSanat
+      : (typeof globalThis !== 'undefined' && globalThis.TehditSanat) ? globalThis.TehditSanat : null;
+    const o = kaynak && kaynak[ad];
+    if(!o || !o.kare) return null;
+    const ilk = Object.keys(o.kare)[0];
+    return { w: o.w, h: o.h, pal: o.pal, rows: o.kare[ilk] };
+  },
+
+  cizSprite(g, sp, x, y, zorla){
+    for(let ry = 0; ry < sp.rows.length; ry++){
+      const satir = sp.rows[ry];
+      for(let rx = 0; rx < satir.length; rx++){
+        const ch = satir[rx];
+        if(ch === '.') continue;
+        const renk = zorla || sp.pal[ch];
+        if(!renk) continue;
+        this.px(g, x + rx, y + ry, 1, 1, renk);
+      }
+    }
+  },
+
   /* Çoban değneği: günün iş HAKLARI burada. Rota tahtası kasnağı aldı,
      değnek konağa kaldı — aynı nesneye iki anlam yüklenmedi. */
   /* YER ÇAKIŞMAYA GÖRE SEÇİLDİ, göz kararı değil. index.html'deki
@@ -66,17 +91,31 @@ const Konak_ = {
   },
 
   /* ===== İŞ TABLOSU ===================================================
-     YALNIZ kodda karşılığı OLAN işler. ADR-022 sekiz iş onayladı ama
-     `alet bakımı` ve `iz sürme` için `yayla.js`'te fonksiyon YOK — onları
-     çizmek olmayan bir şeyi vaat etmek olurdu (rapor: eksikler md.1). */
+     YALNIZ kodda karşılığı OLAN işler. `alet` ilk yazımda YOKTU çünkü
+     fonksiyonu da yoktu; `prototype/alet.js` yazılınca eklendi — olmayan
+     bir şeyi vaat etmemek kuralı hâlâ geçerli, yalnız artık var.
+     `iz sürme` hâlâ yok: kancası bir KARŞILAŞMA (karaayak.js), konakta
+     yapılan bir iş değil. */
   IS: [
-    { k: 'sagim',  tr: 'Sağım',  en: 'Milking' },
-    { k: 'egitim', tr: 'Eğitim', en: 'Training' },
-    { k: 'bakim',  tr: 'Bakım',  en: 'Care' },
-    { k: 'bahce',  tr: 'Bahçe',  en: 'Garden' },
-    { k: 'kirkim', tr: 'Kırkım', en: 'Shearing' },
-    { k: 'odun',   tr: 'Odun',   en: 'Firewood' },
+    /* Tek dil: Ingilizce (2026-08-20). Adlar KISA tutuldu, cunku hepsi
+       ayni raya diziliyor ve rayda is basina yalnizca 26 piksel var.
+       'Upkeep' bilerek 'Gun' oldu: ilk kez oynayan biri "upkeep"i
+       anlamiyor. Once 'Clean Gun' yazildi ama karede 'SHEARING' ile
+       arasinda 2 piksel kaliyordu ve "SHEARINGCLEAN GUN" diye tek kelime
+       okunuyordu — asilan nesne zaten tufek oldugu icin tek kelime yeter. */
+    { k: 'sagim',  en: 'Milk' },
+    { k: 'egitim', en: 'Training' },
+    { k: 'bakim',  en: 'Care' },
+    { k: 'bahce',  en: 'Garden' },
+    { k: 'kirkim', en: 'Shearing' },
+    { k: 'odun',   en: 'Firewood' },
+    { k: 'alet',   en: 'Gun' },
   ],
+
+  /* Üretilen sprite'lar (prototype/tehditsanat.js). Varsa kullanılır,
+     yoksa prosedürel çizime düşülür — dosya tek başına da çalışsın diye
+     SERT bağımlılık kurulmadı. */
+  SPRITE: { kirkim: 'A_MAKAS', odun: 'A_BALTA', alet: 'A_TAKIM' },
 
   /* ===== DURUM — Yayla'dan TÜRETİLİR ==================================
      hal: 'hazir' | 'bitti' | 'yok' | 'yuvasiz'
@@ -101,9 +140,14 @@ const Konak_ = {
         else if(Y.bahce && Y.bahce.ekili >= Y.BAHCE.tavan) hal = 'bitti';
       } else if(is.k === 'egitim'){
         if(!Y.egitim) hal = 'yok';            // konakta bir komut seçilmemiş
+      } else if(is.k === 'alet'){
+        /* Temiz tüfek temizlenmez — "bitti" hâli budur. `Y.Alet`
+           bağlanmamışsa iş yine görünür (hazır), çünkü modül yokluğu
+           oyuncunun sorunu değil. */
+        if(Y.Alet && (Y.Alet.kir | 0) === 0) hal = 'bitti';
       }
       if(hal === 'hazir' && yuva <= 0) hal = 'yuvasiz';
-      out.push({ k: is.k, tr: is.tr, en: is.en, hal });
+      out.push({ k: is.k, en: is.en, hal });
     }
     return out;
   },
@@ -165,6 +209,11 @@ const Konak_ = {
     const P = this.PAL;
     const c = (renk) => zorla || renk;
     const x = Math.round(cx);
+    /* Üretilmiş sprite varsa onu kullan (PixelLab turu, tehditsanat.js).
+       Yoksa aşağıdaki prosedürel çizim — ikisi de okunuyordu, sprite
+       yalnız daha iyi. */
+    const sp = this.spriteAl(k);
+    if(sp){ this.cizSprite(g, sp, x - Math.floor(sp.w / 2), y, zorla); return; }
     if(k === 'sagim'){                        // güğüm: sap + gövde
       this.px(g, x - 5, y, 11, 2, c(P.metal));
       this.px(g, x - 6, y + 3, 13, 13, c(P.ahsap));
@@ -236,10 +285,28 @@ const Konak_ = {
 
   /* Adlar YALNIZ çağıran yazı fonksiyonu verirse. Oyunun yazı yolu
      index.html'de ve orası bu oturumun bölgesi değil. */
+  /* Adlar İKİ SIRAYA ŞAŞIRTMALI diziliyor, ve bu bir süsleme değil bir
+     ZORUNLULUK — ölçüldü. Rayda iş başına 26 piksel var (156/6), ama
+     oyunun 5x7 fontunda 'Training' 47, 'Firewood' 47, 'Clean Gun' 53
+     piksel. Tek sıraya dizilince harfler komşunun üstüne biniyordu;
+     Türkçedeyken de biniyordu ('Kırkım' 35px), İngilizce yalnız daha
+     görünür hâle getirdi. Şaşırtmalı iki sıra aralığı 52 piksele
+     çıkarıyor ve hepsi sığıyor (tools/konak-ekran.js bunu ölçüyor —
+     yeni bir ad eklenirse test kırılır).
+
+     Alt sıradakilere kancasından inen kısa bir çizgi çekiliyor, yoksa
+     hangi adın hangi alete ait olduğu karışıyor. */
   cizAdlar(g, d, o){
-    const dil = o.dil === 'en' ? 'en' : 'tr';
-    for(let i = 0; i < d.length; i++)
-      o.yaz(g, d[i][dil], this.kancaX(i, d.length), this.ALET_Y + 22, this.PAL.bez);
+    const y0 = this.ALET_Y + 22;
+    for(let i = 0; i < d.length; i++){
+      const alt = (i % 2) === 1;
+      const x = this.kancaX(i, d.length);
+      /* Bağlaç ÜST SIRANIN ALTINDAN başlıyor ve KISIK renkte. İlk yazımda
+         parlak bez rengiyle ve üst satırın hizasından çiziliyordu; karede
+         harflerin arasına giren bir '|' işareti gibi okundu. */
+      if(alt) this.px(g, x, y0 + 7, 1, 3, this.PAL.ahsapLt);
+      o.yaz(g, d[i].en, x, alt ? y0 + 9 : y0, this.PAL.bez);
+    }
   },
 
   px(g, x, y, w, h, renk){

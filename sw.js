@@ -7,7 +7,7 @@
 /* SHELL listesi ELLE TUTULMAZ — tools/build.js diskteki gerçek dosyalardan
    üretir. Elle tutulduğunda atlas asset'leri listeye girmemişti ve çevrimdışı
    ilk açılışta oyun prosedürel sanata düşüyordu. */
-const CACHE = 'yaban-f6bb4bb2';
+const CACHE = 'yaban-2d0a39a3';
 /* ==SHELL-START== */
 const SHELL = [
   './',
@@ -49,11 +49,15 @@ const SHELL = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
+  './alet.js',
   './bitis.js',
+  './cikin.js',
+  './iz.js',
   './karaayak.js',
   './konak.js',
   './rota.js',
   './tehdit.js',
+  './tehditsanat.js',
   './yayla.js',
 ];
 /* ==SHELL-END== */
@@ -80,7 +84,17 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   if (new URL(req.url).origin !== self.location.origin) return;
 
-  // Önbellek öncelikli: oyun tek dosya, güncelleme yeni sürümde CACHE adıyla gelir.
+  /* Önbellek öncelikli: oyun tek dosya, güncelleme yeni sürümde CACHE
+     adıyla gelir.
+
+     ÇEVRİMDIŞI YEDEK YALNIZ GEZİNMEYE (navigate) VERİLİR — bedeli ödendi
+     (2026-08-19, sahibinin telefonunda "ana sayfa tamamen patladı").
+     Burası ESKİDEN her düşen isteğe `index.html` döndürüyordu; yani
+     `assets/fold.json` isteyen kod cevap olarak bir HTML SAYFASI alıyor,
+     `.json()` onu ayrıştıramayıp patlıyordu. Tek bir geçici ağ hatası
+     böylece bir varlığı BOZUK VERİYLE besliyordu — sessiz değil, yanlış.
+     Artık asset isteği düşerse hata olarak düşüyor; çağıran (Assets.load)
+     onu görüp yalnız o sayfayı prosedürel çizime indiriyor. */
   e.respondWith(
     caches.match(req).then(hit => hit || fetch(req).then(res => {
       if (res && res.ok) {
@@ -88,6 +102,9 @@ self.addEventListener('fetch', e => {
         caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
       }
       return res;
-    }).catch(() => caches.match('./index.html')))
+    }).catch(err => {
+      if (req.mode === 'navigate') return caches.match('./index.html');
+      throw err;
+    }))
   );
 });
