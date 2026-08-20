@@ -182,8 +182,40 @@ const Konak_ = {
     for(let i = 0; i < d.length; i++) this.cizAlet(g, d[i], this.kancaX(i, d.length));
     this.cizDegnek(g, Y);
     this.cizKiler(g, Y);
-    if(typeof o.yaz === 'function') this.cizAdlar(g, d, o);
+    if(typeof o.yaz === 'function'){
+      this.cizAdlar(g, d, o);
+      this.cizHakSatiri(g, Y, o);
+    }
     return true;
+  },
+
+  /* GUNUN KISITI ARTIK YAZIYOR (2026-08-20, docs/plan-tek-mod.md).
+
+     Degnegin halkalari kalan is hakkini zaten gosteriyordu ve tasarim
+     bilerek SAYI YAZMIYORDU. Karar geri alindi, sebebi su: "hepsini
+     yapamazsin, SECMEK zorundasin" bu oyunun ASIL kararidir, ve bir
+     kural ancak oyuncu onu BILIYORSA karar olur. Halkalar o kurali
+     ima ediyor, soylemiyor. Ilk kez oynayan biri sapa gecirilmis
+     halkalardan "gunde uc is yapabilirim" sonucunu cikaramaz.
+
+     Uc bagimsiz AI'nin ortak tavsiyesi de ayni yondeydi: kaynak
+     HARCANDIGI anda gorunsun. Burasi tam o an.
+
+     Halkalar KALDI. Yazi onlarin yerine gecmiyor, onlari ADLANDIRIYOR:
+     oyuncu bir kez okuyunca halkalarin ne oldugunu ogreniyor ve sonraki
+     gunlerde yaziya bakmadan halkalari sayabiliyor. */
+  cizHakSatiri(g, Y, o){
+    const kalan = Y ? (Y.yuvaKalan | 0) : 0;
+    const metin = kalan <= 0 ? 'NO HOURS LEFT TODAY'
+                : kalan === 1 ? 'LAST HOUR TODAY'
+                : kalan + ' HOURS LEFT TODAY';
+    /* Rayin ustune ORTALI: satir gunun butun is dizisi hakkinda
+       konusuyor, degnek hakkinda degil. Ilk denemede degnegin ustune
+       konmustu ve sahnenin sol kenarina kacmisti (basildi, bakildi).
+       Renk adlarla AYNI (PAL.bez) — renksiz cagri koyu ciziyor ve yazi
+       gok yuzunde okunmuyordu, o da basilinca goruldu. */
+    const cx = (this.HAT.x0 + this.HAT.x1) / 2;
+    o.yaz(g, metin, cx, this.HAT.y - 12, this.PAL.bez);
   },
 
   cizKiris(g){

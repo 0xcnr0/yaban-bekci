@@ -60,6 +60,11 @@ const Bitis_ = {
   AD_X: 42,                    // adın sol kenarı
   SURU_Y: 96,                  // kayıpsız turda yaşayan sürü hattı
   DIP1_Y: 158, DIP2_Y: 168,    // kapanış satırları
+  /* PAYLAŞ düğmesi — sağ alt köşe. Yeri ölçüldü: kapanış satırlarının en
+     uzunu ('YOU GOT AS FAR AS ...') 320'lik ekranda ortalanınca x253'te
+     bitiyor, plaka x258'den başlıyor. Çakışma yok. */
+  PAYLAS: { x: 258, y: 164, w: 54, h: 13 },
+  KENAR_X: 18,                 // kapanış satırlarının sol kenarı
 
   PAL: {
     gokVardi:   '#2e2028',
@@ -88,8 +93,9 @@ const Bitis_ = {
     yeniSuru: 'A NEW JOURNEY STARTS WITH A NEW FLOCK.',
     temiz:    'NOT ONE OF THEM WAS LOST.',
     kayipBas: 'LOST ALONG THE WAY',
+    paylas:   'SHARE',
     dahaVar:  'AND {n} MORE',
-    ogrendi:  'YOUR DOG LEARNED: {k}',
+    ogrendi:  'DOG LEARNED: {k}',
     kadar:    'YOU GOT AS FAR AS {yer}.',
   },
   s(k, d){
@@ -165,6 +171,7 @@ const Bitis_ = {
       if(d.kayipSayi === 0) this.cizSuruTam(g, Y, d);
       else this.cizRoll(g, Y, d, o);
       this.cizDip(g, Y, d, vardi, o);
+      this.cizPaylas(g, o);
     }
     return d;
   },
@@ -222,6 +229,47 @@ const Bitis_ = {
     if(kayip.length > gorunen.length)
       this.yazSol(g, o, this.s('dahaVar', { n: kayip.length - gorunen.length }),
                   this.AD_X, y, P.rollBaslik);
+  },
+
+  /* ===== PAYLAŞIM ====================================================
+     Kart makinesi (`openCardView`) ana ekrandan söküldü — üç danışmanın
+     ortak kararı: "ana ekranda işi yok". Doğru yeri BURASI, çünkü
+     paylaşılacak bir hikâye ancak burada oluşuyor: isimler, kaç tanesi
+     döndü, nereye kadar gelindi. Boş bir ana ekranda paylaşılacak hiçbir
+     şey yoktu.
+
+     BU DOSYA KARTI KENDİ AÇMIYOR. Çizim fonksiyonu her karede çalışıyor;
+     oradan bir ekran açmak kartı sonsuz kez açardı. Burada olan üç şey:
+     düğmeyi ÇİZ, dokunuşu TANI (`paylasVur`), ve istendiğinde AÇ
+     (`paylas`). Dokunuş yolunu bağlamak çağıranın işi — index.html bu
+     oturumun bölgesi değil. Gereken tek satır:
+
+         if(Bitis.paylasVur(p.x, p.y)){ Bitis.paylas(); return; }
+
+     `paylas()` global `openCardView`i YUMUŞAK arıyor: yoksa sessizce
+     false dönüyor, epilog çalışmaya devam ediyor. */
+  cizPaylas(g, o){
+    const P = this.PAL, B = this.PAYLAS;
+    /* Plaka gövdesi '#2e2028' idi ve 'vardi' sonunun gök rengi de
+       '#2e2028' — yani plaka arka planla BİREBİR aynıydı ve karede
+       görünmüyordu, yalnız iki açık kenarı çıkıyordu (havada duran bir
+       çizgi + altı çizili SHARE gibi). Gövde bir ton açıldı: iki sonun
+       da zemininden ayrılıyor. */
+    this.px(g, B.x, B.y, B.w, B.h, '#483436');
+    this.px(g, B.x, B.y, B.w, 1, P.ad);
+    this.px(g, B.x + 3, B.y + B.h - 2, B.w - 6, 1, P.ad);
+    o.yaz(g, this.s('paylas'), B.x + B.w / 2, B.y + 4, P.baslik);
+  },
+  paylasVur(x, y){
+    const B = this.PAYLAS;
+    return x >= B.x && x <= B.x + B.w && y >= B.y && y <= B.y + B.h;
+  },
+  paylas(){
+    const f = (typeof openCardView !== 'undefined') ? openCardView
+      : (typeof globalThis !== 'undefined' ? globalThis.openCardView : null);
+    if(typeof f !== 'function') return false;
+    f();
+    return true;
   },
 
   /* Y_BIREY satırlarını basar. `zorla` verilirse tek tonda (oyuk).
@@ -289,7 +337,13 @@ const Bitis_ = {
     const ogrenilen = ((Y && Y.ogrenilen) || []).filter(k => KOM[k] && KOM[k].en);
     if(ogrenilen.length){
       const adlar = ogrenilen.map(k => KOM[k].en);
-      o.yaz(g, this.s('ogrendi', { k: adlar.join(' ') }), this.W / 2, y, P.altBaslik);
+      /* SOLA YASLI, ortalanmıyor. Ortalıyken karede PAYLAŞ plakasının
+         üstüne biniyordu: dört komut öğrenilmiş bir turda satır 245
+         piksel oluyor ve 320'lik ekranda ortalanınca x282'ye kadar
+         uzuyor, plaka ise x258'de başlıyor. Etiket de kısaldı
+         ('YOUR DOG LEARNED' -> 'DOG LEARNED'). Sola yaslı hâlde en kötü
+         durum x233'te bitiyor — plakaya 25 piksel var. */
+      this.yazSol(g, o, this.s('ogrendi', { k: adlar.join(' ') }), this.KENAR_X, y, P.altBaslik);
       y = this.DIP2_Y;
     }
     /* Sert sonda "buraya kadar gelmiştin" — kalıcı olan bilgi ve rota
@@ -297,7 +351,8 @@ const Bitis_ = {
     if(!vardi && d.centik > 0){
       const SEFER = (Y && Y.SEFER) || [];
       const son = SEFER[Math.min(d.centik, SEFER.length) - 1];
-      if(son && son.ad) o.yaz(g, this.s('kadar', { yer: son.ad }), this.W / 2, y, P.rollBaslik);
+      if(son && son.ad)
+        this.yazSol(g, o, this.s('kadar', { yer: son.ad }), this.KENAR_X, y, P.rollBaslik);
     }
   },
 

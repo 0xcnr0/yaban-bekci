@@ -35,12 +35,27 @@ const TEHDIT = {
      YOK (SAHNE_SIRA.K = sabah/konak/gece), yani hırsız hiç gelemiyordu.
      Sahneye bağlamak hem doğru hem okunur: zirve 'buyukgun'da, gece
      tehdidi 'gece'de, sıradan olan 'sabah'ta. */
+  /* DAĞITIM 2026-08-20 (docs/bolge-farklari.md). Önceki hâlde on bölümün
+     ALTISINDA hiçbir isimli olay yoktu ve bölüm 8'de ÜÇÜ birden vardı.
+     Yığılma dağıtıldı, boş bölgeler dolduruldu:
+       vaşak   6 -> 3   pusu dar geçide ait; kolonun kuyruğu zaten açıkta
+       hırsız  8 -> 4   ağaç hattı örtü demek, örtü insan tehdidine ait
+       sırtlan 8 -> 6   dere gecesi; su sesi duymayı zorlaştırıyor
+       ayı     8'de KALDI — artık bölümün tek olayı, zirve zirve oldu
+
+     1 ve 2 BİLEREK boş: 1 kalibrasyon (oyuncu "normal"i öğrenmeden sapmayı
+     göremez), 2'nin tehdidi GECENİN KENDİSİ (ilk gece burada). Karanlık
+     zaten olayken üstüne hayvan koymak ADR-020'nin "zorluk bilgi
+     eksilterek artar" kuralını bozardı.
+
+     Karaayak burada YOK — onun takvimi karaayak.js'te (4, 7, 10) ve tek
+     kaynak orası kalıyor. */
   TAKVIM: {
+    3: { buyukgun: 'vasak' },
+    4: { sabah: 'hirsiz' },
     5: { buyukgun: 'ayiGorulme' },
-    6: { buyukgun: 'vasak' },
-    /* Bölüm 8 üç olay taşıyor — harita bunu biliyor ("gece ağırlıklı"):
-       zirvede ayı, bir gecede sırtlan, bir sabah hırsız. */
-    8: { buyukgun: 'ayi', gece: 'sirtlan', sabah: 'hirsiz' },
+    6: { gece: 'sirtlan' },
+    8: { buyukgun: 'ayi' },
     9: { buyukgun: 'firtina' },
   },
 
@@ -206,7 +221,7 @@ const TEHDIT = {
     if(d.evre === 'sicrama' && d.t > 10) return false;      // ilk ~10 kare
     if(Math.abs(x - d.x) > 12 || Math.abs(y - d.y) > 14) return false;
     d.evre = 'bitti'; d.vuruldu = true;
-    if(ort.showMsg) ort.showMsg('THE LYNX TOOK A SHEEP', 180);
+    if(ort.showMsg) ort.showMsg('YOU DROVE THE LYNX OFF', 180);
     if(ort.Snd && ort.Snd.hit) ort.Snd.hit();
     return true;
   },
@@ -319,7 +334,7 @@ const TEHDIT = {
     if(ates && !ort.Yayla.gorunur(d.x, d.y, ates.x, ates.y)) return false;
     if(Math.abs(x - d.x) > 16 || Math.abs(y - d.y) > 16) return false;
     d.evre = 'bitti'; d.vuruldu = true;
-    if(ort.showMsg) ort.showMsg('THE HYENA TOOK A SHEEP', 180);
+    if(ort.showMsg) ort.showMsg('YOU DROVE THE HYENA OFF', 180);
     if(ort.Snd && ort.Snd.hit) ort.Snd.hit();
     return true;
   },

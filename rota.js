@@ -145,6 +145,8 @@ const Rota_ = {
     yol:    { en: 'THE ROAD SO FAR'     },
     tasir:  { en: 'YOUR DOG LEARNED'    },
     kayip:  { en: 'LOST ALONG THE WAY'  },
+    ileride:{ en: 'WHAT LIES AHEAD'    },
+    sonDurak:{ en: 'THE ROAD ENDS HERE' },
     burada: { en: 'WE ARE HERE'         },
     evde:   { en: 'WE MADE IT HOME'     },
     yolda:  { en: 'NOT STARTED YET'     },
@@ -272,6 +274,8 @@ const Rota_ = {
     this.cizKitap(g);
     this.cizSerit(g, o);
     this.cizSolSayfa(g, d, sefer, liste, o);
+    this.SIRADA_DIP = 0;          // kalinti birakmasin
+    this.cizSirada(g, o);
     this.cizSagSayfa(g, o);
     this.cizHat(g, d, n, sefer, o);
     return d;
@@ -388,6 +392,59 @@ const Rota_ = {
     }
   },
 
+  /* ===== SIRADA NE VAR ==============================================
+     Takvim silindikten sonra (f4f9623) ilerlemeyi gösteren tek şey
+     coğrafya kaldı, ve defter o göstergenin kendisi oldu. Sol sayfa
+     "nereden geldim", alttaki harita "ne kadar kaldı", bu blok da
+     **"sırada ne var"** sorusunu cevaplıyor — ki oyunda hiç yoktu.
+
+     ADI VERMİYOR. Defterin 2. kuralı "ad ancak VARILINCA kazanılır"
+     (Dead Cells) ve bu blok onu ÇİĞNEMİYOR: nereye gideceğini değil
+     NEYLE karşılaşacağını söylüyor. Üç kısa satır — yer, sürünün ne
+     yapacağı, senin işin. Alto'nun hedef listesinin karşılığı bu:
+     oyunu anlaşılır yapan şey manzara değil, "sıradaki ne" cümlesi.
+
+     TEK KAYNAK: veri `Yayla.BOLGE`den geliyor, yani bölge tablosuyla
+     AYNI yerden (docs/bolge-farklari.md). Defter kendi kopyasını
+     TUTMUYOR — iki yerde ayrı yazılsalardı kaçınılmaz olarak
+     ayrışırlardı, liderin uyardığı şey tam buydu.
+
+     Bağ YUMUŞAK: `Yayla` globalden aranıyor ve yoksa blok hiç
+     çizilmiyor (konak.js'in TehditSanat'ı okuduğu desenin aynısı).
+     Böylece `ciz` imzası değişmedi ve çağrı yeri güncellenmiyor. */
+  yaylaAl(){
+    if(typeof Yayla !== 'undefined') return Yayla;
+    if(typeof globalThis !== 'undefined' && globalThis.Yayla) return globalThis.Yayla;
+    return null;
+  },
+  cizSirada(g, o){
+    if(typeof o.yaz !== 'function') return;
+    const Y = this.yaylaAl();
+    if(!Y || typeof Y.sirada !== 'function') return;
+    const n = Y.sirada();
+    const P = this.PAL, C = this.SAG, x = C.x0 + this.IC;
+    let y = this.BASLIK_Y;
+    if(!n){
+      /* Sıradaki yok, yani SON DURAKTASIN. İlk yazımda burası "HOME IS
+         NEXT" diyordu ve kareye bakınca yanlış olduğu görüldü: oyuncu
+         eve VARMIŞ durumdayken "sırada ev var" yazıyordu. Doğrusu yolun
+         bittiğini söylemek. */
+      this.cizBaslik(g, o, this.s('ileride'), C, y);
+      this.yazSol(g, o, this.s('sonDurak'), x + 6, y + this.SATIR + 3, P.yazi);
+      this.SIRADA_DIP = y + this.SATIR * 2 + 6;
+      return;
+    }
+    this.cizBaslik(g, o, this.s('ileride'), C, y);
+    y += this.SATIR + 3;
+    for(const satir of [n.yer, n.suru, n.is]){
+      if(!satir) continue;
+      this.px(g, x + 1, y + 3, 2, 2, P.iplik);
+      this.yazSol(g, o, satir, x + 6, y, y === this.BASLIK_Y + this.SATIR + 3 ? P.yazi : P.ikincil);
+      y += this.SATIR;
+    }
+    this.SIRADA_DIP = y + 4;
+  },
+
   /* ===== SAĞ SAYFA — ne kazandık, ne kaybettik =======================
      İÇERİK ÇAĞIRANDAN GELİR (`opts.ogrenilen`, `opts.kayip`). Bu dosya
      köpeğin ne bildiğini ya da kimin kaybolduğunu KENDİ bilmiyor ve
@@ -396,7 +453,9 @@ const Rota_ = {
   cizSagSayfa(g, o){
     if(typeof o.yaz !== 'function') return;
     const P = this.PAL, C = this.SAG, x = C.x0 + this.IC;
-    let y = this.BASLIK_Y;
+    /* Sıradaki blok sayfanın üstünü aldı; kalan ne varsa altından
+       başlıyor. Sığmayan blok zaten kendiliğinden atlanıyor. */
+    let y = this.SIRADA_DIP || this.BASLIK_Y;
     const blok = (baslik, satirlar, isaret) => {
       if(!Array.isArray(satirlar) || !satirlar.length) return;
       if(y + this.SATIR > this.DIP_Y) return;

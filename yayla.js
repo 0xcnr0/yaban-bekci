@@ -1273,7 +1273,16 @@ const Yayla_ = {
   /* Bir kare işle. Dönüş: { bitti, oran, kopan } */
   yolIsle(flock){
     if(!this.aktif || !this.yol) return null;
-    const y = this.yol, carpan = this.YOL.hiz[y.hiz];
+    const y = this.yol;
+    /* BÖLGE FARKI BURADA GERÇEKLEŞİYOR (docs/bolge-farklari.md).
+       `cekis` sürünün KENDİ isteği: Winter Camp'te eksi (ağıldan
+       kopmuyorlar, yol uzuyor), Home'da artı (eve koşuyorlar, seçtiğin
+       hızdan hızlı gidiyorlar). Oyuncunun hız seçimiyle ÇARPILMIYOR,
+       ona EKLENİYOR — yoksa sıkı yürüyüş bölge farkını yutardı ve
+       "aynı gece daha kalabalık" tuzağına geri düşerdik.
+       Taban 0.35'in altına inmiyor: sürü isteksiz olabilir, DURMAZ. */
+    const bl = this.bolge();
+    const carpan = Math.max(0.35, this.YOL.hiz[y.hiz] + (bl.cekis || 0));
     y.alinan = Math.min(y.uzunluk, y.alinan + carpan);
 
     /* Geride kalma: hız arttıkça olasılık artıyor. "Gizli çarpan yok"
@@ -1292,7 +1301,10 @@ const Yayla_ = {
        köpek toplamayı bırakırsa sürü yine dağılır. Hızın bedeli
        olaylardan okunuyor, anlık kopuk sayısından değil. */
     if(flock && flock.length){
-      const olasilik = this.YOL.yorulmaTaban * carpan * carpan;
+      /* Bölgenin kopma çarpanı: dar geçitte kuyruk sürekli kopar, açık
+         ovada kopmaz. Hız bedeli KARESEL kalıyor (ölçülmüş model), bölge
+         farkı onun ÜSTÜNE çarpan olarak biniyor. */
+      const olasilik = this.YOL.yorulmaTaban * carpan * carpan * (bl.dagilma || 1);
       for(const a of flock){
         if(a.state === 'gone' || a.kopuk) continue;
         if(this.rnd() < olasilik){
@@ -1415,6 +1427,99 @@ const Yayla_ = {
     this.sefer = { bolum: 1, gun: 1, takilma: 0, centik: [], bitti: null };
     return this.sefer;
   },
+  /* ===== BÖLGE FARKLARI (docs/bolge-farklari.md) ========================
+     Tek mod kararının (docs/plan-tek-mod.md) asıl işi: takvim kalktı,
+     ilerlemenin birimi BÖLGE oldu. Ölçüt: "bu bölge, oyuncunun sürüyü
+     koruma FİKRİNİ değiştiriyor mu?"
+
+     TEŞHİS, koda bakarak: on bölümün ALTISINDA hiçbir isimli olay yoktu
+     (TEHDIT.TAKVIM yalnız 5,6,8,9'u tanıyordu; KARAAYAK 4,7,10'u), ve
+     sürünün davranışı HİÇBİR bölgede farklı değildi — `YOL.yorulmaTaban`
+     tek bir sabitti. Yani bölgeler yalnız benzer değil, çoğu hiç
+     TANIMLANMAMIŞTI.
+
+     Her satırda üç eksenden en az ikisi değişiyor: manzara · sürünün
+     hâli · köpeğin işi. Tehdit BURADA YOK — tek kaynağı TEHDIT.TAKVIM ve
+     KARAAYAK.GELIS; iki yerde tutmak "çift kaynak"ın kendisi olurdu.
+
+     ALANLAR
+       zemin        manzara anahtarı (arka plan seçimi — çağıranın işi)
+       dagilma      kopma çarpanı; yolIsle bunu OKUYOR, bugün çalışıyor
+       cekis        sürünün kendi hızı: eksi = gitmek istemiyor,
+                    artı = öne kaçıyor. yolIsle bunu da okuyor
+       dizilis      'serbest' | 'tekSira' | 'genis'  (yol sahnesi — VERİ)
+       geceToplanir gece kendiliğinden toplanır mı  (gece sahnesi — VERİ)
+       ise/yanlis   o bölgede işe yarayan / geri tepen komut (VERİ)
+
+     `dizilis`, `geceToplanir`, `ise`, `yanlis` şu an YALNIZ VERİ: onları
+     işleten sahneler index.html'de ve orası bu oturumun bölgesi değil.
+     Bağlanınca oyunun en büyük eksiği kapanır — dört komut var ve
+     hangisinin nerede doğru olduğu oyuncuya hiç öğretilmiyor. */
+  BOLGE: {
+    1:  { zemin:'kislak',   dagilma:0.6, cekis:-0.20, dizilis:'serbest',
+          geceToplanir:true,  ise:null,      yanlis:null ,
+          yer:'THE HOME PEN', suruUyari:'THEY STAY PUT', isUyari:'GET THEM MOVING' },
+    2:  { zemin:'ova',      dagilma:1.0, cekis: 0.00, dizilis:'genis',
+          geceToplanir:true,  ise:'dur',     yanlis:null ,
+          yer:'OPEN PLAIN', suruUyari:'THEY SPREAD WIDE', isUyari:'FIRST NIGHT OUT' },
+    3:  { zemin:'gecit',    dagilma:1.8, cekis:-0.05, dizilis:'tekSira',
+          geceToplanir:true,  ise:'getir',   yanlis:null ,
+          yer:'A NARROW PASS', suruUyari:'SINGLE FILE', isUyari:'WATCH THE TAIL' },
+    4:  { zemin:'agachat',  dagilma:1.3, cekis: 0.00, dizilis:'serbest',
+          geceToplanir:true,  ise:'getir',   yanlis:'dur' ,
+          yer:'THICK TREES', suruUyari:'THEY VANISH', isUyari:'DO NOT HOLD STILL' },
+    5:  { zemin:'yayla',    dagilma:1.2, cekis:-0.10, dizilis:'genis',
+          geceToplanir:true,  ise:null,      yanlis:null ,
+          yer:'HIGH PASTURE', suruUyari:'THEY GRAZE WIDE', isUyari:'REST, BUT WATCH' },
+    6:  { zemin:'dere',     dagilma:1.1, cekis:-0.25, dizilis:'serbest',
+          geceToplanir:true,  ise:'sus',     yanlis:'savur' ,
+          yer:'A RIVER CROSSING', suruUyari:'THEY FEAR WATER', isUyari:'QUIET THE DOG' },
+    7:  { zemin:'gecit2',   dagilma:1.6, cekis: 0.25, dizilis:'tekSira',
+          geceToplanir:true,  ise:'dur',     yanlis:'savur' ,
+          yer:'THE PASS AGAIN', suruUyari:'THEY RUSH AHEAD', isUyari:'HOLD THE FRONT' },
+    8:  { zemin:'zirve',    dagilma:1.4, cekis: 0.00, dizilis:'serbest',
+          geceToplanir:false, ise:'savur',   yanlis:null ,
+          yer:'COLD HIGH GROUND', suruUyari:'THEY WILL SCATTER', isUyari:'A LONG NIGHT' },
+    9:  { zemin:'bozkir',   dagilma:1.9, cekis:-0.15, dizilis:'genis',
+          geceToplanir:true,  ise:'sus',     yanlis:'savur' ,
+          yer:'OPEN GROUND AGAIN', suruUyari:'THEY ARE TIRED', isUyari:'STORM COMING' },
+    10: { zemin:'kislak',   dagilma:1.5, cekis: 0.35, dizilis:'serbest',
+          geceToplanir:true,  ise:'dur',     yanlis:'savur' ,
+          yer:'THE LAST SLOPE', suruUyari:'THEY RUN FOR HOME', isUyari:'HOLD THEM BACK' },
+  },
+  /* Bulunulan bölgenin tanımı. Tanımsız bölüm için nötr taban döner —
+     bir bölge eklenirse oyun ÇÖKMEZ, yalnız farksız olur. */
+  BOLGE_TABAN: { zemin:'ova', dagilma:1.0, cekis:0, dizilis:'serbest',
+                 geceToplanir:true, ise:null, yanlis:null },
+  bolge(no){
+    const b = (no | 0) || (this.sefer ? this.sefer.bolum : 0);
+    return this.BOLGE[b] || this.BOLGE_TABAN;
+  },
+  /* Komut bu bölgede doğru mu / geri teper mi. Çağıran sonucu buna göre
+     kurar; bu dosya bir CEZA uygulamıyor, yalnız cevabı söylüyor. */
+  /* SIRADAKİ BÖLGE — takvim silindikten sonra (2026-08-20, f4f9623)
+     ilerlemeyi gösteren tek şey coğrafya kaldı. Oyuncu "kaçıncı
+     gündeyim" diye soramıyor; "ne kadar kaldı ve SIRADA NE VAR"
+     sorusunun cevabı buradan çıkıyor.
+
+     ADI VERMİYOR — bilerek. Yol Defteri'nin kuralı "ad ancak VARILINCA
+     kazanılır" (Dead Cells); önizleme o kuralı çiğnemeden yapılıyor:
+     nereye gideceğini değil, NEYLE karşılaşacağını söylüyor. Üç kısa
+     satır — yer, sürünün ne yapacağı, senin işin.
+
+     Dönüş null ise sıradaki yok, yani eve varılıyor. */
+  sirada(){
+    if(!this.sefer || this.sefer.bitti) return null;
+    const n = this.sefer.bolum + 1;
+    if(n > this.SEFER.length) return null;
+    const b = this.BOLGE[n];
+    if(!b || !b.yer) return null;
+    return { bolum: n, yer: b.yer, suru: b.suruUyari, is: b.isUyari };
+  },
+
+  komutIse(k){ return this.bolge().ise === k; },
+  komutYanlis(k){ return this.bolge().yanlis === k; },
+
   seferBolum(){ return this.sefer ? this.SEFER[this.sefer.bolum - 1] : null; },
   /* TAKILMA GÜNÜ HER ZAMAN KONAK GÜNÜ — ve bu bir tercih değil, bir
      kilitlenmenin onarımı (tools/kosum.js gün-gün izi, 2026-08-19).

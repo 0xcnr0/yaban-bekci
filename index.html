@@ -706,10 +706,7 @@ html.tiny  #progNote{display:none}
 <section id="scrTitle">
   <div id="foldBox">
     <button class="hs" id="hsKapi"></button>
-    <button class="hs" id="hsTahta"></button>
-    <button class="hs" id="hsRaf"></button>
     <button class="hs" id="hsKangal"></button>
-    <button class="hs" id="hsFoto"></button>
     <!-- NİŞAN KÖŞESİ (defter L16) — ağılın DÖRDÜNCÜ nesnesi, ve ayarların
          tek kapısı. Yerini aldığı şey #foldFoot'taki dört yazı düğmesiydi
          (NİŞAN MODU / KALİBRASYON / AYARLAR / SENSÖR TANISI); sahibi
@@ -742,16 +739,8 @@ html.tiny  #progNote{display:none}
     <button class="hs" id="cardViewClose" hidden></button>
     <button class="hs" id="cardViewShare" hidden></button>
     <!-- Kışlak (ADIM 1, Faz 3): sezon kapanışı — ağılın İÇİNDEKİ bir alt
-         durum (careClose ile aynı desen). Yalnız Save.d.kislakPending
-         iken görünür (bkz. syncKislakUI). Çentik/boğazlık SÜRÜKLENİR,
-         devam yalnız ritüel bitince tıklanabilir. -->
-    <button class="hs" id="hsKislakCentik" hidden></button>
-    <!-- Tahtanın kendisi de bir hedef: sürükleme çalışmazsa DOKUNMAK da
-         çentiği atar (2026-08-18, kilitlenme onarımı). Bkz. hsKislakTahta
-         dinleyicisi ve syncKislakUI. -->
-    <button class="hs" id="hsKislakTahta" hidden></button>
-    <button class="hs" id="hsKislakBogazlik" hidden></button>
-    <button class="hs" id="hsKislakDevam" hidden></button>
+    <!-- Kışlak ritüelinin dört hotspot'u SİLİNDİ (2026-08-20) — ritüel
+         mevsim kabıyla birlikte kalktı, bkz. docs/plan-tek-mod.md. -->
     <!-- Vinyetler (ADIM 2, Faz 3): tam ekran, tek dokunuşla ATLANIR
          ("atlanabilir, oynanışı kesmez" — tasarımın kendi kuralı). Yalnız
          G.vinyet.open iken görünür (bkz. syncVinyetUI). -->
@@ -760,15 +749,6 @@ html.tiny  #progNote{display:none}
          hsVinyetSkip ile AYNI desen — tam ekran, atlanabilir. Yalnız
          G.sagimYakin.open iken görünür (bkz. syncSagimYakinUI). -->
     <button class="hs" id="hsSagimSkip" style="left:0;top:0;width:100%;height:100%" hidden></button>
-    <!-- Takvim (büyük tasarım turu, 2026-08-14): careClose/cardViewClose
-         ile AYNI desen — küçük bir X hit-box, TAKVIM_LAYOUT.close'tan
-         initFoldHotspots ile konumlanır. Yalnız G.takvim.open iken
-         görünür (bkz. syncTakvimUI). -->
-    <button class="hs" id="hsTakvimKapat" hidden></button>
-    <!-- Takvim sekme geçişi ("geçen sezonlar" turu, 2026-08-14 — sahibinin
-         kararı: yeni bir ağıl hotspot'u yerine takvim ekranı genişletildi).
-         GÜNLER/SEZONLAR arasında geçiş, TAKVIM_LAYOUT.tab'tan konumlanır. -->
-    <button class="hs" id="hsTakvimSekme" hidden></button>
   </div>
   <!-- #foldFoot TAMAMEN KALKTI (defter L16 + L17, 2026-08-17).
        İçinde beş şey vardı: btnMode / btnCalib / btnSheet / btnDiag ve
@@ -1422,7 +1402,11 @@ const STR = {
       cikinBasladi:'SET OUT \u2014 the flock leaves the winter fold',
       hsFoto:'Shepherd\'s photo — share',
       // Ağıl etiketleri — bkz. tr için not (sözlükten: Stand watch/Days/Larder).
-      foldEtiketKapi:'GUARD', foldEtiketTahta:'DAYS', foldEtiketRaf:'FOOD',
+      /* Kapı iki iş yapıyor, iki adı var (bkz. kapiEtiketi). Nöbet
+         gecelerinde oyunu başlatıyor; durak günlerinde günü kapatıyor.
+         'REST' seçildi: kısa, fiil, ve o an gerçekten olan şey — çoban
+         işini bitirip yatıyor, gece geçiyor. */
+      foldEtiketKapi:'GUARD', foldEtiketGunSonu:'REST', foldEtiketTahta:'DAYS', foldEtiketRaf:'FOOD',
       /* Nişan köşesi (defter L16) — tek etiket, bkz. tr için not.
          AIM: İSİM olarak okunuyor ("nişan", nişan alma işi), TR'deki NİŞAN ile
          birebir aynı iş. TARGET denmedi çünkü o nesnenin ADI olurdu ve bu
@@ -4587,55 +4571,7 @@ const FOLD_PAL = {
   a: '#b09058',   // sepya — fotoğraf zemini
 };
 
-/* --- takvim tahtası -------------------------------------------------------
-   Kutu 40x30 (agil.json yerlesim.tahta). Üç KALAS, üç on gün:
-     1. kalas  1-10   (10 çentik)
-     2. kalas  11-19  ( 9 çentik)
-     3. kalas  20-30  ( 8 çentik + DAĞ)
-   Bölünme keyfi değil: kurt ayı (20) tam üçüncü kalasın başında başlıyor,
-   geçit (28-30) sonunda bitiyor. Böylece "önde ne var" tek bakışta okunur:
-   alt kalas koyu ve sonunda dağ var.
 
-   Çentik dili: geçmiş gün = OYULMUŞ (ahşaptan açık kesik), bugün = altın
-   ve bir piksel uzun, gelecek gün = yalnız soluk iz (tahta 30 güne
-   hazırlanmış). Gün gün kurt kafası oymak bu ölçekte okunmuyor (40x30 =
-   1200 piksel, bir gün 3x5); kurt ayı bunun yerine BANT olarak veriliyor. */
-const FOLD_BOARD = {
-  w: 40, h: 30,
-  kalas: [                       // [ilkGun, sonGun, centikSayisi, x0]
-    [1, 10, 10, 4],
-    [11, 19, 9, 5],
-    [20, 27, 8, 2],
-  ],
-  dagX: 25, dagGun: [28, 30],
-};
-
-/* Takvim ekranı (2026-08-14, "büyük tasarım turu" — sahibinin geri
-   bildirimi: "takvim düz koyu kutular, oyunun dünyasıyla hiçbir ilgisi
-   yok"). Eskiden #calGrid — ayrı bir DOM ızgarası, ağılın kanvas diliyle
-   hiç konuşmuyordu, "iki ayrı ürün" gibi duruyordu. Şimdi drawFoldBoard'ın
-   AYNI çentik/tahta dilini SC=4 ile büyütüp CARD_VIEW_LAYOUT/CARE_LAYOUT
-   ile AYNI "ağılın içindeki alt durum" desenini izliyor (renderTakvim).
-   SC=4: tahtanın 40x30'luk alanı ~164x120 kaplıyor, 320x180 ekranda
-   ortalanmış (bx=78 -> sağ/sol boşluk simetrik), üstte başlık, altta
-   lejant, sağ üstte careClose/cardViewClose ile BİREBİR aynı X düğmesi. */
-const TAKVIM_LAYOUT = {
-  w: 320, h: 180,
-  sc: 4,
-  board: { x: 78, y: 34 },
-  /* titleY 8'den 18'e indi (2026-08-14, sekme geçişi turu): sol üstteki
-     GÜNLER/SEZONLAR şeridiyle (tab.y:4) ortalanmış başlık ÇAKIŞIYORDU
-     (BASILDI, BAKILDI — "1. SEZON - 22. GÜN" tab şeridinin bittiği yerde
-     başlıyordu). Şerit + başlık artık İKİ AYRI satır; board da aynı 10px
-     inip aradaki boşluğu koruyor. */
-  titleY: 18, legendY: 158,
-  close: { x: 288, y: 8, w: 26, h: 22 },
-  /* Sekme geçişi (2026-08-14, "geçen sezonlar" turu — sahibinin kararı):
-     YENİ bir ağıl hotspot'u eklemek yerine (beş-nokta dengesi korunsun)
-     MEVCUT takvim ekranı GÜNLER/SEZONLAR arasında geçiş yapan küçük bir
-     şeride genişletildi. close ile simetrik: sol üstte, aynı boyut ailesi. */
-  tab: { x: 4, y: 4, w: 132, h: 16 },
-};
 
 /* KAPATMA İŞARETİ — ÇİZİLİR, YAZILMAZ (BULGU 2, seçenek A, sahibinin kararı
    2026-08-15). Üç ekranda (bakım, takvim, kart) aynı kapatma plakası vardı ve
@@ -4663,148 +4599,6 @@ function drawCloseMark(g, cl){
   for(let i = -r; i <= r; i++){
     px(g, cx + i, cy + i, 1, 1, PAL.bone);
     px(g, cx + i, cy - i, 1, 1, PAL.bone);
-  }
-}
-
-/* SC (2026-08-14, "takvim ekranını canvasa taşı" turu): büyütme çarpanı,
-   varsayılan 1 — ağıldaki küçük tahta çağrıları AYNEN eski davranışı korur.
-   Her ofset/boyut SC ile çarpılır (px() zaten her nesneyi kendi hücresi
-   olarak çiziyor, drawKurtBig'in SC deseniyle AYNI: tam sayı SC'de komşu
-   dikdörtgenler arasında dikiş/boşluk kalmaz). Büyük takvim ekranı bu
-   fonksiyonu doğrudan büyük SC ile çağırıyor (bkz. renderTakvim) — ayrı
-   bir "büyük tahta" fonksiyonu YAZILMADI, aynı çentik dili tek kaynaktan. */
-function drawFoldBoard(g, bx, by, day, t, SC = 1){
-  const P = FOLD_PAL;
-  const s = v => v * SC;
-  const x = bx + s(1), y = by + s(2), w = s(38), h = s(26);
-
-  // askı: iki çivi (başları ışık alır — duvarda asılı olduğunu söyleyen şey)
-  px(g, x + s(6),  by, s(2), s(3), P.o);
-  px(g, x + s(30), by, s(2), s(3), P.o);
-  px(g, x + s(6),  by, s(2), s(1), P.j);
-  px(g, x + s(30), by, s(2), s(1), P.j);
-  /* İdle (dokunulabilen nesne kıpırdar kuralı): sol çividen sarkan kısa
-     bir sayaç ipi, hafifçe sallanır. t verilmeyen çağrılarda (kışlak,
-     vinyet, statik önizleme) tamamen hareketsiz kalır — "dokunulamayan
-     hiçbir şey kıpırdamasın" kuralı. */
-  /* İP BURADA DEĞİL, GÖVDEDEN SONRA ÇİZİLİYOR (BULGU 1, 2026-08-15).
-     Eskiden tam buradaydı ve hemen ardından gelen gövde dolgusu
-     (px(g,x,y,w,h,P.o) ve kalaslar) ONU TAMAMEN ÖRTÜYORDU — kod yazılmıştı,
-     yorumu "dokunulabilen nesne kıpırdar" diyordu, ve ip HİÇ GÖRÜNMEMİŞTİ.
-     Cetvel B tahta kutusunu 288 tikte 0.0000 ölçüyordu: sebebi animasyonun
-     yokluğu değil, ÇİZİM SIRASIYDI. Aşağıya taşındı. */
-
-  // duvara düşen gölge: sağa ve aşağıya 2px. Tahtanın "asılı" okunmasını
-  // sağlayan tek şey bu — gölgesiz levha duvarın deseni gibi duruyordu.
-  px(g, x + s(2), y + h, w, s(2), 'rgba(28,26,48,0.55)');
-  px(g, x + w, y + s(2), s(2), h, 'rgba(28,26,48,0.55)');
-
-  // gövde: kontur + üç kalas (yatay lif; çentikler dikey — ikisi karışmasın)
-  px(g, x, y, w, h, P.o);
-  for(let k = 0; k < 3; k++){
-    const ky = y + s(1) + k * s(8);
-    px(g, x + s(1), ky,      w - s(2), s(8), P.n);   // gövde duvardan KOYU: nesne öne çıksın
-    px(g, x + s(1), ky,      w - s(2), s(1), P.m);   // kalasın üst kenarı ışık alır
-    px(g, x + s(1), ky + s(7), w - s(2), s(1), P.o);   // altı gölgede — kalaslar ayrışır
-  }
-  /* İdle (dokunulabilen nesne kıpırdar kuralı): sol çividen sarkan kısa bir
-     sayaç ipi, hafifçe sallanır. Kalasların ÜSTÜNE çiziliyor, yoksa
-     görünmüyor (yukarıdaki nota bakın). t verilmeyen çağrılarda (kışlak,
-     vinyet, statik önizleme) tamamen hareketsiz kalır — "dokunulamayan
-     hiçbir şey kıpırdamasın" kuralı. */
-  /* İP ARTIK SALLANMIYOR (oyuncu raporu, 2026-08-20 — takvim ekranı
-     hakkında): *"hatta bir çizgi gereksizce sağa sola hareket ediyor
-     sürekli."*
-
-     Küçük tahtada (SC=1) 1px'lik salınımdı; takvim ekranı aynı çizimi
-     SC=4 ile büyütüyor, yani orada 4px'lik bir çizgi sürekli gidip
-     geliyordu. Okunan bir referans panosunun ortasında anlamsız hareket
-     dikkati asıl içerikten (çentikler) çalıyor.
-
-     Gerekçesi olan "dokunulabilen nesne kıpırdar" kuralı burada da
-     düştü; sebebi drawFoldPhoto'daki notta. İp KALDI, yalnız durdu. */
-  if(t != null){
-    px(g, x + s(6), y + s(1), s(2), s(5), P.j);
-    px(g, x + s(6), y + s(6), s(2), s(3), P.j);
-    px(g, x + s(5), y + s(9), s(4), s(2), P.m);   // ucundaki düğüm
-  }
-
-  // kurt ayı bandı: üçüncü kalas KIZILA çalar. Bant, tehlikeyi çentik
-  // sayarak değil TON olarak söylüyor — bu ölçekte tek okunabilir yol.
-  // (İlk denemede bant düz siyahtı: kalas kayboldu, çentikler yutuldu.)
-  {
-    const ky = y + s(18);
-    px(g, x + s(1), ky, w - s(2), s(6), P.m);       // kızıl-kahve: diğer iki kalastan
-    px(g, x + s(1), ky, w - s(2), s(1), P.k);       // hem açık hem SICAK -> uyarı tonu
-  }
-
-  const d = day | 0;
-  // çentikler
-  for(let k = 0; k < FOLD_BOARD.kalas.length; k++){
-    const [ilk, , n, x0] = FOLD_BOARD.kalas[k];
-    const ky = y + s(1) + k * s(8);
-    for(let i = 0; i < n; i++){
-      const gun = ilk + i, cx = x + s(x0) + i * s(3), cy = ky + s(2);
-      if(d > gun){                          // geçmiş: oyulmuş (ahşabın içi AÇIK)
-        px(g, cx, cy, s(1), s(5), P.j);
-        px(g, cx + s(1), cy, s(1), s(5), P.o);       // oyuğun sağ gölgesi -> derinlik
-      } else if(d === gun){                 // bugün: altın ve bir piksel uzun
-        px(g, cx - s(1), cy - s(1), s(3), s(7), P.o);
-        px(g, cx, cy - s(1), s(1), s(7), P.h);
-        /* BUGÜN NEFES ALIR (BULGU 1, 2026-08-15). Tahtanın idle'ı bir
-           sallanan ipti ve o ip yıllardır gövdenin ALTINDA kalıp hiç
-           görünmemişti; görünür kılınınca bile 40x30'luk kutuda ölçüm
-           gövde kalibrasyonunun 'idle' p05 çizgisinde kalıyordu. Kıpırtıyı
-           tahtanın EN ANLAMLI parçasına taşımak hem daha okunur hem doğru:
-           bugünün çentiği zaten altın, artık ışığı da alıp bırakıyor —
-           "bugün burada" cümlesi. Konum değişmiyor, yalnız yüzey. */
-        if(t != null){
-          const a = 0.25 + 0.35 * Math.max(0, Math.sin(t * 0.08));
-          if(a > 0.30) px(g, cx, cy - s(1), s(1), s(7), 'rgba(252,248,224,' + a.toFixed(2) + ')');
-        }
-      } else {                              // gelecek: yalnız iz
-        /* 3. kalasta (kurt ayı bandı) iz rengi ÖNCEDEN P.m'ydi — bandın
-           KENDİ dolgu rengiyle AYNI (bkz. aşağıdaki kurt ayı bandı bloğu),
-           yani gelecek günün izi bandın üstünde tamamen GÖRÜNMEZ kalıyordu.
-           40x30'luk küçük tahtada (3px'lik iz) hiç fark edilmemiş — takvim
-           ekranını SC=4 ile büyütünce (2026-08-14 turu) çıplak gözle
-           yakalandı. P.c ('kızılımsı — kurt ayı' diye tanımlı ama hiç
-           KULLANILMAMIŞ bir palet rengiydi) tam bunun için duruyordu. */
-        px(g, cx, cy + s(1), s(1), s(3), k === 2 ? P.c : P.o);
-      }
-    }
-  }
-
-  // geçit: son üç günün yerinde çentik yok, DAĞ oyması var (iki tepe).
-  {
-    const ky = y + s(19), gx = x + s(FOLD_BOARD.dagX);
-    const gecti = d > FOLD_BOARD.dagGun[1];
-    const simdi = d >= FOLD_BOARD.dagGun[0] && d <= FOLD_BOARD.dagGun[1];
-    const c = simdi ? P.h : gecti ? P.i : P.j;
-    /* GEÇİT OYMASI YENİDEN ÇİZİLDİ (oyuncu raporu, 2026-08-20):
-       *"en alt sırada sıranın sonunda bi ikon var gibi ama bu ikon sanki
-       bir çift meme gibi duruyor."*
-
-       Haklı ve sebebi çizimde: eski oyma İKİ SİMETRİK KUBBEYDİ (tek
-       pikselden başlayıp yayvanlaşan iki özdeş tepe) ve altta tabanı
-       ikiye ayıran boşluklar vardı. Takvim ekranı bunu SC=4 ile
-       büyütünce okuma kaçınılmaz hâle geliyor.
-
-       Yeni oyma iki şeyi değiştiriyor, ikisi de kasıtlı:
-         1. TEPELER SİVRİ VE FARKLI YERDE — simetrik çift kalkmıyor,
-            iki ayrı dağ oluyor.
-         2. ARADA DİPTE BİTEN BİR BOŞLUK — "geçit" zaten bu: iki dağın
-            arasından geçen yol. Boşluk tabana kadar inince oyma bir
-            çift tepe değil, İÇİNDEN GEÇİLEN bir yer olarak okunuyor. */
-    const dag = [
-      '..x.....x.',
-      '.xxx...xxx',
-      'xxxxx.xxxx',
-      'xxxxx.xxxx',
-    ];
-    for(let r = 0; r < dag.length; r++)
-      for(let i = 0; i < dag[r].length; i++)
-        if(dag[r][i] === 'x') px(g, gx + s(i), ky + s(r), SC, SC, c);
   }
 }
 
@@ -5287,16 +5081,26 @@ function foldNokta(g, kutu, t, dx, dy){
 
    Sayı ve düz kelime, mecaz yok: bu satır atmosfer taşımıyor, bilgi
    taşıyor. Atmosferi zaten resmin kendisi taşıyor. */
+/* Kapı bu an ne yapıyor — etiket ve nokta AYNI kaynaktan okuyor.
+   İkisi ayrı hesaplanırsa etiket bir şey der, nokta başka yerde durur. */
+function kapiIsi(){
+  if(typeof Yayla === 'undefined' || !Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return 'nobet';
+  return Yayla.sahne() === 'konak' ? 'gunukapat' : 'nobet';
+}
+function kapiEtiketi(u){
+  return kapiIsi() === 'gunukapat' ? u.foldEtiketGunSonu : u.foldEtiketKapi;
+}
+
 function foldDurumSatiri(){
   const koyun = Math.max(0, Save.d.flock | 0);
   const kampanya = typeof Yayla !== 'undefined' && Yayla.aktif &&
                    Yayla.sefer && !Yayla.sefer.bitti;
   if(kampanya){
     return 'CAMP ' + Yayla.sefer.bolum + ' OF ' + Yayla.SEFER.length +
-           '  -  ' + koyun + ' SHEEP  -  FOOD ' + Math.max(0, Math.floor(Yayla.kiler || 0));
+           '  -  ' + koyun + ' SHEEP';
   }
   if(Season.day == null) return '';
-  return 'DAY ' + Season.day + '  -  ' + koyun + ' SHEEP  -  FOOD ' + (Save.d.larder | 0);
+  return 'DAY ' + Season.day + '  -  ' + koyun + ' SHEEP';
 }
 
 function foldTabela(g, metin, cx, nesneY, alt){
@@ -5701,38 +5505,6 @@ function drawCareHand(g, cx, cy){
   px(g, x0, y0 + 6, 2, 3, '#5c3a2e'); px(g, x0, y0 + 7, 1, 1, '#c0916a');
 }
 
-/* Kışlak kapanışı (Faz 3 / ADIM 1, docs/mevsim-tasarim.md "Geçit ve
-   kışlak"). art/manzara/kislak.json ile elle ölçülmüş: kapı json'dan
-   AYNEN (taş ağılın kemerli girişi — sürü buradan içeri sayılır); diğer
-   kutular açık kar alanına, sanatın kompozisyonuna bakılarak yerleştirildi
-   (kaynak: docs/shots'a basılan önizleme). Sanat ekibi ölçünce kesinleşir. */
-const KISLAK_LAYOUT = {
-  w: 320, h: 180,
-  kapi:   { x:74,  y:104, w:32, h:36 },   // art/manzara/kislak.json "kapi"
-  suru:   { x:50,  y:142, w:60, h:24 },   // kapının önünde sayılan sürü
-  kangal: { x:118, y:138, w:26, h:22 },   // sürüyü karşılayan Kangal
-  /* İlk basımda (BASILDI, BAKILDI) tahta y:100'de dağların üstünde
-     havada asılı duruyordu — kar alanına indirildi, kar/zemine yakın. */
-  tahta:  { x:186, y:124, w:40, h:34 },   // açık kar alanı — çentik buraya atılır
-  /* ÇENTİK VE BOĞAZLIK — DOKUNMA ALANI BÜYÜTÜLDÜ (2026-08-18, sahibinin
-     telefonda yaşadığı kilitlenme).
-     Sahibi kışlak törenine girip ÇIKAMADI: "sadece kışlakta kalıyor."
-     Sebebi mantık değil, HEDEF BOYUTU. "Ağıla dön" şeridi yalnız çentik
-     tahtaya BIRAKILINCA çıkıyor (syncKislakUI: ready = notchDone && ...),
-     yani jeton tutulamazsa oyuncunun hiçbir çıkışı kalmıyor.
-     Eski kutular 14x14 ve 20x14'tü. Telefonda ölçek 414/180 = 2.3, yani
-     14 px ~ 32 punto — projenin KENDİ kuralı (ADR-013 md.5) en az 44
-     punto diyor. Üstelik bu bir SÜRÜKLEME BAŞLANGICI, en zor hedef türü.
-     Kutu 30x30'a çıktı (~69 punto). ÇİZİM DEĞİŞMEDİ: renderKislak yalnız
-     kutunun MERKEZİNİ okuyor (satır ~7274), merkez sabit tutuldu —
-     166+7=173 / 270+10=280. Yani jeton piksel piksel aynı yerde duruyor,
-     yalnız parmağın tutabildiği alan büyüdü.
-     Çakışma denetlendi: tahta (186..226, 124..158) bir hotspot DEĞİL,
-     devam şeridi ritüel bitmeden gizli, bogazlik uzakta. */
-  centik:   { x:158, y:150, w:30, h:30 }, // merkez 173,165 — çizim buradan
-  bogazlik: { x:265, y:146, w:30, h:30 }, // merkez 280,161 — çizim buradan
-  devam:  { x:0,   y:162, w:320, h:18 },  // ritüel bitince "ağıla dön" şeridi
-};
 
 /* Vinyetler (Faz 3 / ADIM 2, docs/mevsim-tasarim.md "Vinyetler"). art/vinyet/
    vinyet.json'daki 12 referans PNG GÖMÜLMEDİ — sanatın kendi notu: "sahne
@@ -6531,7 +6303,6 @@ const G = {
      bile kaybolmasın); burası yalnız SÜRÜKLEME anının geçici hâli.
      dragging: null | 'centik' | 'bogazlik'. notchDone: bu OTURUMDA çentik
      atıldı mı — kalıcı değil, uygulama yeniden açılırsa ritüel baştan. */
-  kislak:{ open:false, dragging:null, dragPt:{x:0,y:0}, notchDone:false },
   /* Vinyetler (Faz 3 / ADIM 2, docs/mevsim-tasarim.md "Vinyetler") — ağılın
      İÇİNDE bir alt durum, AYNI desen. key: 'kuzu'|'kurt'|'aksak'|'kislak'.
      frame/t: oynatım ilerlemesi (bkz. VINYET.ms, Attract.update). Ayrı bir
@@ -6562,7 +6333,6 @@ const G = {
      Attract'in kendi `this.t` sayacı zaten yetiyor, bkz. renderTakvim).
      tab: 'gunler' | 'sezonlar' — sekme geçişi ("geçen sezonlar" turu,
      2026-08-14), her açılışta 'gunler'e döner (openTakvim). */
-  takvim:{ open:false, tab:'gunler' },
   /* Süt akışı: startRun()'ın o sabah kilerden ne kadar harcadığını (ve kaç
      kuzu içtiğini) taşır — toMenu() ağıla dönüşte BİR KEZ okuyup gösterir,
      sonra null'a döner (bkz. "GÖRÜNÜR tüketim" maddesi). Save.d'de DEĞİL:
@@ -6653,7 +6423,13 @@ function ensureSeason(now){
        Boğazlık Mevsim I'in geçit ödülü: henüz kazanılmamışsa HER kapanışta
        yeniden teklif edilir (yalnız season===1'de beklenir ama sağlam
        olsun diye "henüz yok" yeterli koşul — atlanan sezonlar da kapansın). */
-    Save.d.kislakPending = true;
+    /* TEK MOD (2026-08-20, docs/plan-tek-mod.md): mevsim kabı kalktı, bu
+       ritüel de onunla birlikte gidiyor. Tetik burada KESİLDİ — kapanış
+       artık yolculuğun kendi durak töreni (rota.js çentiği).
+       Alan `false` yazılıyor, satır silinmiyor: eski kayıtlarda
+       kislakPending=true kalmış olabilir ve o oyuncu bir daha asla
+       açılmayan bir ritüelin arkasında KİLİTLİ kalırdı. */
+    Save.d.kislakPending = false;
     Save.d.kislakFrom = preFlock;
     Save.d.kislakTo = Save.d.flock;
     Save.d.kislakCollarOffer = !Save.d.collar;
@@ -6667,8 +6443,9 @@ function ensureSeason(now){
        zaten burada olan Save.d.scars'ın kendisi (30. günden BURAYA kadar
        yeni yara eklenmez, geçit sonrası mornings kışlağa kadar oynanmaz). */
     const scarsThisSeason = Math.max(0, (Save.d.scars || 0) - (Save.d.seasonScarsStart || 0));
-    Save.d.seasonHist.push({ season: Save.d.season, flock: preFlock, scars: scarsThisSeason, date: today });
-    if(Save.d.seasonHist.length > SEASON_HIST_MAX) Save.d.seasonHist.shift();
+    /* LIDERLIK TABLOSU SILINDI (2026-08-20, docs/plan-tek-mod.md):
+       gecmis MEVSIM skorlariydi, mevsim kabi kalkti. Yolculugun
+       karsiligi bitis ekranindaki isimli anma (bitis.js). */
     Save.d.seasonScarsStart = Save.d.scars || 0;   // yeni sezon sıfırdan sayıyor
     Save.d.season += blocks;
     const remainder = D - blocks * 30;          // 0..29 — yeni sezonun kaçıncı günündeyiz
@@ -6681,40 +6458,7 @@ function seasonDayNow(now){
   return Math.max(1, Math.min(30, daysBetween(Save.d.seasonStart, todayKey(now)) + 1));
 }
 
-/* Liderlik tablosu (Görev 3, 2026-08-14) — İKİ AYRI görünüm, AYNI kayıt
-   listesinden (Save.d.seasonHist) türetilir; ayrı bir veri şekli icat
-   edilmedi. Kişisel (cihaz-lokal) — sunucu/Game Center YOK, bilerek
-   (bkz. teslim raporu: Apple Developer hesabı gerektiriyor, mağaza
-   sürecine bırakıldı). n=5: kışlak ekranındaki küçük özete yetecek kadar. */
-function lbBySuru(n = 5){
-  return [...Save.d.seasonHist].sort((a, b) => b.flock - a.flock).slice(0, n);
-}
-function lbByYara(n = 5){
-  return [...Save.d.seasonHist].sort((a, b) => a.scars - b.scars).slice(0, n);
-}
 
-/* İki sütunlu liderlik listesi — kışlak (renderKislak) VE takvim
-   (renderTakvim, "GEÇEN SEZONLAR" sekmesi, 2026-08-14) AYNI çizim kodunu
-   paylaşıyor ("aynı bileşeni yeniden kullan" kararı). highlight verilirse
-   (referans eşitliği, Save.d.seasonHist'teki bir kayıt) o satır altın
-   renkle vurgulanır — kışlakta "az önce kapanan bu sezon" bu şekilde
-   işaretlenir; takvimde vurgu YOK (henüz kapanmamış bir sezonun ortasında
-   bakılıyor, listede "bu" diyebileceğimiz bir kayıt yok). */
-function drawSeasonLists(g, u, topY, highlight){
-  const colX = [20, 165];
-  const cols = [
-    { title: u.lbSuruBaslik, rows: lbBySuru(5), val: r => r.flock },
-    { title: u.lbYaraBaslik, rows: lbByYara(5), val: r => r.scars },
-  ];
-  for(let c = 0; c < 2; c++){
-    text(g, cols[c].title, colX[c], topY, PAL.gold, 1, PAL.ink);
-    cols[c].rows.forEach((r, i) => {
-      const mine = highlight && r === highlight;
-      text(g, u.lbSatir(r.season, cols[c].val(r)), colX[c], topY + 12 + i * 9,
-           mine ? PAL.gold : PAL.bone, 1, PAL.ink);
-    });
-  }
-}
 
 /* "c" kararı — tavanlı-tabanlı taşıma (docs/mevsim-tasarim.md, "Geçit ve
    kışlak"). Sezon içinde kayıp kalıcı; sezon sınırında taban tazelenir:
@@ -6947,15 +6691,10 @@ const Attract = {
       if(G.cardView.open){ this.renderCardView(); return; }
       // Takvim ("büyük tasarım turu", 2026-08-14): AYNI öncelik — oyuncunun
       // DOĞRUDAN dokunuşuyla (hsTahta) açılan bir alt durum.
-      if(G.takvim.open){ this.renderTakvim(); return; }
       /* Kışlak kapanışı (ADIM 1): Save.d.kislakPending sezon sınırını
          GEÇMİŞ (ensureSeason) ama ritüeli henüz GÖRMEMİŞ demek — ağıl
          yerine bu sahne açılır, kapı dahil hiçbir hotspot çalışmaz
          (syncKislakUI). Aynı "ağıl=menü, yeni faz icat etme" ilkesi. */
-      if(Save.d.kislakPending){
-        if(!G.kislak.open) openKislak();
-        this.renderKislak(); return;
-      }
       /* Vinyetler (ADIM 2): kışlak ritüelinden SONRA kontrol edilir —
          30. gün hem "kışlak" vinyetinin hem geçidin günü, ama vinyet o
          GÜNÜ OYNARKEN (Season.day===30, ağıla dönüşte), kışlak kapanışı
@@ -7053,7 +6792,6 @@ const Attract = {
     // payını az sonra alacaklar.
     {
       const t = FOLD_LAYOUT.tahta;
-      drawFoldBoard(g, t.x, t.y, Season.day || 1, idle);
       const f = FOLD_LAYOUT.foto;
       drawFoldPhoto(g, f.x, f.y, idle);
       const r = FOLD_LAYOUT.raf;
@@ -7206,8 +6944,16 @@ const Attract = {
       /* NÖBET kapı KANADININ üstüne, direklerin tepesine değil: basılan
          karede direk tepesi kanattan yüksek olduğu için tabela kopuk
          duruyordu. +6 kanadın üst hizası. */
-      foldTabela(g, u.foldEtiketKapi, kp.x + kp.w / 2, kp.y + 6);
-      foldTabela(g, u.foldEtiketTahta, t.x + t.w / 2, t.y);
+      /* KAPININ ETİKETİ SAHNEYE GÖRE DEĞİŞİR (2026-08-20).
+         Kapı iki ayrı iş yapıyor ve tek etiketle ikisini birden söylüyordu:
+         nöbet gecelerinde oyunu BAŞLATIYOR, durak günlerinde günü
+         KAPATIYOR. Aynı yazının altında iki farklı fiil olması, ekranın
+         "anlaşılmıyor" denen yanının somut bir parçasıydı — oyuncu
+         dokunduğunda ne olacağını bilemiyordu.
+
+         Araştırmanın ortak kararı "tek birincil eylem"di; tek eylem
+         olması, o eylemin ADININ da doğru olmasını gerektiriyor. */
+      foldTabela(g, kapiEtiketi(u), kp.x + kp.w / 2, kp.y + 6);
       /* KİLER/LARDER: raf'ın sağında dururken sabit +3 boşluk İngilizce'de
          ("LARDER", 6 harf) takvim tahtasına BİNİYORDU — sahibinin telefonu
          İngilizce, ekran görüntüsüyle doğrulandı 2026-08-13. Sabit konum
@@ -7221,7 +6967,6 @@ const Attract = {
          önce sağındaydı ve NİŞAN tabelasıyla çakıştı; sonra üstüne
          alındı ve duvardaki FOTOĞRAFI örttü (o da bir hotspot).
          Rafın altı boş. */
-      foldTabela(g, u.foldEtiketRaf, r.x + r.w / 2, r.y + r.h, true);
       /* Nişan köşesinin etiketi: kapı/takvimle AYNI kural — nesnenin ÜSTÜNDE,
          ona bitişik (-4). Ötekiler duvarda asılı, bu zeminde; ölçü aynı
          kalıyor ki Cetvel F'nin "temas" normu (7 etikette de 0px) bozulmasın. */
@@ -7262,9 +7007,9 @@ const Attract = {
         if(sagilabilirVar()) foldNokta(g, FOLD_LAYOUT.suru, idle, -8, 3);
         // Nişan köşesi — yalnız sensör bozuksa; ayar kurcalamak "iş" değil.
         if(G.sensorBad) foldNokta(g, ns, idle, -5, 0);
-        // Çıkın — yolculuk henüz başlamadıysa başlatılabilir.
-        if(typeof Yayla !== 'undefined' && !yolda && !(Yayla.sefer && Yayla.sefer.bitti))
-          foldNokta(g, FOLD_LAYOUT.cikin, idle, -5, 2);
+        /* ÇIKIN NOKTASI KALDIRILDI: yolculuk artık açılışta kendiliğinden
+           başlıyor (boot.js), yani "başlatılabilir" hâli hiç oluşmuyordu.
+           Ölü bir koşul, okuyanı yanıltır. */
       }catch(e){ console.error('YABAN: is-var noktalari cizilemedi', e); }
     }
 
@@ -7930,182 +7675,6 @@ const Attract = {
     if(G.msgT > 0 && G.msg) textC(g, G.msg, W / 2, 4, PAL.bone, 1, PAL.ink);
   },
 
-  /* Takvim (2026-08-14, "büyük tasarım turu" — bkz. TAKVIM_LAYOUT yorumu).
-     careClose/cardViewClose ile AYNI perde + X düğmesi; asıl içerik
-     drawFoldBoard'ın SC=4 çağrısı — ağıldaki KÜÇÜK tahtayla TAM AYNI
-     çizim kodu, yalnız büyütülmüş. Etkileşim YOK (sürüklenen nesne değil,
-     okunan bir referans panosu) — kapanış yalnız X düğmesiyle, cardView
-     ile aynı ilke (tap-anywhere değil: yanlışlıkla kapanmasın, oyuncu
-     takvimi OKUMAK için açıyor). */
-  renderTakvim(){
-    if(!blit(g, 'fold', 'fold', 0, 0)) px(g, 0, 0, W, H, PAL.hillFar);
-    px(g, 0, 0, W, H, 'rgba(16,16,24,0.72)');   // ağıl loşça arkada — care/cardView ile aynı perde
-
-    const u = U(), T = TAKVIM_LAYOUT;
-    const sezonlar = G.takvim.tab === 'sezonlar';
-
-    /* Sekme şeridi ("geçen sezonlar" turu, 2026-08-14 — sahibinin kararı):
-       YENİ bir ağıl hotspot'u yerine takvim ekranı GÜNLER/SEZONLAR
-       arasında geçiş yapan küçük bir şeride genişletildi. Aktif sekme
-       altın, pasif kemik rengi — iki ayrı text() çağrısı (bitmap font
-       tek satırda iki renk çizemiyor), aralarındaki boşluk textW ile
-       ölçülüyor ki dil değişince (İngilizce daha uzun) kaymasın. */
-    {
-      const sep = ' - ';
-      const w1 = textW(u.tabGunler, 1), w2 = textW(sep, 1);
-      text(g, u.tabGunler, T.tab.x, T.tab.y, sezonlar ? PAL.bone : PAL.gold, 1, PAL.ink);
-      text(g, sep, T.tab.x + w1, T.tab.y, PAL.bone, 1, PAL.ink);
-      text(g, u.tabSezonlar, T.tab.x + w1 + w2, T.tab.y, sezonlar ? PAL.gold : PAL.bone, 1, PAL.ink);
-    }
-
-    if(sezonlar){
-      // "GEÇEN SEZONLAR" — kışlaktaki (renderKislak) AYNI bileşen
-      // (drawSeasonLists), yalnız vurgu yok: burada "bu sezon" diye
-      // işaretlenecek KAPANMIŞ bir kayıt yok, sezon hâlâ sürüyor.
-      textC(g, u.lbBaslik, W / 2, T.titleY, PAL.gold, 1, PAL.ink);
-      drawSeasonLists(g, u, T.titleY + 20, null);
-    } else {
-      textC(g, u.calTitle(Season.season, Season.day), W / 2, T.titleY, PAL.bone, 1, PAL.ink);
-      drawFoldBoard(g, T.board.x, T.board.y, Season.day || 1, this.t, T.sc);
-      textC(g, u.calLegend, W / 2, T.legendY, PAL.bone, 1, PAL.ink);
-      // İkinci satır: bandlar. Bkz. calLegend notu — anahtar önce, ayrıntı sonra.
-      if(u.calLegend2) textC(g, u.calLegend2, W / 2, T.legendY + 8, PAL.dim, 1, PAL.ink);
-    }
-
-    // Kapat — careClose/cardViewClose ile birebir aynı çizim.
-    drawCloseMark(g, T.close);
-  },
-
-  /* Kışlak — sezon kapanışı (ADIM 1, docs/mevsim-tasarim.md "Geçit ve
-     kışlak"). Ağılın İÇİNDE bir alt durum (renderCare ile aynı desen):
-     Save.d.kislakPending açıkken kapı dahil hiçbir ağıl hotspot'u
-     çalışmaz (syncKislakUI), oyuncu ritüeli bitirmeden geri dönemez.
-
-     Üç fiil, hepsi EL (düğme değil, tasarımın kendi cümlesi):
-       - sürü zaten içeride SAYILMIŞ görünür (kapının önünde duruyor)
-       - çentik oyuncu tarafından tahtaya SÜRÜKLENİR
-       - boğazlık (yalnız Mevsim I'in geçit ödülü, ilk kazanışta) Kangal'a
-         SÜRÜKLENİR — ikisi de "ödül popup değil el hareketi" kuralına uyar.
-
-     Kar perdesi ZORUNLU (art/manzara/kislak.json notu): varlıklar
-     çizildikten SONRA tek katman mavi tül — onsuz krem sürü mavi-beyaz
-     pana yapıştırma duruyordu. Sabahın gece perdesindeki İKİ PARÇALI
-     ayrımdan (dünya/varlık payı) farklı olarak burada ayrım YOK: kışlak
-     akan bir an değil sabit bir "hâl" gösteriyor, tül hepsinin üstüne TEK
-     kez düşüyor (sanatın notu tam olarak bunu istiyor). */
-  renderKislak(){
-    if(!blit(g, 'kislak', 'kislak', 0, 0)) px(g, 0, 0, W, H, PAL.hillFar);
-    /* Bacadan duman — kışlak ölü bölge ölçümünde %100 çıkmıştı (180
-       pikselin 180'i, tek piksel oynamıyor) ve burası son bölümün töreni.
-       Baca ağzı kislak.png'de x23-30, y38-40; duman x=26, y=40'tan çıkıyor.
-       Rüzgâr 13: kışlağın karlı yamacında hava yatay eser, sütun dik değil
-       eğik olmalı. Bkz. ==GOK-START== içindeki drawDuman. */
-    drawDuman(g, 26, 40, this.t || G.t || 0, { renk:'232,228,232', ruzgar:13 });
-
-    const K = KISLAK_LAYOUT, S = G.kislak;
-    const toN = Save.d.kislakTo || 0;
-
-    /* Sürü — kapıya doğru TEK SIRA, "içeri sayılıyor".
-       Eskiden 2x4'lük bir ızgaraydı ve basılınca YIĞIN okunuyordu (göç
-       kolonuyla aynı kusur): tasarımın cümlesi "sürü içeri sayılır",
-       ızgara ise "bekleyen kalabalık" diyor. Tek sıra, hepsi kapıya
-       bakıyor, öndeki eşikte; sayım okunuyor. */
-    {
-      /* Aralık KOYUN GENİŞLİĞİNE göre, kutuya göre değil: kutuya sığdırmak
-         10 hayvanı üst üste bindiriyordu (basıldı, görüldü). Koyun ~14px;
-         13px aralık hafif bindirme verir, sayım okunur kalır. */
-      const b = K.suru, shown = Math.min(toN, 8);
-      const step = 13;
-      const sy = b.y + b.h - 5;
-      /* Dizi KANGAL'IN SOLUNDA biter: kapı solda, sürü kapıya doğru
-         yürüyor, köpek arkada sürüyor. Kangal'ı dizinin ORTASINDA
-         bırakmak "sayım" değil "karışıklık" okunuyordu (basıldı, görüldü). */
-      const bitis = K.kangal.x - 8;
-      /* Sığmıyorsa hayvan sayısı KISILIR, dizi köpeğin üstüne taşmaz —
-         sayım okunurluğu, tam sayıyı göstermekten önce gelir. */
-      const yer = Math.max(1, Math.floor((bitis - (b.x + 2)) / step) + 1);
-      const n = Math.min(shown, yer);
-      const bas = bitis - step * (n - 1);
-      for(let i = 0; i < n; i++){
-        // i=0 kapıya en yakın; dizi kapıdan köpeğe doğru uzuyor
-        const sx = bas + step * i;
-        // hafif zikzak: cetvel gibi durmasın, ama sıra bozulmasın
-        drawKurt(g, SUT_KOYUN, 'koyun_dolu', sx, sy - (i & 1 ? 2 : 0), -1);
-      }
-    }
-
-    // Kangal — sürüyü karşılıyor.
-    drawFoldKangal(g, K.kangal.x, K.kangal.y, (Save.d.sore || 0) > 0 ? 'yatmis' : 'ayakta', Save.d.scars || 0);
-    // Boğazlık zaten kazanılmışsa (bu kapanıştan ÖNCEki bir sezonda ya da
-    // az önce takıldıysa) Kangal onu takılı taşır — yaklaşık boyun
-    // konumu, sanat ölçünce kesinleşir.
-    if(Save.d.collar){
-      // drawFoldKangal HER ZAMAN dir:-1 (başı sola bakar) — boyun kutunun
-      // SOL tarafına yakın. İlk basımda +13 gövde ortasına düşüyordu
-      // (BASILDI, BAKILDI); +6'ya çekildi.
-      const cx = K.kangal.x + 6, cy = K.kangal.y + 9;
-      px(g, cx - 4, cy, 9, 2, '#5c3a2e');
-      px(g, cx + 3, cy, 2, 2, PAL.gold);
-    }
-
-    // Takvim tahtası — 30 gün dolu, çentik SÜRÜKLENENE kadar "atılmamış".
-    drawFoldBoard(g, K.tahta.x, K.tahta.y, S.notchDone ? 30 : 29);
-
-    /* Çentik: sürüklenmediyse evinde bekler, sürükleniyorsa parmağın
-       altında. Altın başlıklı — ilk basımda kar üstündeki dallardan
-       (art'ın kendi çalı silüetleri) AYIRT EDİLEMİYORDU (BASILDI,
-       BAKILDI); parlak başlık onu "alet" olarak okutuyor. */
-    if(!S.notchDone){
-      const p = S.dragging === 'centik' ? S.dragPt : { x: K.centik.x + K.centik.w / 2, y: K.centik.y + K.centik.h / 2 };
-      px(g, p.x - 1, p.y - 3, 2, 7, '#5c3a2e');
-      px(g, p.x - 2, p.y - 5, 4, 3, PAL.gold);
-    }
-
-    /* Boğazlık: yalnız Mevsim I ödülü teklif edilmişse VE henüz
-       takılmamışsa. Tokası PAL.gold — aynı sebep, kar üstündeki taş
-       silüetlerine karışmasın. */
-    if(Save.d.kislakCollarOffer && !Save.d.collar){
-      const p = S.dragging === 'bogazlik' ? S.dragPt : { x: K.bogazlik.x + K.bogazlik.w / 2, y: K.bogazlik.y + K.bogazlik.h / 2 };
-      ell(g, p.x, p.y, 8, 4, '#5c3a2e');
-      ell(g, p.x, p.y - 1, 6, 3, '#8a6438');
-      px(g, p.x - 1, p.y - 2, 3, 2, PAL.gold);
-    }
-
-    // Kar perdesi — SONRA, tek katman (bkz. yukarıdaki not).
-    px(g, 0, 0, W, H, 'rgba(96,132,206,0.20)');
-
-    const u = U();
-    const collarLeft = Save.d.kislakCollarOffer && !Save.d.collar;
-    const ready = S.notchDone && !collarLeft;
-
-    /* Liderlik özeti (Görev 3, "gece vardiyası" turu, 2026-08-14) — ritüel
-       bitince (ready), "geçmişe göre nasıldın" — careClose/cardView'daki
-       perde dili (koyu, tam ekran) ile AYNI aile, yalnız içerik farklı.
-       Kaynak Save.d.seasonHist'in kendisi: ensureSeason() sezon sınırını
-       geçerken BİR KEZ ekliyor (bkz. yorum orada), burası yalnız OKUYUP
-       İKİ AYRI sıralı görünüm türetiyor (lbBySuru/lbByYara) — kışlak-anı
-       entegrasyonu bu; KALICI erişim (istediği an bakabilme) sahibine
-       AYRI bir KARAR GEREKİR olarak bırakıldı (yeni bir dokunma noktası
-       ağıldaki beş-nokta dengesini bozabilir). */
-    if(ready && Save.d.seasonHist.length){
-      const last = Save.d.seasonHist[Save.d.seasonHist.length - 1];
-      px(g, 0, 0, W, H, 'rgba(16,16,24,0.82)');
-      textC(g, u.lbBaslik, W / 2, 12, PAL.gold, 1, PAL.ink);
-      textC(g, u.lbBuSezon(last.flock, last.scars), W / 2, 24, PAL.bone, 1, PAL.ink);
-      drawSeasonLists(g, u, 42, last);
-      textC(g, u.kislakDevam, W / 2, 168, PAL.bone, 1, PAL.ink);
-      if(G.msgT > 0 && G.msg) textC(g, G.msg, W / 2, 158, PAL.bone, 1, PAL.ink);
-      return;
-    }
-
-    const line = !S.notchDone ? u.kislakYonergeCentik : u.kislakYonergeBogazlik;
-    // İlk basımda y:172 metni alt kenarda KIRPIYORDU (H=180, glif 7px) —
-    // yukarı alındı (BASILDI, BAKILDI).
-    textC(g, line, W / 2, 168, PAL.bone, 1, PAL.ink);
-
-    if(G.msgT > 0 && G.msg) textC(g, G.msg, W / 2, 158, PAL.bone, 1, PAL.ink);
-  },
-
   /* Vinyetler (ADIM 2, docs/mevsim-tasarim.md "Vinyetler" + art/vinyet/
      vinyet.json). "Silüet + ışık + zamanlama" — hiç metin yok, üç kare
      kendi başına anlatıyor. key/frame G.vinyet'ten okunur. */
@@ -8233,7 +7802,10 @@ const Attract = {
     if(!blit(g, 'kislak', 'kislak', 0, 0)) px(g, 0, 0, W, H, PAL.hillFar);
     // Aynı baca, aynı duman — vinyet de kışlağı gösteriyor (bkz. renderKislak).
     drawDuman(g, 26, 40, this.t || G.t || 0, { renk:'232,228,232', ruzgar:13 });
-    const K = KISLAK_LAYOUT;
+    /* Kutu ARTIK YEREL: KISLAK_LAYOUT kışlak ritüeliyle birlikte silindi
+       (2026-08-20). Vinyetin ihtiyacı olan tek şey sürünün sayıldığı alan;
+       değeri silinen tablodan birebir taşındı. */
+    const K = { suru: { x:50, y:142, w:60, h:24 } };
     /* THE COUNT-IN COUNTS THE PLAYER'S OWN FLOCK (FINDING 2, second
        question; owner's choice 2026-08-14). This drew a fixed 0/3/6 by
        frame whatever the player had — the closing ceremony of a season
@@ -11890,12 +11462,27 @@ async function begin(){
   // İlk koşudan ÖNCE alıştırma. Oyunun tek ayrımını öğretmeden ve
   // hassasiyeti oyuncunun eline oturtmadan sahaya salmak, jiroskop
   // oyunlarının bilinen ölüm sebebi.
-  /* İlk açılışta önce KONTROL SEÇİMİ, sonra alıştırma. Seçim olmadan
-     alıştırmaya girmek oyuncuyu varsayılan moda mahkûm ediyordu. */
+  /* İLK AÇILIŞTA SEÇİM SORULMUYOR (2026-08-20, docs/plan-tek-mod.md).
+     Burada bir "nasıl nişan alacaksın" ekranı vardı. Üç bağımsız AI da
+     aynı şeyi söyledi: ilk açılışta oyuncuya seçenek sunma, tek dokunuş
+     ver, oyunun ne olduğunu OYNAYARAK öğrensin. Oyuncu raporu da aynı
+     yerde takılmıştı — kapıya dokunan biri oyuna değil bir AYAR EKRANINA
+     düşüyordu.
+
+     Jiroskop VARSAYILAN. Sahibinin kararı (2026-08-19): *"ben gyro nun
+     öncelikli olmasını istiyorum."* Sensör yoksa ya da izin verilmezse
+     aşağıdaki blok zaten sessizce dokunmatiğe düşüyor — ve BU OTURUMLUK
+     düşüyor, tercihi kalıcı olarak bozmuyor (cfg.modeSecildi).
+
+     Seçim kaybolmadı, YERİ değişti: nişan köşesi (AIM) her zaman orada
+     ve iki kipi de sunuyor. Kaybolan tek şey, oyuncunun daha oyunu
+     görmeden karar vermeye zorlanması.
+
+     Alıştırma turu DURUYOR: o bir ayar ekranı değil, oynayarak öğretme —
+     tam da araştırmanın istediği şey. */
   if(!Save.d.seen['aim']){
-    scrTitle.hidden = true; scrOver.hidden = true;
-    $('scrAim').hidden = false;
-    return;
+    Save.d.seen['aim'] = 1; Save.put();
+    if(!cfg.modeSecildi){ cfg.mode = 'gyro'; }
   }
   if(!Save.d.seen['practice']){
     return openPractice(true);
@@ -12653,8 +12240,7 @@ function initFoldHotspots(){
     el.style.width  = pct(r.w, w);
     el.style.height = pct(r.h, h);
   };
-  const spots = { hsKapi:'kapi', hsTahta:'tahta', hsRaf:'raf', hsKangal:'kangal',
-                  hsFoto:'foto', hsSuru:'suru', hsNisan:'nisan' };
+  const spots = { hsKapi:'kapi', hsKangal:'kangal', hsSuru:'suru', hsNisan:'nisan' };
   for(const [id, key] of Object.entries(spots)) place(id, FOLD_LAYOUT[key], FOLD_LAYOUT.w, FOLD_LAYOUT.h);
   place('hsCikin', FOLD_LAYOUT.cikin, FOLD_LAYOUT.w, FOLD_LAYOUT.h);
   // Bakım yakın çekimi (ADIM 3) — AYNI #foldBox kutusu, CARE_LAYOUT'tan.
@@ -12665,12 +12251,6 @@ function initFoldHotspots(){
   // Paylaşım kartı önizlemesi — AYNI #foldBox kutusu, CARD_VIEW_LAYOUT'tan.
   const cardViewSpots = { cardViewClose:'close', cardViewShare:'share' };
   for(const [id, key] of Object.entries(cardViewSpots)) place(id, CARD_VIEW_LAYOUT[key], CARD_VIEW_LAYOUT.w, CARD_VIEW_LAYOUT.h);
-  // Kışlak (ADIM 1) — AYNI #foldBox kutusu, KISLAK_LAYOUT'tan.
-  const kislakSpots = { hsKislakCentik:'centik', hsKislakTahta:'tahta', hsKislakBogazlik:'bogazlik', hsKislakDevam:'devam' };
-  for(const [id, key] of Object.entries(kislakSpots)) place(id, KISLAK_LAYOUT[key], KISLAK_LAYOUT.w, KISLAK_LAYOUT.h);
-  // Takvim (büyük tasarım turu, 2026-08-14) — AYNI #foldBox kutusu, TAKVIM_LAYOUT'tan.
-  place('hsTakvimKapat', TAKVIM_LAYOUT.close, TAKVIM_LAYOUT.w, TAKVIM_LAYOUT.h);
-  place('hsTakvimSekme', TAKVIM_LAYOUT.tab, TAKVIM_LAYOUT.w, TAKVIM_LAYOUT.h);
 }
 initFoldHotspots();
 
@@ -12687,18 +12267,10 @@ $('hsKapi').addEventListener('click', () => {
   else startDoorPan();
 });
 
-/* Raf: dünyaya ait kısa bir not (canvas, bkz. renderFold) — ayrı bir
-   panel açmaya değecek kadar veri yok.
-   R2 (2026-08-14): bu tek satır KOŞULSUZDU ve Save.d.larder'ı HİÇ
-   okumuyordu — rafta 36 güğüm dururken bile "KİLER BOŞ · SÜT HENÜZ YOK"
-   diyordu. Bağlayıcı tasarımın mevsim boyu biriktirme geri bildirimini
-   yüklediği nesne bu, ve kendi kuralına ("tüketim GÖRÜNÜR olacak")
-   aykırı düşüyordu. Cetvel E'nin en güçlü tek işareti buydu: tepkisi de
-   sonucu da boş TEK fiil. Artık rafta ne varsa onu söylüyor. */
-$('hsRaf').addEventListener('click', () => {
-  const n = Save.d.larder | 0;
-  showMsg(n > 0 ? U().foldRafDolu(n) : U().foldRafBos, 150);
-});
+/* RAF ARTIK DOKUNULMUYOR (2026-08-20): kiler sayisi surekli gorunmesin,
+   HARCANDIGI yerde gorunsun — uc bagimsiz AI'nin ortak karari. Rafin
+   kendisi sahnede duruyor ve dolulugu goruluyor; kaldirilan sey yalnizca
+   dokunma hedefi ve etiketi. */
 
 /* Nişan köşesi: ayar panelini açar (defter L16). DOĞRUDAN openSheet —
    araya bir "ağıl menüsü" koymak panelin derinliğini 1'den 2'ye çıkarır ve
@@ -12727,8 +12299,12 @@ $('hsNisan').addEventListener('click', () => { openSheet(); renderDiag(); });
    nesne beş yerin hepsine elle eklenmek zorundaydı — nişan köşesi eklenirken
    tam bu yüzden bir yerde unutulup alt durumların üstünde açık kalabilirdi.
    Bir yerde durunca unutulamıyor. */
-const FOLD_HOTSPOTS = ['hsKapi', 'hsTahta', 'hsRaf', 'hsKangal', 'hsFoto',
-                       'hsSuru', 'hsNisan'];
+/* AGILIN DOKUNULABILIR NESNELERI. Raf ve foto CIKARILDI (2026-08-20):
+   uc bagimsiz AI da ayni seyi soyledi — kaynak SUREKLI gorunmesin,
+   harcandigi yerde gorunsun; paylasim ana ekranda degil yolculugun
+   SONUNDA olsun. Rafin kendisi sahnede duruyor (dolulugu goruluyor),
+   yalnizca dokunma hedefi ve etiketi kalkti. */
+const FOLD_HOTSPOTS = ['hsKapi', 'hsKangal', 'hsSuru', 'hsNisan'];
 
 function syncCareUI(){
   const open = G.care.open;
@@ -12783,46 +12359,12 @@ $('cardViewShare').addEventListener('click', async () => {
   catch(e){ showMsg(U().shareFail, 150); }
 });
 
-/* --- kışlak (ADIM 1, Faz 3, docs/mevsim-tasarim.md "Geçit ve kışlak") ---
-   Aynı desen: ayrı bir faz değil, ağılın İÇİNDE bir alt durum. Kaynağı
-   Save.d.kislakPending (kalıcı — ritüel bitmeden uygulama kapansa bile
-   sahne bir sonraki açılışta yeniden çıkar). openKislak() Attract.render()
-   içinden OTOMATİK çağrılır (bkz. G.phase 'idle' dalı) — care'in aksine
-   oyuncu bir yere dokunarak açmıyor, sezon kapandığında kendiliğinden. */
-function syncKislakUI(){
-  const open = G.kislak.open;
-  if(open){
-    for(const id of [...FOLD_HOTSPOTS,
-                      'careClose','careEl','careBowl','careSargi',
-                      'cardViewClose','cardViewShare']) $(id).hidden = true;
-  }
-  const S = G.kislak;
-  const collarLeft = Save.d.kislakCollarOffer && !Save.d.collar;
-  const ready = open && S.notchDone && !collarLeft;
-  $('hsKislakCentik').hidden = !open || S.notchDone;
-  /* Tahta, çentik atılmamışken dokunulabilir bir hedef. Çentikle AYNI
-     koşul: ritüel bitince ikisi de kayboluyor. */
-  $('hsKislakTahta').hidden = !open || S.notchDone;
-  $('hsKislakBogazlik').hidden = !open || !collarLeft;
-  $('hsKislakDevam').hidden = !ready;
-  $('hsKislakCentik').setAttribute('aria-label', U().hsKislakCentik);
-  $('hsKislakTahta').setAttribute('aria-label', U().hsKislakTahta);
-  $('hsKislakBogazlik').setAttribute('aria-label', U().hsKislakBogazlik);
-  $('hsKislakDevam').setAttribute('aria-label', U().hsKislakDevam);
-}
-function openKislak(){
-  G.kislak.open = true; G.kislak.dragging = null; G.kislak.notchDone = false;
-  syncKislakUI();
-}
-function closeKislak(){
-  Save.d.kislakPending = false;
-  Save.d.kislakFrom = 0; Save.d.kislakTo = 0; Save.d.kislakCollarOffer = false;
-  Save.put();
-  G.kislak.open = false; G.kislak.dragging = null; G.kislak.notchDone = false;
-  syncKislakUI();
-  syncCareUI();   // normal ağıl hotspot'larını (hsKapi vb.) geri getirir
-  refreshFoldUI();
-}
+/* KIŞLAK RİTÜELİ TAMAMEN SİLİNDİ (2026-08-20, docs/plan-tek-mod.md).
+   Mevsim sonu töreniydi; mevsim kabı kalkınca töreni de kalktı. Ekranı ve
+   tetiği bir önceki turda sökülmüştü, veri fonksiyonları orada BİLEREK
+   yarım bırakılmıştı ve commit mesajına yazılmıştı — burada kapanıyor.
+   Kapanış artık yolculuğun kendi durak töreni (rota.js çentiği). */
+
 
 /* --- vinyetler (ADIM 2, docs/mevsim-tasarim.md "Vinyetler") -------------
    Aynı desen: ağılın İÇİNDE bir alt durum. pendingVinyet() Save.first()
@@ -12880,84 +12422,6 @@ function syncSagimYakinUI(){
 }
 $('hsSagimSkip').addEventListener('click', () => { if(G.sagimYakin.open) finishSagimYakin(); });
 
-/* ÇENTİK — uygulama (applySarma/applyBesleme ile AYNI desen: sürükleme
-   yalnız BIRAKMA NOKTASINI hesaplar, gerçek işi adı konmuş bir fonksiyon
-   yapar — böylece testler DOM sürüklemesini taklit etmeden doğrudan
-   çağırabilir). Bir kez atılır; geri alınmaz (sezon kapandı, gerçek eylem). */
-function applyKislakCentik(){
-  if(!G.kislak.open || G.kislak.notchDone) return;
-  G.kislak.notchDone = true;
-  showMsg(U().kislakCentikDone, 150);
-  syncKislakUI();
-}
-$('hsKislakCentik').addEventListener('pointerdown', e => {
-  if(!G.kislak.open || G.kislak.notchDone) return;
-  e.preventDefault();
-  G.kislak.dragging = 'centik';
-  G.kislak.dragPt = canvasPt(e);
-  try{ $('hsKislakCentik').setPointerCapture(e.pointerId); }catch(err){}
-});
-$('hsKislakCentik').addEventListener('pointermove', e => {
-  if(G.kislak.dragging !== 'centik') return;
-  G.kislak.dragPt = canvasPt(e);
-});
-function endCentikDrag(e){
-  if(G.kislak.dragging !== 'centik') return;
-  G.kislak.dragging = null;
-  const p = canvasPt(e);
-  const b = KISLAK_LAYOUT.tahta;
-  if(p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) applyKislakCentik();
-}
-$('hsKislakCentik').addEventListener('pointerup', endCentikDrag);
-$('hsKislakCentik').addEventListener('pointercancel', () => { G.kislak.dragging = null; });
-
-/* TAHTAYA DOKUNMAK DA ÇENTİĞİ ATAR — kilitlenme onarımı (2026-08-18).
-   Sahibi kışlakta kilitlendi ve uygulamayı kapatıp açmak da kurtarmadı:
-   kislakPending kalıcı, yani her açılışta doğrudan kışlağa düşüyor. Tek
-   çıkış çentiği tahtaya BIRAKMAK, o da tek bir sürükleme jestine bağlıydı.
-   Bir oyunu tek bir jestin çalışmasına bağlamak kırılgan — jest herhangi
-   bir sebeple (dokunma alanı, tarayıcının jesti kaydırma sanması, parmak
-   kayması) düşerse oyuncunun BAŞKA hiçbir yolu kalmıyor.
-   Şimdi tahtanın kendisi de hedef. Sürükleme birincil ve etkileyici yol
-   olarak DURUYOR; bu yalnız düşme durumundaki karşılığı. Ritüel bozulmuyor:
-   oyuncu yine bilerek, doğru nesneye dokunuyor — "çentiği tahtaya atmak"
-   fiili aynı, yalnız iki yolu var. */
-$('hsKislakTahta').addEventListener('click', () => {
-  if(!G.kislak.open || G.kislak.notchDone) return;
-  applyKislakCentik();
-});
-
-/* BOĞAZLIK — yalnız Mevsim I'in geçit ödülü teklif edildiğinde (aynı
-   desen). Save.d.collar KALICI — bir daha sorulmaz, bir daha kaybolmaz. */
-function applyKislakBogazlik(){
-  if(!G.kislak.open || Save.d.collar || !Save.d.kislakCollarOffer) return;
-  Save.d.collar = true;
-  Save.put();
-  showMsg(U().kislakBogazlikDone, 150);
-  syncKislakUI();
-}
-$('hsKislakBogazlik').addEventListener('pointerdown', e => {
-  if(!G.kislak.open || Save.d.collar || !Save.d.kislakCollarOffer) return;
-  e.preventDefault();
-  G.kislak.dragging = 'bogazlik';
-  G.kislak.dragPt = canvasPt(e);
-  try{ $('hsKislakBogazlik').setPointerCapture(e.pointerId); }catch(err){}
-});
-$('hsKislakBogazlik').addEventListener('pointermove', e => {
-  if(G.kislak.dragging !== 'bogazlik') return;
-  G.kislak.dragPt = canvasPt(e);
-});
-function endBogazlikDrag(e){
-  if(G.kislak.dragging !== 'bogazlik') return;
-  G.kislak.dragging = null;
-  const p = canvasPt(e);
-  const b = KISLAK_LAYOUT.kangal;
-  if(p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) applyKislakBogazlik();
-}
-$('hsKislakBogazlik').addEventListener('pointerup', endBogazlikDrag);
-$('hsKislakBogazlik').addEventListener('pointercancel', () => { G.kislak.dragging = null; });
-
-$('hsKislakDevam').addEventListener('click', closeKislak);
 
 /* SARMA — yorgunluk 2 -> 1 sabah, BEDAVA (süt istemez). Yalnız köpek
    gerçekten yorgunken bir şey yapar; sargı hotspot'u zaten yalnız o hâlde
@@ -13088,17 +12552,10 @@ careDragSetup('careBowl', 'bowl', null, applyBesleme);
    hiç dokunulmuyor. */
 careDragSetup('careEl', 'el', null, null, () => { G.care.petHold = CARE_PET_MAX + 24; });
 
-/* Foto: çoban fotoğrafı -> kart ÖNİZLEMESİ (renderCardView) -> paylaşım.
-   Kartın verisi SABAH SONU ekranıyla aynı alanlardan (Save.d) kurulur —
-   ayrı bir hesap yok, tek kaynak. Bu sabah henüz oynanmadıysa lost/saved 0
-   kalır (dürüst: hiçbir şey olmadı). ESKİDEN buradan doğrudan shareCard()
-   çağrılıyordu — oyuncu kartı hiç görmeden iOS paylaşım sayfasına
-   düşüyordu (sahibinin geri bildirimi, 2026-08-13). */
-$('hsFoto').addEventListener('click', () => {
-  G.card = { kept: Save.d.flock, scars: Save.d.scars || 0, mornings: Save.d.mornings,
-             lost:0, saved:0 };
-  openCardView();
-});
+/* FOTO ARTIK ANA EKRANDA DEGIL (2026-08-20). Paylasim kart makinesi
+   (openCardView/renderCardView/shareCard) DURUYOR ama cagrisi yolculugun
+   BITIS ekranina tasindi (bitis.js): anlatilacak bir hikaye olusmadan
+   paylasim teklif etmek, oyuncuya bos bir kart sunmakti. */
 
 /* Sağım (ADIM 4, docs/mevsim-tasarim.md "Süt -> kiler -> azık -> kışlak").
    ELLE: her dokunuş BİR koyunu sağar. hsSuru zaten yalnız sağılacak
@@ -13212,40 +12669,13 @@ function sagilabilirVar(){
    kullanır ve ağıla girişte kurulan günü SESSİZCE değiştirirdi — eski
    #calGrid'de ölçüldü, tools/dom.js ile yakalandı; aynı tuzak burada da
    geçerli, o yüzden AYNI KURAL korundu. */
-function openTakvim(){
-  G.takvim.open = true;
-  G.takvim.tab = 'gunler';   // her açılış GÜNLER'den başlar (sekme, 2026-08-14)
-  syncTakvimUI();
-}
-function closeTakvim(){
-  G.takvim.open = false;
-  syncTakvimUI();
-}
 // Sekme geçişi ("geçen sezonlar" turu, 2026-08-14) — GÜNLER<->SEZONLAR,
 // yalnız render-durumu, başka hiçbir hotspot'u etkilemiyor.
-function toggleTakvimSekme(){
-  G.takvim.tab = G.takvim.tab === 'sezonlar' ? 'gunler' : 'sezonlar';
-}
-function syncTakvimUI(){
-  const open = G.takvim.open;
-  if(open) for(const id of FOLD_HOTSPOTS) $(id).hidden = true;
-  else syncCareUI();
-  $('hsTakvimKapat').hidden = !open;
-  $('hsTakvimKapat').setAttribute('aria-label', U().calClose);
-  $('hsTakvimSekme').hidden = !open;
-  $('hsTakvimSekme').setAttribute('aria-label', U().hsTakvimSekme);
-}
-$('hsTahta').addEventListener('click', openTakvim);
-$('hsTakvimKapat').addEventListener('click', closeTakvim);
-$('hsTakvimSekme').addEventListener('click', toggleTakvimSekme);
 
 function refreshFoldUI(){
   const u = U();
   $('hsKapi').setAttribute('aria-label', u.hsKapi);
-  $('hsTahta').setAttribute('aria-label', u.hsTahta);
-  $('hsRaf').setAttribute('aria-label', u.hsRaf);
   $('hsKangal').setAttribute('aria-label', u.hsKangal);
-  $('hsFoto').setAttribute('aria-label', u.hsFoto);
   /* Nişan köşesinin etiketi sensör durumunu SÖYLER. Kızıl parıltı
      görmeyene o bilgiyi taşıyan tek şey bu — yazıdan resme geçmek
      ekran okuyucu için bir gerileme OLMAYACAK (eski btnDiag'ın
@@ -13259,8 +12689,6 @@ function refreshFoldUI(){
   $('careSargi').setAttribute('aria-label', u.careSargi);
   $('cardViewClose').setAttribute('aria-label', u.careClose);
   $('cardViewShare').setAttribute('aria-label', u.share);
-  $('hsTakvimKapat').setAttribute('aria-label', u.calClose);
-  $('hsTakvimSekme').setAttribute('aria-label', u.hsTakvimSekme);
 }
 
 /* --- dili arayüze uygula --- */
