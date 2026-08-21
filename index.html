@@ -714,12 +714,8 @@ html.tiny  #progNote{display:none}
     <!-- Sağım (ADIM 4): dokun-sağ — her dokunuş kuzulu bir koyunu sağar.
          Yalnız kuzulama başladıktan (12. gün) sonra, sağılacak koyun
          kaldığında görünür (bkz. syncSuruUI). -->
-    <!-- Bakım yakın çekimi (ADIM 3): Kangal'a dokununca açılır, ağılın
-         İÇİNDEKİ bir alt durum (ayrı ekran/mod değil) — #foldBox'ın
-         kendi ölçeğini (fit()) paylaşıyor, ayrı bir kutu icat edilmedi.
-         Yalnız G.care.open iken görünür (bkz. syncUI). -->
     <!-- Paylaşım kartı önizlemesi (bkz. G.cardView): foto'ya dokununca
-         açılır, ağılın İÇİNDEKİ bir alt durum (careClose ile aynı desen).
+         açılır, ağılın İÇİNDEKİ bir alt durum.
          Kart ÖNCE burada görünür, native paylaşım yalnız cardViewShare'e
          ayrı bir dokunuşla. Yalnız G.cardView.open iken görünür. -->
     <!-- Kışlak (ADIM 1, Faz 3): sezon kapanışı — ağılın İÇİNDEKİ bir alt
@@ -1050,8 +1046,8 @@ const STR = {
       /* ASCII tire (em-tire "—" DEĞİL, 2026-08-14): DOM'dayken fark etmiyordu
          (textContent Unicode'u basar), takvim KANVASA taşınınca bitmap
          fontta em-tire olmadığı için "?" basardı — dil bütünlüğü testi
-         yakaladı. Bu koddaki tekrarlanan bir sınıf (bkz. careSargiDone,
-         foldRafBos yorumları): KANVASA çizilen her metin bu kurala tabi. */
+         yakaladı. Bu koddaki tekrarlanan bir sınıf (bkz. foldRafBos
+         yorumu): KANVASA çizilen her metin bu kurala tabi. */
       // Takvim sekme geçişi ("geçen sezonlar" turu, 2026-08-14) — GÜNLER
       // (mevcut takvim) / SEZONLAR (liderlik) arasında, KANVASA çiziliyor.
       /* Raf DOLUYKEN kendi sayısını söyler (R2, 2026-08-14). Eskiden tek
@@ -1060,41 +1056,18 @@ const STR = {
          zaten kilerin kendisi. Kısa tutuldu: Cetvel F dünya-notu satırının
          sürü hedefine bindiğini ölçmüştü (TR 388px, EN 508px), bu satır
          eski İngilizce hâlinden KISA olduğu için o bindirme büyümüyor. */
-      /* Bakım yakın çekimi (ADIM 3). careSargiDone tasarım dokümanının
-         KENDİ cümlesi (mevsim-tasarim.md, "Bakım yakın çekimi") — aynen
-         alındı (yalnız em-tire "—" yerine ASCII "-": bu ikisi G.msg ile
-         KANVASA çiziliyor, bitmap fontta em-tire yok — "?" basardı,
-         font testi yakaladı). careBesleDone SÖZLÜKTE YOK, doğrudan
-         yazıldı (bkz. teslim raporu "sahibine sorulacak" listesi). */
-      /* ADIM 3 yeniden kuruluşu (2026-08-13, Nintendogs modeli): üç
-         nesnenin ÜÇÜ de artık sürükleniyor — carePortrait/tıklama gitti. */
-      careClose:'Kapat', careEl:'El — köpeğe sürükle, sev',
-      /* Bakım etiketleri (ağıldaki NÖBET/GÜNLER/KİLER ile aynı desen —
-         "nereye dokunulacağı anlaşılmıyor" sorunu burada da vardı, bkz.
-         foldEtiketKapi). Nesnenin adı değil İŞİ: SARGI değil SAR. */
-      careEtiketSargi:'SAR', careEtiketBowl:'BESLE', careEtiketEl:'SEV',
-      careSargiDone:'Sargı yerinde - yarın dinlenmiş kalkar.',
-      careBesleDone:'Yalı önünde, karnı tok yatar.',
-      /* SEVME (R4, 2026-08-14): kardeşlerinin ikisinde de bir söylenen
-         sonuç vardı, sevmede YOKTU — oyun oturumu sevince bir ÖNCEKİ
-         eylemin cümlesinin ekranda kaldığını kaydetti.
-         Cümle bilerek hiçbir MEKANİK söz vermiyor: sarma yarını, besleme
-         geceyi söylüyor, sevme yalnız ŞU ANI söylüyor — "mekanik etkisi
-         YOK, olmamalı" tasarımın kendi kuralı, cümle onunla çelişmemeli.
-         ASCII tire (KANVASA çiziliyor — bkz. careSargiDone notu). */
-      careSevDone:'Başını eline yasladı - başka bir şey istemiyor.',
       /* Kışlak (ADIM 1, Faz 3) — SÖZLÜKTE YOK (mevsim-tasarim.md'nin iki
          dilli sözlüğünde "kışlak/winter pasture" başlığı var, bu satırlar
          yok), doğrudan yazıldı: bkz. teslim raporu "sahibine sorulacak"
          listesi. kislakCentikDone/kislakBogazlikDone KANVASA çiziliyor
-         (G.msg) — careSargiDone ile aynı kural: em-tire yok, ASCII "-". */
+         (G.msg) — KANVASA çizilen metnin kuralı: em-tire yok, ASCII "-". */
       // Liderlik tablosu (Görev 3, "gece vardiyası" turu, 2026-08-14) —
       // kışlak ritüeli bitince gösterilen özet, KANVASA çiziliyor.
       // Sağım yakın çekimi ("gece vardiyası" görevi, 2026-08-14) — hsVinyetSkip ile AYNI desen.
       hsSagimSkip:'Geç',
       /* Süt akışı (o zamanki tercih, "Kiler STOK değil AKIŞ"): SÖZLÜKTE
          YOK, doğrudan yazıldı — bkz. teslim raporu. KANVASA çiziliyor
-         (G.msg), careSargiDone ile aynı kural: em-tire yok, ASCII "-".
+         (G.msg), KANVASA çizilen metnin kuralı: em-tire yok, ASCII "-".
          Sahibinin kendi örneği rakamları YAZIYLA vermişti ("üç güğüm",
          "dört kuzu"); burada RAKAMLA yazıldı (oyunun geri kalanının
          kuralı — HUD/bilanço hep rakam kullanıyor, bkz. teslim raporu). */
@@ -1300,17 +1273,6 @@ const STR = {
          anahtarı, sonra ayrıntı. */
       // Calendar tab switch ("past seasons" task, 2026-08-14) — drawn to CANVAS.
       // See the tr note: the shelf states its own count once it holds anything.
-      // ADIM 3 — düz çeviri, SÖZLÜKTE YOK, FİNALİZE EDİLMEDİ (bkz. teslim
-      // raporu). careSargiDone/careBesleDone KANVASA çiziliyor (G.msg) —
-      // bitmap fontta apostrof/em-tire yok, ASCII'ye indirgendi.
-      // ADIM 3 yeniden kuruluşu (2026-08-13): üç nesnenin ÜÇÜ de sürükleniyor.
-      careClose:'Close', careEl:'Hand — drag to him to pet',
-      careEtiketSargi:'WRAP', careEtiketBowl:'FEED', careEtiketEl:'PET',
-      careSargiDone:'Dressing holds - he wakes rested.',
-      careBesleDone:'Bowl at his feet - he sleeps full.',
-      // See the tr note (R4): the wrap speaks of tomorrow, the bowl of the
-      // night, petting only of NOW — it must promise no mechanical effect.
-      careSevDone:'He leans into your hand - he wants nothing more.',
       // Kışlak (ADIM 1, Faz 3) — SÖZLÜKTE YOK, FİNALİZE EDİLMEDİ (bkz.
       // teslim raporu "sahibine sorulacak"). kislak*Done KANVASA çiziliyor.
       // Leaderboard ("night shift" task, 2026-08-14) — shown when the
@@ -1647,14 +1609,11 @@ const SCAR_LOG_MAX = 6;
 const Save = {
   d:{ v:SAVE_V, runs:0, wins:0, bestRound:0, birds:0, seen:{}, medals:[],
       flock:FLOCK_START, mornings:0, scars:0, bestFlock:FLOCK_START, sore:0, lastLost:0,
-      wolfLimping:false, dogFed:false,
-      /* YARALARIN YAŞI (Seçenek D'nin sargılı biçimi). Her giriş {m,t}:
-         m = yaranın olduğu sabahın numarası, t = pansuman yapıldı mı (0/1).
-         Bu turun TEK şema değişikliği.
-         GÖÇ KENDİLİĞİNDEN: eski kayıtta bu alan yok, dizi boş kalıyor, ve
-         damgası olmayan iz KAPANMIŞ çiziliyor (renderCare). Yani eski bir
-         kayıt açıldığında köpek birden sargılı görünmüyor — özel bir göç
-         dalı yazmak gerekmedi, kuralın kendisi göçü yapıyor. */
+      wolfLimping:false,
+      /* YARALARIN YAŞI. Her giriş {m}: yaranın olduğu sabahın numarası.
+         GÖÇ KENDİLİĞİNDEN: eski kayıtta bu alan yok, dizi boş kalıyor.
+         Eski kayıtlarda girişlerde bir de `t` (pansuman) alanı vardı —
+         bakım katmanıyla birlikte kalktı, okunmuyor, göz ardı ediliyor. */
       scarLog:[] },
   load(){
     let raw = {};
@@ -1695,9 +1654,6 @@ const Save = {
       // Yırtıkkulak: bir önceki karşılaşmada tam kaçırtıldıysa true —
       // bir sonraki görünüşünde aksak pozla döner ve tüketilir (bkz. makeWolf).
       wolfLimping: raw.wolfLimping === true,
-      // Besleme (ADIM 3, bakım yakın çekimi): true ise BİR SONRAKİ sabah
-      // köpek tok başlar, boğuşması kısalır — startRun()'da tüketilir.
-      dogFed: raw.dogFed === true,
       // Kiler (ADIM 4 — henüz boş): raf dolduğunda güğüm sayısı, 0..36.
       /* KAMPANYA (buyume esigi olcumu): kendi alanında, SAVE_V YÜKSELTİLMEDEN.
          Burada yalnız "nesne mi" diye bakılıyor; ALAN ALAN süzme
@@ -1718,7 +1674,7 @@ const Save = {
          oyunu kilitlemesin — bu depo şema konusunda bunu öğrendi. */
       scarLog: (Array.isArray(raw.scarLog) ? raw.scarLog : [])
         .filter(e => e && typeof e === 'object')
-        .map(e => ({ m: num(e.m, 0), t: e.t === 1 || e.t === true ? 1 : 0 }))
+        .map(e => ({ m: num(e.m, 0) }))
         .slice(-SCAR_LOG_MAX),
     };
   },
@@ -1792,7 +1748,6 @@ const Telemetry = {
       lastMorning: +r.lastMorning || 0,
       bestFlock: +r.bestFlock || 0,
       secs: +r.secs || 0,
-      care: obj(r.care),             // sarma/besle/sev -> kaç kez
       milked: +r.milked || 0,        // toplam sağılan güğüm
     };
   },
@@ -1801,7 +1756,6 @@ const Telemetry = {
 
   /* Hepsi "bir şey OLDU mu" sayıyor, oyuncunun kimliğine dair hiçbir şey
      tutmuyor; veri cihazdan çıkmıyor (sunucu yok). */
-  careUsed(kind){ this.bump(this.d.care, kind); this.put(); },
   milkedOne(){ this.d.milked++; this.put(); },
 
   /* Uygulama açıldı. Önceki oturumun sabah sayısı burada kayda geçer —
@@ -1862,7 +1816,7 @@ const Telemetry = {
       'acilis       : ' + d.opens,
       'sabah        : ' + d.mornings + '   son sabah no: ' + d.lastMorning,
       'ACILIS BASINA: ' + pairs(d.perOpen) + '   <- kac sabah / kac kez',
-      'agil isleri  : sagim ' + d.milked + '   bakim ' + pairs(d.care),
+      'agil isleri  : sagim ' + d.milked,
       'yarida birak : ' + d.quit + '   suru tukendi: ' + d.empty,
       'kayip        : ' + d.lost + '  (sabah basina ' + ort + ')',
       'kurtarilan   : ' + d.saved + '   yara: ' + d.scars,
@@ -4091,7 +4045,7 @@ const SUT_KUZU = { w:11, h:8, pal:SUT_PAL, kare:{
  *
  * NEDEN PİŞİRİLMİYOR (fold.png'ye): üçü de DEĞİŞEN nesneler.
  *   - tahta her gün başka görünür (çentik sayısı, bugünün yeri),
- *   - Kangal'ın duruşu bakım hâline göre değişir,
+ *   - Kangal'ın duruşu yorgunluk/yara durumuna göre değişir,
  *   - fotoğraf sabit ama çerçeve/vurgu ışıkla oynuyor ve dokunulunca
  *     parlaması gerekiyor (kod tarafında bedava).
  * Arka plana pişirilen tek şey MİMARİ (duvar, sundurma, kapı kanadı).
@@ -4611,30 +4565,6 @@ function blit(g, sheet, frameName, x, y){
   return true;
 }
 
-/* blit()'in bir PARÇASINI basan hâli — bakım portresinin kesilmesi için
-   (BULGU 3). Kaynak kareden bir alt dikdörtgen alır ve istenen yere basar,
-   böylece tek bir çizilmiş kare birbirinden bağımsız hareket eden parçalara
-   ayrılabilir. Yeni piksel YOK: her parça onaylanmış karenin kendi
-   pikselleri. */
-function blitPart(g, sheet, frameName, sx, sy, sw, sh, dx, dy){
-  const s = Assets.sheets[sheet]; if(!s) return false;
-  const f = s.frames[frameName];  if(!f) return false;
-  g.drawImage(s.img, f.x + sx, f.y + sy, sw, sh,
-              Math.round(dx), Math.round(dy), sw, sh);
-  return true;
-}
-
-/* blit()'in çapa yok sayan hâli — bakım yakın çekiminde SÜRÜKLENEN sargı
-   için: onun ax/ay'ı köpeğin üstündeki hedef bölgeye göre pişmiş, ama
-   parmağın altında taşınırken hedefe değil PARMAĞA göre ortalanmalı. */
-function blitCentered(g, sheet, frameName, x, y){
-  const sh = Assets.sheets[sheet]; if(!sh) return false;
-  const f = sh.frames[frameName];  if(!f) return false;
-  g.drawImage(sh.img, f.x, f.y, f.w, f.h,
-              Math.round(x - f.w / 2), Math.round(y - f.h / 2), f.w, f.h);
-  return true;
-}
-
 /* Animasyon zamanlayıcı: kare dizisini fps'e göre ilerletir. */
 
 /* Ağıl yerleşimi — prototype/assets/fold.json "yerlesim" ile BİREBİR aynı
@@ -4677,7 +4607,7 @@ const FOLD_LAYOUT = {
 
 /* Paylaşım kartı önizlemesi (ADIM 3, sahibinin geri bildirimi 2026-08-13:
    ağıldaki fotoğrafa dokununca kart hiç görünmeden DOĞRUDAN iOS paylaşım
-   sayfası açılıyordu). care ile AYNI desen: ağılın İÇİNDE bir alt durum.
+   sayfası açılıyordu). Ağılın İÇİNDE bir alt durum.
    card kutusu CARD sabitlerinden (216x270, dosyada DAHA SONRA tanımlı —
    ileri referans olmasın diye sayılar elle türetildi) dikeyde sığdırıldı.
    ÖNCEDEN 5/9 oranıydı (216*5/9=120, 270*5/9=150) — tam sayı olmayan oran
@@ -4696,14 +4626,6 @@ const CARD_VIEW_LAYOUT = {
   close: { x:288, y:8,   w:26,  h:22 },
   share: { x:70,  y:164, w:180, h:14 },
 };
-
-/* Üç fiziksel nesne — Nintendogs modeli (docs/referans/bakim-nintendogs.md):
-   düğme değil NESNE, biçimin kendisi ne olduğunu söylesin. Aynı fonksiyon
-   hem "duran" hem "sürüklenen" konumda çağrılıyor (bkz. renderCare), yani
-   parmağın altındaki şey ile köşede bekleyen şey HER ZAMAN aynı çizim. */
-
-/* Bakim nesnelerinin cizimi (sargi/yal kabi/el) SILINDI — bakim ekrani
-   yok. */
 
 
 
@@ -4730,7 +4652,15 @@ const Snd = {
     for(let i=0;i<len;i++) ch[i] = Math.random()*2-1;
   },
   unlock(){ this.init(); if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
-  setMute(m){ this.muted = m; if(this.master) this.master.gain.value = m ? 0 : 0.3; },
+  setMute(m){
+    this.muted = m;
+    if(!this.master) return;
+    /* cancelScheduledValues SART: duck() bir rampa zamanladiysa, .value'ya
+       dogrudan yazmak onu durdurmuyor — oyuncu sessize aliyor, 1 saniye
+       sonra rampa sesi geri aciyordu. */
+    if(this.ctx) this.master.gain.cancelScheduledValues(this.ctx.currentTime);
+    this.master.gain.value = m ? 0 : 0.3;
+  },
   // Aynı ses arka arkaya çalınca makineli tüfek gibi duyuluyordu; hafif
   // perde sapması her atışı biraz farklı kılıyor.
   vary(f){ return f * (0.94 + Math.random()*0.12); },
@@ -5031,6 +4961,40 @@ const Snd = {
   laugh(){ this.seq([700,610,540,470], 0.075, 'square', 0.33); },
   bark(){ this.tone(this.vary(300), 0.07, 'square', 0.38, 180); this.noise(0.05, 900, 0.28); },
   bad(){ this.tone(150, 0.30, 'sawtooth', 0.42, 70); this.noise(0.3, 500, 0.22); },
+
+  /* KAYIP — govdeye inen darbe. Alcak, kisa, MELODISIZ.
+     Buraya kadar Snd.over() calliyordu: dort inen nota, 0.64 sn. O bir
+     KOSU SONU jingle'i ve her koyunda calininca agit degil TIK oluyordu —
+     ustelik arkasindan gelecek sessizligin uzerine biniyordu. over()
+     yerinde duruyor, yalnizca gercek bitiste calisiyor.                  */
+  kayip(){
+    this.noise(0.22, 190, 0.55, 60);            // bogus, alcak gurleme
+    this.tone(96, 0.30, 'sine', 0.40, 54);      // gogus vurusu — sinus, tirmalamaz
+  },
+
+  /* Sesi KISAR ve geri getirir. Kaybin sessizligi buradan geliyor: darbe
+     duyulur, sonra dunya susar, sonra ruzgar yavasca geri gelir.
+     gecikme: darbenin duyulmasi icin beklenen sure
+     sessiz : simdiden itibaren sesin geri DONMEYE BASLADIGI an
+     geri   : geri donus rampasinin suresi                                */
+  duck(gecikme, sessiz, geri){
+    if(!this.ctx || this.muted || !this.master) return;
+    const t = this.ctx.currentTime, gn = this.master.gain;
+    gn.cancelScheduledValues(t);
+    gn.setValueAtTime(gn.value, t);
+    gn.setValueAtTime(gn.value, t + gecikme);
+    gn.linearRampToValueAtTime(0.0001, t + gecikme + 0.05);
+    gn.setValueAtTime(0.0001, t + sessiz);
+    gn.linearRampToValueAtTime(0.3, t + sessiz + geri);
+  },
+  /* Kisilmis sesi ANINDA geri verir. Kosu kaybin sessizligi bitmeden
+     sona ererse (son hayvan giderse) bitis ekrani sessiz aciliyordu. */
+  duckBirak(){
+    if(!this.ctx || !this.master) return;
+    const t = this.ctx.currentTime, gn = this.master.gain;
+    gn.cancelScheduledValues(t);
+    gn.setValueAtTime(this.muted ? 0 : 0.3, t);
+  },
   /* --- menü teması: hicaz dizisi (Anadolu tınısı) ---------------------
      Oynanışta müzik yok — orijinalin sessiz tasarımı kasten korundu.
      Tema yalnız menüde çalar, oyunun kimliğini oradan verir.             */
@@ -5431,7 +5395,11 @@ const G = {
   shieldLeft:0,
   stats:null, roundLog:[],
   // juice
-  shakeT:0, shakeMag:0, stopT:0, parts:[],
+  shakeT:0, shakeMag:0, shakeDur:0, stopT:0, parts:[],
+  /* KAYIP DARBESI — bir hayvan gittiginde calisan uc perdeli an.
+     lossT geriye sayar ve perde onun DEGERINDEN okunur; ayri bayrak yok
+     (ayri bayrak tutulsaydi biri sifirlanip oteki kalabilirdi). */
+  lossT:0, lossX:W/2,
   /* Burada dort alt-durumun yorumu duruyordu: bakim yakin cekimi, kislak
      toreni, takvim ekrani ve sut akisi notu. Dordu de silindi.
      Kalan tek alt-durum paylasim karti onizlemesi. Bir kez daha ayni
@@ -5556,7 +5524,7 @@ const Attract = {
       // Bakım yakın çekimi (ADIM 3): ağılın İÇİNDE bir alt durum, ayrı faz
       // değil — Kangal'a dokununca üstüne biner, kapatınca ağıla döner.
       // Paylaşım kartı önizlemesi (bkz. G.cardView) — kışlak/vinyetten ÖNCE:
-      // oyuncu foto'ya dokunduğunda o an ne varsa (care'in aksine) her zaman açılabilir.
+      // oyuncu foto'ya dokunduğunda o an ne varsa her zaman açılabilir.
       if(G.cardView.open){ this.renderCardView(); return; }
       // Takvim ("büyük tasarım turu", 2026-08-14): AYNI öncelik — oyuncunun
       // DOĞRUDAN dokunuşuyla (hsTahta) açılan bir alt durum.
@@ -5850,8 +5818,9 @@ const Attract = {
       try{
         // Kapı — oyunun kendisi. Hiç oynanmamışsa tek gerçek iş bu.
         if(!Save.d.mornings) foldNokta(g, kp, idle, -7, 5);
-        // Köpek — yaralıysa bakım bekliyor (applySarma gerçekten iyileştiriyor).
-        if((Save.d.sore || 0) > 0) foldNokta(g, k, idle, -5, 0);
+        /* KÖPEK NOKTASI KALDIRILDI (bakım katmanı söküldü): nokta bir
+           eylem vaat ediyordu, ama dokunulacak bir şey kalmadı. Yorgunluk
+           kendiliğinden geçiyor (finishMorning), oyuncunun yapacağı iş yok. */
         // Sürü — sağılacak koyun varsa. sagilabilirVar() sağımın KENDİ
         // kapısını okuyor, ayrı bir kopya hesap değil.
         if(sagilabilirVar()) foldNokta(g, FOLD_LAYOUT.suru, idle, -8, 3);
@@ -5933,43 +5902,16 @@ const Attract = {
        bitis ekrani, konak isleri. Oyun tek mekanige indi. */
   },
 
-  /* Bakım yakın çekimi (ADIM 3, docs/mevsim-tasarim.md "Bakım yakın
-     çekimi"). YENİDEN KURULDU (2026-08-13, Nintendogs modeli — docs/
-     referans/bakim-nintendogs.md): sahibinin sözü "köpek çok güzel
-     çizilmiş FAKAT bu ekranda neyin ne olduğu hiç anlaşılmıyor." Üç
-     fiziksel nesne (sargı/yal kabı/el) köpeğin üstüne SÜRÜKLENİR; köpek
-     HER eylemde GÖRÜNÜR bir fiziksel tepki verir — birincil tepki
-     HAREKET, yazı (showMsg) ikincil.
-
-     Kangal'ın portresi art/kangal/kangal.json'dan (blit, atlas yoksa
-     alttaki drawKangal'a düşer — silüet en azından okunur kalır).
-     Katmanlar SIRAYLA: taban poz (tepki ofsetiyle KAYDIRILMIŞ) -> yara
-     izleri -> sargı (uygulandıysa yanıp söner).
-
-     TASMA KATMANI KALDIRILDI (o zamanki tercih, 2026-08-17): "o tasma
-     anlaşılmıyor hiçbir şekilde ve aşırı kötü duruyor." 33x15'lik bir
-     bindirmeydi ve TEK yerde çiziliyordu — burada. Ağılın Kangal'ı,
-     kışlak ve vinyetler onu hiç kullanmıyordu (tarandı), yani buradan
-     kalkması oyundan kalkması demek; ayrıca kaldırılınca boyunda delik
-     açmıyor, çünkü taban poz tasmanın altını da çiziyor (basıldı, bakıldı).
-     KIŞLAK BOĞAZLIĞI (`bogazlik`) BU DEĞİL ve DOKUNULMADI: o töreninin
-     kazanılmış ödülü, ayrı bir açık madde. */
-  /* BAKIM YAKIN CEKIMI SILINDI (2026-08-21). Sahibinin cumlesi:
-     *"kopek ve sut sagimi ile ilgili hersey tamamen ciksin."* Ekran zaten
-     ULASILAMAZDI (onu acan openCare bir onceki turda silinmisti) ama
-     ~420 satir cizim kodu, kendi sanat sayfasi ve DOM kancalari duruyordu
-     — okuyani "bu oyunda bakim var" diye yaniltan bir kalinti. */
-
 
   /* Paylaşım kartı önizlemesi (bkz. G.cardView, CARD_VIEW_LAYOUT). Foto'ya
      dokununca ESKİDEN doğrudan navigator.share çağrılıyordu — kart hiç
      ekranda görünmüyordu (sahibi telefonda BASILDI, BULUNDU: iOS paylaşım
      sayfası anında açılıyordu, 2026-08-13). Şimdi kart ÖNCE burada gösterilir;
      native paylaşım yalnız oyuncu ayrı bir "paylaş" dokunuşuyla ister —
-     careClose ile AYNI görsel dil (X + hafif kenarlı koyu levha). */
+     ağılın kapat düğmeleriyle AYNI görsel dil (X + hafif kenarlı koyu levha). */
   renderCardView(){
     if(!blit(g, 'fold', 'fold', 0, 0)) px(g, 0, 0, W, H, PAL.hillFar);
-    px(g, 0, 0, W, H, 'rgba(16,16,24,0.72)');   // ağıl loşça arkada — care ile aynı perde
+    px(g, 0, 0, W, H, 'rgba(16,16,24,0.72)');   // ağıl loşça arkada
 
     if(!this._cardCanvas){
       this._cardCanvas = document.createElement('canvas');
@@ -6035,7 +5977,7 @@ const Attract = {
     const u = U();
     textC(g, u.share, W / 2, CARD_VIEW_LAYOUT.share.y + 3, PAL.bone, 1, PAL.ink);
 
-    // Kapat — careClose ile birebir aynı çizim (tutarlılık: aynı fiil, aynı işaret).
+    // Kapat — aynı fiil, aynı işaret (tutarlılık).
     drawCloseMark(g, CARD_VIEW_LAYOUT.close);
 
     // Paylaşım hatası burada bildirilir (bkz. shareCard çağrısı) — alttaki
@@ -6093,15 +6035,9 @@ function startRun(){
   // uygulanınca boğuşma biter bitmez hemen yenisi çıkıyordu (bir sabahta
   // 7 kez ölçüldü) — "süs değil rampa" tasarım niyetiyle çelişiyordu.
   G.jackalUsed = false;
-  /* Besleme (ADIM 3): "ertesi sabah tok, boğuşması kısa" — bayrak burada
-     TÜKETİLİR (Save.d.wolfLimping ile AYNI desen). G.dogFed sabah boyunca
-     sabit (yorgunluk gibi, ortasında değişmez); boğuşma süresine WOLF.
-     fedFightMul ile uygulanıyor (bkz. updateStrikes fight-start). */
-  G.dogFed = !!Save.d.dogFed;
-  if(Save.d.dogFed){ Save.d.dogFed = false; Save.put(); }
   G.scarsThisMorning = 0; G.morningEnd = null;
   /* Delikler o sabahın anısı, kalıcı yara değil — yeni sabah başlayınca
-     ağıl yeni gerçeğe göre yerleşir (bkz. Save.d.lastLost). Save.d.dogFed
+     ağıl yeni gerçeğe göre yerleşir (bkz. Save.d.lastLost). Save.d.wolfLimping
      ile AYNI desen: bayrak burada TÜKETİLİR, boşuna yazma yok. */
   if(Save.d.lastLost){ Save.d.lastLost = 0; Save.put(); }
   // Köpek sabahın başında sürünün yanında. Round girişi ve gezintisi yok:
@@ -6111,6 +6047,11 @@ function startRun(){
   G.perks = [];
   G.draft = null;
   G.slowT = 0;
+  /* Kayip darbesi kosular arasinda TASINMAZ. Tasinsaydi son hayvani
+     kaybedip yeniden basladiginda yeni kosu karanlikta ve yari hizda
+     aciliyordu. Ses kismasi da birakiliyor. */
+  G.lossT = 0; G.shakeT = 0; G.shakeMag = 0; G.shakeDur = 0; G.stopT = 0;
+  Snd.duckBirak();
   G.stats = { shots:0, hits:0, decoyHits:0, fled:0, perfects:0,
               reloads:0, steady:0, maxCombo:0, bestPouch:0, cleanClay:false };
   G.roundLog = [];
@@ -6636,8 +6577,65 @@ function drawCalib(){
 const REDUCED = (() => {
   try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; }
 })();
-function shake(mag){ if(REDUCED) return; G.shakeT = 9; G.shakeMag = Math.max(G.shakeMag, mag); }
+/* --- OLAY AGIRLIKLARI ----------------------------------------------------
+   Bu tablo bir tasarim karari degil, bir OLCUM sonucu. 2026-08-21'de
+   bugunku dozlar sayildi:
+
+     kil disk vurma   sarsinti 2   donma 3   titresim 16ms
+     kus vurma        sarsinti 3   donma 4   titresim 18ms
+     KAYIP            sarsinti 5   donma 0   titresim 40ms
+
+   Yani oyunun tek gercek bedeli — bir hayvani sonsuza dek kaybetmek —
+   bir kil diski vurmaktan yalniz 2 birim daha agirdi, ve hicbir donmasi
+   yoktu. Hepsi bir saniyeden kisa, hicbirinin arkasi yok.
+
+   Yeni kural: VURUS HAFIF VE HIZLI, KAYIP AGIR VE SESSIZ. Vurus sik olan
+   seydir, uzun surerse yorar; kayip nadir olandir, oyun ona bakmali.   */
+const KAYIP = {
+  don:     9,      // kare — tam donma. Darbenin kendisi.
+  yavas:   54,     // kare — yari hizda izleme: suru dagilirken oyuncu bakar
+  toparla: 40,     // kare — sesin ve karanligin geri gelmesi
+  sarsinti:7,
+  titresim:60,     // ms
+  karart:  0.42,   // vinyetin en koyu payi
+};
+KAYIP.top = KAYIP.don + KAYIP.yavas + KAYIP.toparla;   // 103 kare ~ 1.7 sn
+
+/* Sarsinti artik SONUYOR. Eskiden 9 kare boyunca sabit genlikte titreyip
+   birden kesiliyordu — bu "titresim" degil "gurultudur"; darbe hissi
+   genligin DUSMESINDEN gelir. k*k: sert baslar, cabuk biter.
+   dur verilmezse eski 9 kare korunur, boylece cagiran her yeri
+   degistirmek gerekmiyor.                                              */
+function shake(mag, dur){
+  if(REDUCED) return;
+  dur = dur || 9;
+  G.shakeT   = Math.max(G.shakeT, dur);
+  G.shakeDur = Math.max(G.shakeDur, dur);
+  G.shakeMag = Math.max(G.shakeMag, mag);
+}
 function hitStop(f){ G.stopT = Math.max(G.stopT, f); }
+
+/* Kaybin kendi zamanini baslatir. */
+function kayipDarbesi(x){
+  if(G.lossT > 0){
+    /* UST USTE KAYIP: perde YENIDEN KURULMAZ. Kurulsaydi olum sarmalinda
+       (arka arkaya uc koyun) oyun saniyelerce yari hizda ve karanlikta
+       kalirdi — oyuncunun elinden kontrolu almak kaybin acisini degil
+       oyunun BOZUKLUGUNU anlatir. Ikinci kayip yalniz bir sarsinti ve
+       titresim ekler; perde ilk kaybin takvimiyle cozulur.
+       Donma da EKLENMEZ: iki donma ust uste gelirse 0.3 saniye kayip
+       girdi olur ve ucuncu kartal bedavaya gecer.                       */
+    shake(4, 12); buzz(30);
+    return;
+  }
+  G.lossT = KAYIP.top;
+  G.lossX = x;
+  hitStop(KAYIP.don);
+  shake(KAYIP.sarsinti, 26);      // uzun ve sonumlu — vurusun ~4 kati suresi
+  buzz(KAYIP.titresim);
+  Snd.kayip();
+  Snd.duck(0.22, (KAYIP.don + KAYIP.yavas) / 60, KAYIP.toparla / 60);
+}
 /* Haptik: native sarmalayıcı içindeysek Capacitor Haptics kullanılır —
    navigator.vibrate iOS WebView'da hiç çalışmaz, Android'de de native API
    daha güvenilir. Tarayıcıda vibrate'e düşer, ikisi de yoksa sessizce geçer. */
@@ -7277,6 +7275,11 @@ function updateMorning(){
 
 function finishMorning(why){
   G.phase = 'over';
+  /* Kosu, kaybin sessizligi bitmeden sona erebilir — son hayvan giderse
+     tam da oyle olur. Birakilmazsa bitis ekrani sessiz aciliyor ve
+     Snd.over() hic duyulmuyordu. */
+  G.lossT = 0;
+  Snd.duckBirak();
   const before = Save.d.flock;
   const kept = aliveFlock().length;
 
@@ -7300,7 +7303,7 @@ function finishMorning(why){
      Yarıda bırakılan sabahta (quit) mornings artmıyor ama yara KALIYOR —
      tasarımın kendi kuralı — o yüzden damga yine basılıyor. */
   for(let i = 0; i < (G.scarsThisMorning || 0); i++)
-    Save.d.scarLog.push({ m: Save.d.mornings, t: 0 });
+    Save.d.scarLog.push({ m: Save.d.mornings });
   if(Save.d.scarLog.length > SCAR_LOG_MAX)
     Save.d.scarLog = Save.d.scarLog.slice(-SCAR_LOG_MAX);
 
@@ -7515,7 +7518,6 @@ const WOLF = {
      miktar zayıflayacak. Ziyaret sayısının düşmesi GERİLEME DEĞİL, kararın
      kendisi. */
   visitPeriod: 3220,
-  fedFightMul: 0.75,    // besleme (ADIM 3): tok köpek daha çabuk toparlanır
   collarFightMul: 0.80, // boğazlık (ADIM 1, Mevsim I'in geçit ödülü): kalıcı, fedMul ile ÇARPIŞMAZ
   /* visitWeights[i] = i+1 ziyaretle biten sabahların oranı (1,2,3 ziyaret).
      EŞİT DAĞILIM DEĞİL — 1-3 arası DÜZ rastgele seçilince ortanca oyuncunun
@@ -7696,8 +7698,8 @@ const BOGUS_ITIS = [0, 3, 0, -3];
      pencere dışı  köpek yara alıyor, kırmızı "YARALANDI" ve bad — yani oyuncu
                    NEDEN yara aldığını görüyor: yanlış anda ateş etti
    Yara VAR OLAN sisteme yazılıyor (G.scarsThisMorning -> Save.d.scars ->
-   scarLog), yani gerçekten kalıcı iz bırakıyor ve bakım ekranında taze sargı
-   olarak görünüyor. Yeni bir hasar kavramı icat edilmedi. */
+   scarLog), yani gerçekten kalıcı iz bırakıyor. Yeni bir hasar kavramı
+   icat edilmedi. */
 
 /* Nişan alınabilir kavga yığını VAR MI. İki yerde soruluyor (fire()'ın giriş
    kapısı ve nişan sınaması) ve tek tanım olması ŞART: kapı yığını saymazsa
@@ -7904,8 +7906,8 @@ function updateStrikes(){
 
          İki hayvan birbirini kırk saniye itiyorsa yerde SÜRÜKLENİR. Kademeli
          (sürekli sin DEĞİL) çünkü bu depoda sürekli salınım bir kez örnekleme
-         aralığıyla çakışıp donmuş göründü (bkz. renderCare'in kademeli tepki
-         notu). Genlik nefesten büyük: okunması gerekiyor.
+         aralığıyla çakışıp donmuş göründü. Genlik nefesten büyük: okunması
+         gerekiyor.
          `s.x` DEĞİŞMİYOR — kavganın çapası orada kalıyor, sürüklenen şey
          yalnız çizilen yığın; yoksa kurt sabah boyunca sürünüp giderdi. */
       const faz = bogusFaz(s);
@@ -7947,19 +7949,15 @@ function updateStrikes(){
         resolveStrike(s, true);
         if(s.isWolf){
           // Kurda/çakala yetişti: iş bitmedi, BOĞUŞMA başlıyor. Yorgun köpek
-          // daha uzun boğuşur — bakım burada da anlam kazanıyor. Süre KISA
-          // (çok-ziyaret, o zamanki tercih 2026-08-12) — çakalda daha da kısa.
+          // daha uzun boğuşur. Süre KISA (çok-ziyaret, o zamanki tercih
+          // 2026-08-12) — çakalda daha da kısa.
           s.phase = 'fight';
           const fmin = s.jackal ? WOLF.jackalFightMin : WOLF.fightMin;
           const fmax = s.jackal ? WOLF.jackalFightMax : WOLF.fightMax;
-          // Besleme (ADIM 3): tok köpek daha çabuk toparlanır — yorgunlukla
-          // ÇARPIŞMAZ, ikisi de birlikte uygulanabilir. Boğazlık (ADIM 1):
-          // kazanılmış KALICI işaret, sezon/yorgunluk/beslemeden bağımsız
-          // ayrıca çarpıyor — "kurt boğuşması kısalır" tasarımın kendi
-          // cümlesi (mevsim-tasarim.md, "Bakım yakın çekimi").
-          const fedMul = G.dogFed ? WOLF.fedFightMul : 1;
+          // Boğazlık: kazanılmış KALICI işaret, yorgunluktan bağımsız
+          // ayrıca çarpıyor.
           const collarMul = Save.d.collar ? WOLF.collarFightMul : 1;
-          s.fightT = Math.round((fmin + lri(fmax - fmin + 1)) * (G.dogSore ? WOLF.fightTiredMul : 1) * fedMul * collarMul);
+          s.fightT = Math.round((fmin + lri(fmax - fmin + 1)) * (G.dogSore ? WOLF.fightTiredMul : 1) * collarMul);
           s.x = dog.x; s.y = dog.y;
           // G.dogTask KASITLI temizlenmiyor — köpek bağlı kalıyor.
         } else {
@@ -8020,22 +8018,27 @@ function resolveStrike(s, saved){
   } else {
     a.state = 'gone';
     G.lost++;
-    G.missFlash = 26;
     /* SÜRÜ FARK EDİYOR (BULGU A, seçenek B). Kaybın olduğu yerden uzaklığa
-       göre gecikmeli — dalga gibi yayılıyor, hep birlikte değil. */
+       göre gecikmeli — dalga gibi yayılıyor, hep birlikte değil.
+       Yavaş çekimle birlikte bu dalga artık GÖRÜLEBİLİYOR: eskiden tam
+       hızda 30 karede bitiyordu, göz yetişmiyordu. */
     for(const o of G.flock){
       if(o === a || o.state === 'gone') continue;
       o.startle = FLOCK_STARTLE + Math.min(30, Math.round(Math.abs(o.x - a.x) / 12));
     }
     /* KAYIP YAZISI SİLİNDİ (BULGU A, seçenek D — YALNIZ C ile birlikte,
-       o zamanki tercih 2026-08-15). Tek başına bu, denetim 01'in kaydettiği
-       puan-baloncuğu hatasının tekrarı olurdu: tek taşıyıcıyı silip yerine
-       hiçbir şey koymamak. Yerine C geliyor — kaybedilenin yeri ağılda açık
-       kalıyor. Yerine BAŞKA BİR SÖZ konmadı; kısıt buydu.
-       Ses, sarsıntı, titreşim ve tam ekran parlama DEĞİŞMEDİ: kaybın darbe
-       yuvası zaten oyunun en yükseği ve ona dokunulmadı. */
-    Snd.over();
-    shake(5); buzz(40);
+       o zamanki tercih 2026-08-15). Yerine C geldi: kaybedilenin yeri
+       ağılda açık kalıyor. Yerine BAŞKA BİR SÖZ konmadı; kısıt buydu.
+
+       2026-08-21 — DARBE YUVASI DEĞİŞTİ. Önceki yorum "kaybın darbe yuvası
+       zaten oyunun en yükseği" diyordu; ÖLÇÜLDÜ ve değildi: sarsıntı 5,
+       donma 0, titreşim 40ms — yani bir kil diski vurmaktan 2 birim ağır
+       ve hiç durmuyor. Artık kaybın kendi zamanı var (bkz. KAYIP tablosu
+       ve kayipDarbesi): donma, yavaş çekim, sesin kesilmesi, kararma.
+
+       missFlash (gri yıkama) KALDIRILDI: ıskanın diliydi ve kaybı ıskayla
+       aynı sese sokuyordu. Kaybın dili artık KARARMA. */
+    kayipDarbesi(a.x);
     if(s.isWolf && s.wolfRef) s.wolfRef.done = true;
     // Yırtıkkulak "kaçırtıldı mı" ölçümü: en az bir koyun aldıysa DRIVEN OFF
     // sayılmaz — aksak dönüş yalnız tam boş çekilen sabahtan sonra.
@@ -8508,7 +8511,7 @@ function hitBird(d){
     comboTriggers(d.x, d.y);
     G.pops.push({x:d.x, y:d.y-14, s:(far>1.1 ? pts+' '+T.far : String(pts)), c:PAL.clayRim, t:52, pop:10});
     for(let i=0;i<7;i++) feathers(d.x, d.y, i%2 ? PAL.clay : PAL.clayDk);
-    hitStop(3); shake(2); buzz(16);
+    hitStop(2); shake(2, 5); buzz(10);   // vurusla ayni aile: kisa ve keskin
     Snd.clayHit();
     d.state = 'gone';        // done + 'fly' bırakmak, disk hâlâ canlıymış gibi görünmesine yol açıyordu
     resolveBird(d, true);
@@ -8590,9 +8593,16 @@ function hitBird(d){
   comboTriggers(d.x, d.y);
   if(G.steadyShot) Snd.perfect();
   feathers(d.x, d.y, DUCK[d.type].lite);
-  hitStop(4);
-  shake(3);
-  buzz(18);
+  /* VURUS HAFIFLEDI (2026-08-21, bkz. KAYIP tablosu). Eski doz 4 kare
+     donma / 3 sarsinti / 18ms idi ve KAYIPLA neredeyse aynidir. Vurus bu
+     oyunda dakikada onlarca kez olan seydir: agir olursa yorar ve nadir
+     olani (kayip) bastirir. Simdi kisa ve keskin — donma 2 kare, sarsinti
+     ayni genlikte ama 6 karede sonuyor, titresim yariya indi.
+     GENLIK dusurulmedi, SURE dusuruldu: vurusun "tok" hissi genlikten
+     geliyor, uzunluktan degil.                                          */
+  hitStop(2);
+  shake(3, 6);
+  buzz(10);
   Snd.hit();
 }
 
@@ -8619,18 +8629,33 @@ function update(){
   updateAim();
   updateReload();
   if(G.runFrames !== undefined) G.runFrames++;
+  /* Kaybın saati DONMANIN ÜSTÜNDE işler. Altına konsaydı darbe perdesi
+     (tam donma) hiç geçmezdi: stopT lossT'yi bekler, lossT stopT'yi —
+     oyun kilitlenirdi. Bu sıra kasıtlı, değiştirme. */
+  if(G.lossT > 0) G.lossT--;
   if(G.stopT > 0){ G.stopT--; return; }          // isabet donması
-  if(G.shakeT > 0 && --G.shakeT === 0) G.shakeMag = 0;
-  for(let i=G.parts.length-1;i>=0;i--){          // tüyler
+  /* Sarsıntı bitince SÜRESİ de sıfırlanır. Sıfırlanmasaydı bir kez 26
+     karelik kayıp sarsıntısı olduktan sonra her vuruş o uzun süreyle
+     sönerdi — sonraki bütün vuruşlar yumuşak hissedilirdi. */
+  if(G.shakeT > 0 && --G.shakeT === 0){ G.shakeMag = 0; G.shakeDur = 0; }
+
+  /* YAVAŞ ÇEKİM — iki frame'den birini atlayarak yarı hız.
+     Kaynak: kaybın orta perdesi (darbe bitti, toparlanma başlamadı).
+     Burada olmasının sebebi sürünün ürkme dalgası: tam hızda 30 karede
+     bitiyor ve göz yetişmiyordu. */
+  const kayipYavas = G.lossT > KAYIP.toparla;
+  if(G.slowT > 0) G.slowT--;
+  if(G.slowT > 0 || kayipYavas){
+    G.slowHalf = !G.slowHalf;
+    if(G.slowHalf) return;
+  } else G.slowHalf = false;
+
+  /* Tüyler yavaş çekim KAPISININ ALTINDA: üstünde kalsalardı kayıp anında
+     dünya yarı hızda, tüyler tam hızda akardı — iki ayrı zaman görünüyordu. */
+  for(let i=G.parts.length-1;i>=0;i--){
     const q = G.parts[i];
     q.x += q.vx; q.y += q.vy; q.vy += 0.06; q.vx *= 0.97;
     if(--q.t <= 0) G.parts.splice(i,1);
-  }
-  // "son mermi" perk'i: iki frame'den birini atlayarak yarı hız
-  if(G.slowT > 0){
-    G.slowT--;
-    G.slowHalf = !G.slowHalf;
-    if(G.slowHalf) return;
   }
   G.t++;
   if(G.missFlash > 0) G.missFlash--;
@@ -8841,8 +8866,14 @@ function render(){
   if(shaking){
     px(g, 0, 0, W, H, PAL.hillNear);
     g.save();
-    g.translate(Math.round((Math.random()*2-1) * G.shakeMag),
-                Math.round((Math.random()*2-1) * G.shakeMag));
+    /* SÖNÜM (2026-08-21). Eskiden genlik 9 kare boyunca SABİTTİ ve birden
+       kesiliyordu — bu titreşim değil gürültüdür; darbe hissi genliğin
+       DÜŞMESİNDEN gelir. k*k: sert başlar, çabuk biter, sıfıra iner.
+       Math.round zaten <0.5'i yutuyor, yani kuyruk kendiliğinden susuyor. */
+    const k = G.shakeT / (G.shakeDur || 9);
+    const m = G.shakeMag * k * k;
+    g.translate(Math.round((Math.random()*2-1) * m),
+                Math.round((Math.random()*2-1) * m));
   }
   ART.sunUp = sunUp(dawnP());   // ART bloğu dışarı bakamaz: güneş buradan sürülür
   /* Batan ay yalnız gece perdesi ASILIYKEN görünür; perde inince söner.
@@ -8974,6 +9005,53 @@ function render(){
     if(dk > 0.002) px(g, 0, 0, W, H, 'rgba(' + DAWN.night + ',' + dk.toFixed(3) + ')');
     // Sisin hafif payı — varlıkların üstüne, HUD/nişangâh HARİÇ (arayüz hep okunur).
     if(G.fog > 0.002) px(g, 0, 0, W, H, 'rgba(' + FOG.color + ',' + (G.fog * FOG.entityMul).toFixed(3) + ')');
+  }
+
+  /* KAYBIN DİLİ: KARARMA (2026-08-21).
+     Eskiden kayıp `missFlash` kullanıyordu — ıskanın gri yıkaması. Yani
+     bir hayvanı sonsuza dek kaybetmek, kurşunu boşa harcamakla AYNI ŞEYİ
+     söylüyordu. İki ayrı olay tek dile sıkışmıştı.
+
+     Kararma kenardan içeri gelir (vinyet), ortası açık kalır: oyuncu
+     kaybın olduğu yere BAKAR. Üç perde de burada okunuyor —
+       darbe      : anında tam koyuluk
+       yavaş çekim: koyuluk sabit durur, sürü dağılır
+       toparlanma : koyuluk yavaşça çözülür
+     HUD'un ÜSTÜNDE değil ALTINDA çiziliyor (drawHUD'dan önce): arayüz
+     her koşulda okunur kalmalı — bu deponun kuralı.                     */
+  if(G.lossT > 0){
+    /* Perde: darbe ve yavaş çekim boyunca TAM, toparlanmada çözülüyor.
+       Giriş ani, çıkış yavaş — darbenin şekli budur. */
+    const p = G.lossT > KAYIP.toparla ? 1 : G.lossT / KAYIP.toparla;
+
+    /* 1) DÜNYA KARARIR. İlk denemede yalnız kenar vinyeti vardı ve BASILAN
+       KAREDE GÖRÜNMEDİ (shots/dom/kayip-100.png): en dış katman 0.14 alfa
+       ile çıkıyordu ve şafak sahnesi zaten koyu. Ölçüsüz "incelik" burada
+       hiçbir şey demek olmuyor. Perde tam ekran ve GERÇEK.
+       missFlash'in dilinden ayrı: o AÇAR (gri-mavi yıkama), bu KAPATIR. */
+    px(g, 0, 0, W, H, 'rgba(8,8,14,' + (KAYIP.karart * p).toFixed(3) + ')');
+
+    /* 2) KALAN IŞIK KAYBIN OLDUĞU YERDE. Karartma ekranın ortasına değil
+       G.lossX'e kuruluyor: hayvan nerede alındıysa göz oraya gidiyor.
+       İlk yazımda çerçeve çerçeve bir vinyetti ve ekranın MERKEZİNE
+       bakıyordu — yorumu "kaybın olduğu yere baksın" diyordu ama kod
+       öyle yapmıyordu. Söylenen ile yapılan ayrılmışsa yanlış olan koddur.
+
+       Sütun sütun, arc/gradient yok: bu dosyada çizim yalnız fillRect
+       (Node'da doğrulanabilirlik kuralı).                              */
+    const cx = G.lossX, adim = 4;
+    for(let x = 0; x < W; x += adim){
+      const dx = Math.min(1, Math.abs(x + adim/2 - cx) / (W * 0.42));
+      const al = 0.34 * p * dx * dx;
+      if(al > 0.004) px(g, x, 0, adim, H, 'rgba(6,6,12,' + al.toFixed(3) + ')');
+    }
+    // üst ve alt kenar — yatay sütunların bırakamadığı iki şerit
+    for(let i = 0; i < 22; i++){
+      const t = 1 - i / 22, al = 0.26 * p * t * t;
+      if(al < 0.004) continue;
+      const c = 'rgba(6,6,12,' + al.toFixed(3) + ')';
+      px(g, 0, i, W, 1, c); px(g, 0, H-1-i, W, 1, c);
+    }
   }
 
   {
@@ -10104,22 +10182,6 @@ $('hsKapi').addEventListener('click', () => {
    (eski btnDiag da tam bunu yapıyordu). */
 $('hsNisan').addEventListener('click', () => { openSheet(); renderDiag(); });
 
-/* --- bakım yakın çekimi (ADIM 3, docs/mevsim-tasarim.md "Bakım yakın
-   çekimi") ---------------------------------------------------------------
-   YENİDEN KURULDU (2026-08-13, Nintendogs modeli — docs/referans/
-   bakim-nintendogs.md). Düğme yok, ÜÇ FİZİKSEL NESNE var, üçü de
-   SÜRÜKLENİR: SARMA (sargı yaraya, BEDAVA — süt istemez, ters sarmal
-   panzehiri), BESLEME (yal kabı köpeğe), SEVME (el köpeğe — basılı
-   tutmak artık PORTREYE dokunmak değil, eli SÜRÜKLEYİP ÜSTÜNDE TUTMAK). */
-/* Hotspot görünürlüğü: ağılın kendi düğmeleri (kapı/tahta/raf/foto) yakın
-   çekim açıkken GİZLENİR — altta bir sahne var ama dokunma hedefleri
-   üst üste binmemeli (DEVAM.md: "bir moda özgü HUD eklerken ötekini
-   gizle" dersiyle aynı ilke). Sargı yalnız köpek yorgunken görünür. */
-/* Ağılın DOKUNULABİLİR NESNELERİ, tek liste. Bu dizi beş yerde ayrı ayrı
-   yazılıydı (bakım, kışlak, vinyet, sağım yakın çekimi, takvim) ve her yeni
-   nesne beş yerin hepsine elle eklenmek zorundaydı — nişan köşesi eklenirken
-   tam bu yüzden bir yerde unutulup alt durumların üstünde açık kalabilirdi.
-   Bir yerde durunca unutulamıyor. */
 /* AGILIN DOKUNULABILIR NESNELERI. Raf ve foto CIKARILDI (2026-08-20):
    uc bagimsiz AI da ayni seyi soyledi — kaynak SUREKLI gorunmesin,
    harcandigi yerde gorunsun; paylasim ana ekranda degil yolculugun
@@ -10129,9 +10191,7 @@ const FOLD_HOTSPOTS = ['hsKapi', 'hsKangal', 'hsSuru', 'hsNisan'];
 
 
 /* --- paylaşım kartı önizlemesi (bkz. G.cardView, CARD_VIEW_LAYOUT, Attract.
-   renderCardView) --- care ile AYNI desen: syncCareUI'nin blocked'ı artık
-   G.cardView.open'ı da sayıyor, o yüzden aç/kapatınca ağılın kendi
-   hotspot'larını GERİ ÇAĞIRMAK YERİNE syncCareUI() çağırmak yeterli. */
+   renderCardView) --- ağılın İÇİNDEKİ bir alt durum. */
 /* Native paylaşım YALNIZ burada, oyuncunun kartı GÖRDÜKTEN sonraki ayrı
    dokunuşuyla tetiklenir (o zamanki tercih, 2026-08-13 — foto'ya dokununca
    dolaysız iOS paylaşım sayfası açılması şikayet konusuydu). */
@@ -10150,55 +10210,6 @@ const FOLD_HOTSPOTS = ['hsKapi', 'hsKangal', 'hsSuru', 'hsNisan'];
    kilere gider, bu bir dekor DEĞİL, o sabahın İLK sağımının kendisi. */
 
 
-/* SARMA — yorgunluk 2 -> 1 sabah, BEDAVA (süt istemez). Yalnız köpek
-   gerçekten yorgunken bir şey yapar; sargı hotspot'u zaten yalnız o hâlde
-   görünür (bkz. syncUI). reactKind/reactT: renderCare'in okuduğu bir
-   kerelik fiziksel tepki (irkilme) — bkz. Attract.update() geri sayımı. */
-/* BESLEME — ertesi sabah tok, boğuşması kısa (bkz. startRun() G.dogFed,
-   WOLF.fedFightMul). Süt/azık ekonomisine bağlanması ADIM 4'te. */
-/* BESLEME (ADIM 4 güncellemesi): "gideceği yer belli: geçit azığı + köpek
-   besleme" — SARMA'nın aksine besleme SÜT İSTER (bir güğüm), tasarımın
-   kendi ekonomi akışı. Kiler boşsa besleme YAPILAMAZ — sessizce
-   başarısız olmaz, aynı "boş" notunu (foldRafBos) gösterir. */
-
-/* ÜÇ FİZİKSEL NESNE, AYNI SÜRÜKLEME DESENİ (ADIM 3 yeniden kuruluşu,
-   2026-08-13 — docs/referans/bakim-nintendogs.md): pointerdown nesneyi
-   tutar, pointermove parmağı izler (renderCare dragPt'i çizer), bırakma
-   noktası portre kutusunun İÇİNDEYSE eylem uygulanır. Üçü de TEK bir
-   yardımcıyla kuruluyor ki yeni bir nesne eklemek üç kopya kod değil
-   bir çağrı olsun.
-   - sargı: yalnız köpek yorgunken görünür (syncUI), bırakınca applySarma.
-   - yal kabı: her zaman görünür, bırakınca applyBesleme (kiler boşsa
-     kendi içinde sessizce "boş" notunu gösterir).
-   - el: bırakınca hiçbir şey UYGULAMAZ — SEVME bir eylem değil bir
-     DURUM (basılı tutulduğu SÜRECE devam eder). pointermove her karede
-     "şu an köpeğin üstünde mi" diye günceller (G.care.petting),
-     renderCare bunu okuyup baş/gövde yaslanmasını SÜREKLİ çizer —
-     "mekanik etkisi YOK, olmamalı" (Save.d'ye hiç dokunmuyor, testle
-     sınanıyor, bkz. smoke.js). */
-/* DOKUNMAK DA İŞE YARIYOR (oyuncu raporu, 2026-08-20):
-   *"wrap, feed, pet diye butonlar var. tıklıyorum ama bişey olmuyor.
-   Oyun ile ne kadar bağlantılı bu butonlar anlamadım."*
-
-   Kusur `end()`teydi: eylem YALNIZ bırakma noktası köpeğin portresinin
-   İÇİNDEYSE uygulanıyordu. Dokunan oyuncu parmağını nesnenin üstünde
-   kaldırıyor, yani portrenin dışında — hiçbir şey olmuyor, hiçbir sebep
-   de söylenmiyor. Üç nesne de "bozuk düğme" gibi davranıyordu.
-
-   Sürükleme yanlış DEĞİLDİ (Nintendogs modeli, docs/referans/
-   bakim-nintendogs.md) ama TEK yol olamaz: etiketli bir şeye dokunan
-   oyuncu onun çalışmasını bekler. Artık ikisi de var — parmak kayarsa
-   sürükleme, kaymazsa dokunuş. Zengin etkileşim duruyor, keşfedilmesi
-   şart olmaktan çıkıyor.
-
-   TAP_ESIK 6 kanvas pikseli: telefonda parmak hiçbir zaman tam durmaz,
-   sıfır tolerans "dokunuş" diye bir şey bırakmazdı. */
-const CARE_TAP_ESIK = 6;
-/* SEVME dokunuşla da olur — ama uygulanan şey yine bir EYLEM değil bir
-   DURUM: petHold kadar kare boyunca köpek yaslanmayı sürdürür, sonra
-   kendiliğinden bırakır. Dokunan oyuncu tepkiyi görüyor, ve "sevmenin
-   mekanik etkisi YOK, olmamalı" kararı bozulmuyor: Save.d'ye burada da
-   hiç dokunulmuyor. */
 
 /* FOTO ARTIK ANA EKRANDA DEGIL (2026-08-20). Paylasim kart makinesi
    (openCardView/renderCardView/shareCard) DURUYOR ama cagrisi yolculugun
@@ -10255,7 +10266,7 @@ const CARE_TAP_ESIK = 6;
       soruyor, durum kurmuyor: gün bilinmiyorsa cevabı "hayır". */
 
 /* Takvim (büyük tasarım turu, 2026-08-14) — eski #calGrid DOM ızgarası
-   yerine renderTakvim (bkz. Attract nesnesi) canvas'a çiziyor, careClose/
+   yerine renderTakvim (bkz. Attract nesnesi) canvas'a çiziyor,
    sağımYakın/cardView ile AYNI "ağılın içindeki alt durum" deseni.
 
    Season.refresh() BİLEREK burada YOK. Ağıl açılışta ve her dönüşte
