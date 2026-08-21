@@ -1011,7 +1011,6 @@ const STR = {
          erişilebilirlik (aria-label) ve dokunma sonrası kısa notlar —
          sanatın kendisi "önce gösteriyor", bunlar yalnız ADLANDIRIYOR. */
       hsKapi:'Nöbete çık', hsTahta:'Takvim', hsRaf:'Kiler', hsKangal:'Kangal',
-      tutukluk:'TÜFEK TUTUKLUK YAPTI — temizlenmeli',
       yolBitti:'KONAĞA VARILDI', yolBittiKopan:n => 'KONAĞA VARILDI — ' + n + ' hayvan geride kaldı',
       hsFoto:'Çoban fotoğrafı — paylaş',
       /* Nişan köşesi (defter L16). TEK etiket — o zamanki tercih (2026-08-17,
@@ -1189,7 +1188,6 @@ const STR = {
          üstüne biner (LARDER'ın takvim tahtasına binmesi, 2026-08-13).
          Bir tur "Start the journey" yazıldı ve tam bu yüzden geri alındı.
          Kısa ve fiil: tabela ne olduğunu değil NE YAPACAĞINI söylüyor. */
-      tutukluk:'THE RIFLE JAMMED \u2014 it needs cleaning',
       yolBitti:'REACHED CAMP', yolBittiKopan:n => 'REACHED CAMP \u2014 ' + n + ' left behind',
       hsFoto:'Shepherd\'s photo — share',
       // Ağıl etiketleri — bkz. tr için not (sözlükten: Stand watch/Days/Larder).
@@ -1348,6 +1346,28 @@ const W = 320, H = 180;              // iç çözünürlük (16:9, telefon yatay
 const GROUND = 132;                  // çim çizgisi
 /* Alt şerit şarj bölgesi YALNIZ jiroskopta. Dokunmatikte orası artık sanal
    çubuğun altında; şarj çubuğu dibe itip tutmakla yapılıyor. */
+/* ===== TUFEGIN HISSI (2026-08-21) ===================================
+   Oyuncunun EN SIK yaptigi sey ates etmek, ve en sik sonucu iska.
+   Buradaki her sayi o anin dozu — SAYI DEGIL HIS: MOD.aimFreeze,
+   reloadFrames, hitbox, shotsPerTarget hicbiri degismiyor.
+
+   OLCULDU (2026-08-21): duz bir iskanin ekranda hicbir karsiligi YOKTU.
+   `G.missFlash`a atama yapan iki yer var ve ikisi de iska degil —
+   fireCalib (alistirma) ve YEME isabet. Gercek oyunda pick() null
+   donuyor ve fonksiyon bitiyordu: nisangahi tehditten uzaga koyup
+   fire() cagrildi, stats.shots 0->1 oldu, missFlash 0 KALDI.        */
+const TUFEK = {
+  geri:      9,     // geri tepme (kare) — aimFreeze'den uzun, sonumu gorunsun
+  geriPx:    2.4,   // nisangahin yukari sicradigi piksel
+  agiz:      5,     // namlu agzi parlamasi (kare)
+  agizR:     7,     // parlamanin yaricapi
+  iska:     13,     // iskanin izi (kare)
+  iskaR:     9,     // iska halkasinin yaricapi
+  bosTetik: 15,     // bos sarjor: nisangahin irkilmesi (kare)
+  kuruTetik: 7,     // bos gok: kuru tik — en sessiz ret (kosunun ~ucte biri)
+  doldu:    15,     // sarjor doldu parlamasi (kare)
+};
+
 const RELOAD_ZONE = 20;              // alt şerit: dokunulunca şarj (HUD bölgesi)
 const FPS = 60;
 
@@ -1748,7 +1768,6 @@ const ART = { marks:false, env:null, sunUp:1, gok:null, ayGor:0, gunTepe:0, bulu
 const PAL = {
   // şafak gökyüzü bantları (yukarıdan aşağıya)
   skyBands:['#413764','#413764','#695684','#946388','#bc6557','#d39273'],
-  skyMissBands:['#413764','#523e46','#695684','#89615a','#937575','#b3897d'],
   cloud:'#fcdf98', cloudDk:'#ddab91',
   sun:'#fcdf98',
   hillFar:'#59477a', hillMid:'#413764', hillNear:'#2a1e3b',
@@ -2452,12 +2471,16 @@ function drawKapiAgzi(g, t, opt) {
 /* ==GOK-END== */
 
 
-function drawScene(g, t, missFlash){
+/* ISKA PERDESI SOKULDU (2026-08-21). Bu fonksiyonun ucuncu parametresi
+   `missFlash`ti: iska aninda gokyuzu grilesirdi. Tufek turunda dort ayri
+   "olmadi" hali dort ayri dile kavustu (engel / yokluk / sonuc / hata) ve
+   hicbiri artik tam ekran yikama kullanmiyor. Parametreyi okuyan hicbir
+   cagri kalmadi -- fazladan argument gonderen eski cagrilar (ve
+   tools/render.js) zararsizca yok sayiliyor, JS fazlasini yutuyor. */
+function drawScene(g, t){
   if(ART.env){
     g.drawImage(ART.env, 0, 0, W, H, 0, 0, W, H);
     drawGokcisim(g, t);   // GÖK: bulut + ay + güneş, resimden bağımsız (bkz. ==GOK-START==)
-    // ıska anında gökyüzü soğur — üretilen görselin üstüne gri perde
-    if(missFlash) px(g, 0, 0, W, GROUND, 'rgba(108,112,132,0.55)');
     // Prosedürel bulut ÇİZİLMEZ: üretilen gökyüzünün kendi atmosferi var,
     // elips bulutlar üstüne yapıştırma duruyordu. Hareketi kuşlar sağlıyor
     // — ama sabahın en sessiz diliminde henüz hiçbir tehdit kuşu yok
@@ -2469,14 +2492,14 @@ function drawScene(g, t, missFlash){
     return;
   }
   // --- yedek: prosedürel şafak ---
-  const bands = missFlash ? PAL.skyMissBands : PAL.skyBands;
+  const bands = PAL.skyBands;
   const n = bands.length, bh = Math.ceil(GROUND / n);
   for(let i=0;i<n;i++) px(g, 0, i*bh, W, Math.min(bh, GROUND - i*bh), bands[i]);
 
   /* ufukta doğan güneş — env yoluyla AYNI nesne. Eskiden iki ayrı güneş
      vardı (env'de pişmiş+örtülü, yedekte iki elips, farklı yerde ve boyda);
      artık tek çizim iki yolu da besliyor. */
-  if(!missFlash) drawGokcisim(g, t);
+  drawGokcisim(g, t);
 
   drawClouds(g, t);
 
@@ -3851,10 +3874,51 @@ function drawDog(g, x, y, pose, f){
    1 piksellik çubuk klipte görünmüyordu; göz zaten nişangâha bakıyor,
    geri bildirim de orada olmalı. (ART bloğu kendi kendine yeter — durum
    parametreyle gelir, dışarıdaki değişkene bakılmaz.)                     */
-function drawAim(g, x, y, hot, rl, st){
+/* geri/agiz/doldu/bos: 0..1 oranlari, hepsi DISARIDAN gelir (bkz.
+   TUFEK ve tufekGuncelle). ART blogu kendi kendine yeter kurali: bu
+   fonksiyon `aim` ya da `G` okuyamaz, cunku blok 11 arac tarafindan
+   kesilip TEK BASINA kosturuluyor. Bir kez ihlal edildi ve artizole
+   yakaladi — bagimlilik nesne degil SAYI olarak giriyor. */
+function drawAim(g, x, y, hot, rl, st, geri, agiz, doldu, bos, kuru){
   const reloading = rl >= 0;
-  const c = reloading ? PAL.gold : hot ? PAL.red : PAL.bone;
-  const L = reloading ? Math.max(1, Math.round(6 * rl)) : hot ? 2 : 6;
+  /* GERI TEPME. Nisangah kisa bir tekme alip yerine oturuyor. Yer
+     degistirme KUCUK (2-3 px) ve HIZLI bilerek: jiroskopta nisangah
+     telefonun yonunun karsiligi, uzun surerse yalan olur.
+     k*k sonumu: sert baslar, cabuk oturur — shake ile ayni aile. */
+  const gk = geri || 0;
+  y = Math.round(y - 2.4 * gk * gk);
+  /* NAMLU AGZI. Tepmenin sesli degil GORSEL karsiligi. Nisangahin
+     etrafinda kisa, sicak bir kabarma; birkac kare sonra yok. */
+  const ak = agiz || 0;
+  if(ak > 0){
+    const r = Math.round(7 * (1.15 - 0.55 * ak));             // acilarak soner
+    const a = (0.34 * ak * ak).toFixed(3);
+    px(g, x - r, y - 1, r * 2, 3, 'rgba(255,232,170,' + a + ')');
+    px(g, x - 1, y - r, 3, r * 2, 'rgba(255,232,170,' + a + ')');
+  }
+  /* SARJOR DOLDU. Beklemenin bitisi bir AN. Genisleyip sonen altin
+     bir halka — "doldu" diyen tek isaret, ve oyuncunun baktigi yerde. */
+  const dk = doldu || 0;
+  if(dk > 0){
+    const r = Math.round(3 + 9 * (1 - dk));
+    const a = (0.55 * dk * dk).toFixed(3);
+    px(g, x - r, y - r, r * 2 + 1, 1, 'rgba(248,216,120,' + a + ')');
+    px(g, x - r, y + r, r * 2 + 1, 1, 'rgba(248,216,120,' + a + ')');
+    px(g, x - r, y - r, 1, r * 2 + 1, 'rgba(248,216,120,' + a + ')');
+    px(g, x + r, y - r, 1, r * 2 + 1, 'rgba(248,216,120,' + a + ')');
+  }
+  /* BOS TETIK. Tufek REDDEDIYOR: nisangah bir kez irkilip kizariyor.
+     Ekranin altindaki serit zaten "sarj et" diyor ama oyuncu oraya
+     bakmiyor — reddin nisangahin KENDISINDE olmasi sart. */
+  const bk = bos || 0;
+  if(bk > 0) x = Math.round(x + Math.sin(bk * 22) * 2 * bk);
+  const c = bk > 0 ? PAL.red
+          : reloading ? PAL.gold : hot ? PAL.red : PAL.bone;
+  /* KURU TIK: kollar bir an KISALIR, renk DEGISMEZ. Bos sarjorun
+     kirmizi irkilmesinden bilerek ayri — o bir ENGEL, bu bir YOKLUK. */
+  const kk = kuru || 0;
+  let L = reloading ? Math.max(1, Math.round(6 * rl)) : hot ? 2 : 6;
+  if(kk > 0) L = Math.max(1, Math.round(L * (1 - 0.45 * kk)));
   const arms = [[-3-L,0,L,1],[4,0,L,1],[0,-3-L,1,L],[0,4,1,L]];
   for(const [ox,oy,w,h] of arms){
     px(g, x+ox-1, y+oy-1, w+2, h+2, PAL.ink);
@@ -4793,6 +4857,27 @@ const Snd = {
   reloadDone(){ this.noise(0.04, 1500, 0.26, 420); this.tone(520, 0.06, 'square', 0.18, 300); },
   quack(){ this.tone(this.vary(430), 0.09, 'square', 0.24, 320); },
   hit(){ this.tone(this.vary(880), 0.10, 'square', 0.38, 220); },
+
+  /* --- TUFEGIN IKI "OLMADI" SESI (2026-08-21) -------------------------
+     Uc ayri ret var ve ucu ayri sey soyluyor; ucu ayri SES olmak
+     zorunda, yoksa oyuncu ayirt edemez:
+       empty()      BOS SARJOR  -> bir ENGEL. 140 Hz alcak ton, perdeli.
+       kuruTetik()  BOS GOK     -> bir YOKLUK. Perdesiz kuru tik.
+       iska()       ISKA        -> bir SONUC. Perdesiz sonuk kuyruk.   */
+  kuruTetik(){
+    /* Mekanik bir tik, patlama DEGIL. Perde yok — perde verilseydi
+       empty()nin akrabasi olurdu. %38 siklikta calacak, o yuzden
+       oyunun en kisik ipucundan (flap 0.09) daha kisik: duyulsun ama
+       FARK EDILMESIN. Fark edilirse arka plan gurultusune doner.     */
+    this.noise(0.035, 2600, 0.05, 1400);
+  },
+  iska(){
+    /* shot()'un KUYRUGUNA oturur (60 ms sonra), ondan kisik, perdesiz.
+       hit() 880 Hz kare dalga ve PARLAK; iska onun tersi olmali —
+       SONUK. Oyuncu gozunu tehditte tutuyor, isabetle iskayi KULAK
+       tek basina ayirabilmeli.                                       */
+    setTimeout(() => this.noise(0.16, 700, 0.16, 190), 60);
+  },
   ping(){                                   // zırha çarpan mermi — metalik
     this.tone(2100, 0.16, 'triangle', 0.30, 900);
     this.tone(3150, 0.09, 'square', 0.10, 1400);
@@ -5004,7 +5089,13 @@ cfg.load();
 const gyro = { ok:false, beta:0, gamma:0, alpha:0, m:null, ref:null };
 /* sx/sy: durgunluk izleyicisi — nişanın kendisi değil, "el ne kadar sabit"
    sorusunun ayrı sinyali. Bkz. MOD.steadySmooth ve updateAim. */
-const aim  = { x:W/2, y:H/2, sx:W/2, sy:H/2, freeze:0, below:false, still:0, edge:0 };
+/* geri/agiz/doldu: nisangahin KENDI hali (bkz. TUFEK). fire() paralel
+   oturumun bolgesi, o yuzden tepme oradan degil `freeze`in KENDISINDEN
+   turetiliyor — freeze her tetik cekisinde MOD.aimFreeze'e kuruluyor,
+   yani "yukseldiyse tetik cekildi" demek. */
+const aim  = { x:W/2, y:H/2, sx:W/2, sy:H/2, freeze:0, below:false, still:0, edge:0,
+               geri:0, agiz:0, doldu:0, oncekiFreeze:0,
+               iskaX:W/2, iskaY:H/2, oncekiIska:0 };
 
 /* --- yönelim matrisi ----------------------------------------------------
    Nişan ESKİDEN Euler farkıyla hesaplanıyordu: (beta - refBeta),
@@ -5208,11 +5299,60 @@ function updateReload(){
     G.shots = magCap();
     G.reloadT = 0;
     if(G.stats) G.stats.reloads = (G.stats.reloads || 0) + 1;
+    /* DOLDU. Bekleme bir suredir; bitisi bir AN olmali, yoksa oyuncu
+       ne zaman yeniden ates edebilecegini nisangahtan degil sayarak
+       ogreniyor. Nisangahin kendi uzerinde, cunku oyuncu oraya bakiyor. */
+    aim.doldu = TUFEK.doldu;
     Snd.reloadDone();
   }
 }
 
+/* NISANGAHIN KENDI HALI — tepme, namlu agzi, doldu parlamasi.
+   `fire()` paralel oturumun bolgesi, o yuzden tepme oradan set
+   EDILMIYOR: `aim.freeze` her tetik cekisinde MOD.aimFreeze'e
+   kuruluyor, yani "bu karede yukseldiyse tetik cekildi" demek.
+   Tek kaynak, ve fire()'a hic dokunmuyor. */
+function tufekGuncelle(){
+  if(aim.freeze > aim.oncekiFreeze){       // tetik cekildi
+    if(G.shots > 0 || G.reloadT > 0 || G.phase === 'calib'){
+      aim.geri = TUFEK.geri;
+      aim.agiz = TUFEK.agiz;
+    }
+  }
+  aim.oncekiFreeze = aim.freeze;
+  if(aim.geri  > 0) aim.geri--;
+  if(aim.agiz  > 0) aim.agiz--;
+  if(aim.doldu > 0) aim.doldu--;
+  if(G.iska > aim.oncekiIska){        // iska YENI: atisin gittigi yeri sabitle
+    aim.iskaX = aim.x; aim.iskaY = aim.y;
+  }
+  aim.oncekiIska = G.iska;
+  if(G.iska      > 0) G.iska--;
+  if(G.bosTetik  > 0) G.bosTetik--;
+  if(G.kuruTetik > 0) G.kuruTetik--;
+}
+
+/* ISKANIN IZI. Bir CEZA degil bir BILGI: "atis oraya gitti, orada bir
+   sey yoktu". O yuzden kirmizi degil kemik rengi, tam ekran degil tek
+   nokta, ve kisa. Ceza dili bu oyunda KAYBA ait (bkz. KAYIP) — ıskaya
+   da ayni dili vermek ikisini birbirine karistirirdi. */
+function drawIska(g){
+  if(G.iska <= 0) return;
+  const k = G.iska / TUFEK.iska;                 // 1 -> 0
+  const r = Math.round(2 + TUFEK.iskaR * (1 - k));
+  const a = 0.42 * k * k;
+  if(a < 0.004) return;
+  const x = Math.round(aim.iskaX), y = Math.round(aim.iskaY);
+  const c = 'rgba(226,226,236,' + a.toFixed(3) + ')';
+  // Genisleyen ince halka — dort yay, kose yok (kose kutuya benziyor).
+  px(g, x - r + 1, y - r, r * 2 - 1, 1, c);
+  px(g, x - r + 1, y + r, r * 2 - 1, 1, c);
+  px(g, x - r, y - r + 1, 1, r * 2 - 1, c);
+  px(g, x + r, y - r + 1, 1, r * 2 - 1, c);
+}
+
 function updateAim(){
+  tufekGuncelle();
   if(aim.freeze > 0){ aim.freeze--; return; }
   // Dokunmatikte nişan dokunulan yere sıçrar; "durgunluk" ölçülemez, o yüzden
   // sabit atış yalnız jiroskopta var. Oyunun asıl modu kendi beceri
@@ -5302,7 +5442,6 @@ const G = {
   results:[],          // true/false — sadece gerçek kuşlar (yem sayılmaz)
   dog:{ x:-30, y:GROUND+6, pose:'walk', timer:0, show:false, f:0 },
   pops:[],             // skor baloncukları
-  missFlash:0,
   msg:null, msgT:0, hint:null,
   seed:0x2A6C, lvlSeed:0x2A6C,
   /* Takvim (Faz 1, docs/mevsim-tasarim.md): bu sabahın sezon günü + günün
@@ -5327,6 +5466,10 @@ const G = {
      lossT geriye sayar ve perde onun DEGERINDEN okunur; ayri bayrak yok
      (ayri bayrak tutulsaydi biri sifirlanip oteki kalabilirdi). */
   lossT:0, lossX:W/2,
+  /* TUFEGIN IKI SESSIZ ANI (2026-08-21). Ikisi de fire() icinde belli
+     oluyor ve fire() disindan gorulemiyordu; sayaclar burada, cizimleri
+     tufek isinde (bkz. TUFEK). */
+  iska:0, bosTetik:0, kuruTetik:0,
   /* Burada dort alt-durumun yorumu duruyordu: bakim yakin cekimi, kislak
      toreni, takvim ekrani ve sut akisi notu. Dordu de silindi.
      Kalan tek alt-durum paylasim karti onizlemesi. Bir kez daha ayni
@@ -5548,7 +5691,7 @@ const Attract = {
          (syncKislakUI). Aynı "ağıl=menü, yeni faz icat etme" ilkesi. */
       this.renderFold(showBirds); return;
     }
-    drawScene(g, this.t, false);
+    drawScene(g, this.t);
     if(showBirds)
       for(const b of this.birds) drawEagleTop(g, b.x, b.y, [0, -1, 0, 1][((this.t + b.x) >> 4) & 3]);
     if(this.dogT > 0){
@@ -6518,11 +6661,15 @@ function fireCalib(){
   if(Math.abs(aim.x - c.x) < hb && Math.abs(aim.y - c.y) < hb){
     c.hits++;
     feathers(c.x, c.y, PAL.bone);
-    hitStop(4); shake(3); buzz(18);
+    hitStop(2); shake(3, 6); buzz(10);   // oyundaki vurusla AYNI doz
     Snd.hit();
     G.pops.push({x:c.x, y:c.y-16, s:String(c.hits) + '/' + PRACTICE.shots, c:PAL.gold, t:44, pop:8});
   } else {
-    G.missFlash = 10;
+    /* Alistirmadaki iska OYUNDAKININ AYNISI olmak zorunda. Eskiden
+       burada tam ekran gri yikama vardi, oyunda ise halka cikiyor —
+       ogretilen sahne oynanacak sahneden farkliysa ogretmiyor,
+       yaniltiyor. */
+    G.iska = TUFEK.iska; Snd.iska();
   }
 }
 
@@ -6624,8 +6771,12 @@ function drawCalib(){
     }
   }
 
+  drawIska(g);
   drawAim(g, aim.x, aim.y, G.shots === 0 && c.step >= 2,
-          G.reloadT > 0 ? 1 - G.reloadT / reloadCost() : -1);
+          G.reloadT > 0 ? 1 - G.reloadT / reloadCost() : -1, false,
+          aim.geri / TUFEK.geri, aim.agiz / TUFEK.agiz,
+          aim.doldu / TUFEK.doldu, G.bosTetik / TUFEK.bosTetik,
+          G.kuruTetik / TUFEK.kuruTetik);
 }
 
 /* --- juice ------------------------------------------------------------
@@ -6659,6 +6810,7 @@ const KAYIP = {
   karart:  0.42,   // vinyetin en koyu payi
 };
 KAYIP.top = KAYIP.don + KAYIP.yavas + KAYIP.toparla;   // 103 kare ~ 1.7 sn
+
 
 /* Sarsinti artik SONUYOR. Eskiden 9 kare boyunca sabit genlikte titreyip
    birden kesiliyordu — bu "titresim" degil "gurultudur"; darbe hissi
@@ -6791,7 +6943,7 @@ const Card = {
        yayınlama"), yani paint()'in künye ataması buraya uğramıyor. Kartın
        sahnesi hep sabah fonu: künye ve güneş sabit, ay yok. */
     ART.gok = GOK_ENV; ART.sunUp = 1; ART.ayGor = 0;
-    drawScene(sg, t, false);
+    drawScene(sg, t);
 
     /* Tavan FLOCK_MAX ile AYNI: kart her zaman gerçek sayıyı gösteriyor,
        "18 yazıp 14 çizmek" gibi bir sapma yok. Önce 14'te kesiyordum,
@@ -8508,12 +8660,35 @@ function fire(){
      ateş etme" diye yazılmıştı ve kurt yığını G.ducks'ta olmadığı için (kurt
      saldırınca w.done=true) yığını da kapatıyordu: boş gök oranı ~%65 olduğu
      için kavga penceresi çoğu kavgada hiç açılamıyordu. */
-  if(!G.ducks.length && !kavgaYigini()) return;
+  /* GOKTE HEDEF YOKKEN TETIK — "KURU TETIK".
+     Bu kapi 2026-08-21'e kadar TAM SESSIZDI: ne ses, ne gorsel, ne
+     mermi, ne nisangah tepkisi. Olculdu (iki ayri ~15.000 karelik
+     gercek kosu): gok, oyun zamaninin %32 ile %38'inde BOS. Tehdit
+     ureteci rastgele oldugu icin oran kosudan kosuya oynuyor, ama
+     buyukluk sabit -- tetik, oyun suresinin yaklasik UCTE BIRINDE
+     oluydu, ve cevapsiz bir dokunus bozukluk
+     gibi okunuyor (DERSLER: sessiz reddin karsiligi olmali).
+
+     MERMI HARCANMIYOR, bilerek. Bu oyunda merminin bedeli SURUDUR —
+     iskaladigin kartal bir hayvan goturur. "Bos goge ates mermi
+     harcasin" demek ihmalin bedelini suruye degil bir SAYACA baglamak
+     olurdu; fisekligin sokulme gerekcesi tam buydu (ayni hatayi iki kez
+     cezalandirmak). Ustelik ogrettigi sey de yanlis olurdu: bu oyunda
+     ogrenilecek sey nisan almak, tetik saymak degil.
+
+     Cevap EN SESSIZ olan: %38 siklikta olan bir sey bagiramaz, yoksa
+     oyunun arka plani olur. Kuru bir tik, perdesiz.                   */
+  if(!G.ducks.length && !kavgaYigini()){
+    G.kuruTetik = TUFEK.kuruTetik;
+    Snd.kuruTetik();
+    return;
+  }
   // Durgunluk ATEŞ ANINDA dondurulur: aim.freeze'den sonra ölçüm bozulur.
   G.steadyShot = cfg.mode === 'gyro' && aim.still >= MOD.steadyFrames;
   aim.freeze = MOD.aimFreeze;
   aim.still = 0;
   if(G.shots <= 0){
+    G.bosTetik = TUFEK.bosTetik;
     Snd.empty();
     hint('reload');       // ilk kez boşaldığında bir kez anlatılır
     return;
@@ -8561,6 +8736,8 @@ function fire(){
   }
   const d = pick(base);
   if(d) hitBird(d);
+  else { G.iska = TUFEK.iska; Snd.iska(); }   // ISKA. Kavga yiginina ates
+                                 // buraya HIC gelmiyor: o dal return ediyor.
 }
 
 /* Puan çarpanı iki kaynaktan gelir ve BİRLEŞTİRİLMEZ:
@@ -8619,7 +8796,24 @@ function hitBird(d){
     if(G.stats) G.stats.decoyHits++;
     G.pops.push({x:d.x, y:d.y-16, s:'-'+pen, c:PAL.red, t:56});
     Snd.bad();
-    G.missFlash = 22;
+    /* YEME ISABET, UC RETTEN AYRI BIR SEY. Tufek turunda uc "olmadi"
+       hali ayri dile kavustu: bos sarjor bir ENGEL, bos gok bir YOKLUK,
+       iska bir SONUC. Bu dorduncusu: bir HATA — ve tekiligi su ki
+       BIR SEY GERCEKTEN VURULDU.
+
+       O yuzden TUY UCUYOR. Kural artik tek cumle: TUY = bir sey
+       vuruldu. Uc retin hicbirinde tuy yok, cunku hicbirinde bir sey
+       vurulmadi. Oyuncu ekrana bakmadan, tek bir isaretten "isabet mi
+       ret mi" ayrimini yapabiliyor.
+
+       missFlash (tam ekran gri-mavi yikama) KALDIRILDI: o ISKANIN
+       eski diliydi ve iska artik ondan ayrildi (halka). Yem hala onu
+       kullansaydi oyuncu "hata"yi "iska" diye okurdu — ustelik iska
+       artik oyle gorunmedigi icin hicbir seye benzemezdi.
+       Bedeli zaten dort taraftan soyleniyor: puan dusuyor, zincir
+       kiriliyor, kopek kiziyor, ses kotu. Bir de ekrani yikamak
+       ayni seyi besinci kez soylemekti. */
+    feathers(d.x, d.y, PAL.red);
     shake(5, 12);
     dogPop(d.x, 'angry', 60);
     d.state = 'flee'; d.vy = -d.sp*2.2; d.vx *= 0.4;
@@ -8736,7 +8930,6 @@ function update(){
     if(--q.t <= 0) G.parts.splice(i,1);
   }
   G.t++;
-  if(G.missFlash > 0) G.missFlash--;
   if(G.msgT > 0) G.msgT--;
   if(G.hint && --G.hint.t <= 0) G.hint = null;
 
@@ -8886,7 +9079,6 @@ function updateBird(d){
   else if(d.state === 'flee'){
     d.x += d.vx; d.y += d.vy; d.vy = Math.min(d.vy, -d.sp*2);
     if(d.y < -30){
-      G.missFlash = 0;
       if(!d.decoy){
         if(G.stats) G.stats.fled++;
         if(G.shieldLeft > 0){ G.shieldLeft--; showMsg(T.shield, 40); }
@@ -8960,7 +9152,7 @@ function render(){
      Ayrı bir zamanlayıcı değil, var olan eğrinin payı — "bakan görür,
      bakmayan kaçırmaz" (bkz. drawAy). */
   ART.ayGor = Math.max(0, (dawnDark(dawnP()) / DAWN.dark) * 1.15 - 0.15);
-  drawScene(g, G.t, G.missFlash > 0);
+  drawScene(g, G.t);
   /* Sabahın ışığı — üç kat, hepsi ilerlemeye bağlı (bkz. DAWN):
      1) gece perdesi (ağır pay, yalnız DÜNYAYA — varlıklar üstte kalır)
      2) ufuk kızıllığı — gün önce ufuktan gelir
@@ -9178,10 +9370,15 @@ function render(){
   }
   if(G.hint) drawHint();
 
-  if(G.phase === 'play')
+  if(G.phase === 'play'){
+    drawIska(g);
     drawAim(g, aim.x, aim.y, G.shots === 0,
             G.reloadT > 0 ? 1 - G.reloadT / reloadCost() : -1,
-            cfg.mode === 'gyro' && aim.still >= MOD.steadyFrames);
+            cfg.mode === 'gyro' && aim.still >= MOD.steadyFrames,
+            aim.geri / TUFEK.geri, aim.agiz / TUFEK.agiz,
+            aim.doldu / TUFEK.doldu, G.bosTetik / TUFEK.bosTetik,
+            G.kuruTetik / TUFEK.kuruTetik);
+  }
 }
 
 /* Kare seçimi: jackal (CAKAL) setinde yalnız sinsi0/1 + kos0/1 var —
@@ -9350,29 +9547,12 @@ function drawHUD(){
     const pr = 1 - G.reloadT / reloadCost();
     px(g, 5, H - 12, Math.round(cap * 7 - 3) * pr, 1, PAL.bone);
   }
-  /* TÜFEĞİN KİRİ ARTIK GÖRÜNÜYOR (2026-08-21).
-     `Alet.ciz` yazılmıştı ama oyunun HİÇBİR yerinden çağrılmıyordu —
-     yalnız testlerden. Yani oyuncunun tek geri bildirimi tutukluk
-     ANINDAKİ mesajdı: ceza başlamadan önce sıfır uyarı. Bu, takvim
-     sökümünde altı kez bulunan örüntünün aynısı: GÖRÜNMEYEN CEZA.
-
-     Yeri fişeklerin yanı, bilerek: oyuncunun "ateş edebilir miyim"
-     sorusunu sorduğu yer orası. Kir namlunun dibinden yukarı doğru
-     kurum olarak birikiyor — sayı yok, DOLULUK var; oyuncu "ne kadar
-     kirli" sorusunu bakışla cevaplıyor.
-
-     Yalnız kampanyada: kir mekaniği kampanyanın (bakım işi orada). */
-  /* SAHIBININ TELEFONUNDA GORULDU (2026-08-21): temiz tufek de ciziliyordu
-     ve fisheklerin hemen yaninda duran o cubuk DORDUNCU BIR FISEK gibi
-     okunuyordu — baska renkte, anlamsiz. Bilgi vermiyor, gurultu
-     uretiyordu.
-
-     Artik yalniz KIR VARSA ciziliyor. Temiz tufekte hicbir sey yok; kir
-     basladigi an ekranda YENI bir sey beliriyor ve oyuncu onu fark
-     ediyor. Ayni ilke agildaki "is var" noktalarinda da kullanildi:
-     surekli duran bir isaret bilgi tasimaz, BELIREN bir isaret tasir.
-
-     Bosluk da acildi (+7): fisheklerle ayni gruba ait sanilmasin. */
+  /* TUTUKLUK VE TUFEK KIRI SOKULDU (2026-08-21). Burada kirin cizimini
+     ve tutuklugu anlatan ~25 satir yorum duruyordu, ama `Alet` diye bir
+     nesne dosyada YOK: ne kir birikiyor, ne tufek tutukluk yapiyor.
+     Sozlukteki `tutukluk` dizgeleri de hicbir yerden okunmuyordu.
+     Vaat eden ama karsiligi olmayan bir metin, okuyani "bu oyunda
+     tutukluk var" diye yaniltiyordu. */
   /* Şarj bölgesi GÖRÜNÜR olmalı. Jiroskopta nişangâh ekran kenarında
      kilitleniyor, yani oyuncu namlusunu ne kadar indirdiğini göremiyordu —
      "şarj zor" şikâyetinin sebebi eşik değil, geri bildirim yokluğuydu.
@@ -9438,7 +9618,7 @@ function paint(){
      Bir zamanlar burada bir de goc sabahinin gogu (GOK_GOC) secilebiliyordu;
      goc sahnesi takvimle birlikte silindi, tek gok kaldi. */
   ART.gok = GOK_ENV;
-  if(G.phase === 'calib'){ drawScene(g, G.t, false); drawCalib(); return; }
+  if(G.phase === 'calib'){ drawScene(g, G.t); drawCalib(); return; }
   if(G.phase === 'doorpan'){ renderDoorPan(); return; }
   /* Nişan seçimi bir KARAR ekranı: kartallar metnin üstünden geçerse
      okunmuyor. Menüde kalırlar (oyunun ilk karesi ne olduğunu söylemeli). */
