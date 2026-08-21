@@ -992,7 +992,6 @@ const STR = {
       decoy:['ŞERİTLİ KUŞ YEM','VURMA - PUAN KAYBEDERSİN'],
       armored:['ZIRHLI KUŞ','İKİ İSABET İSTER'],
       flock:['SÜRÜ','HEPSİNİ HIZLI VUR - BONUS'],
-      draft:['İSTEDİĞİN KARTI VUR','RUN BOYUNCA SENDE KALIR'],
       clay:['KİL GÜVERCİN','UZAKLAŞIR - BEKLEME'],
       reload:['ŞARJÖR BOŞ','NAMLUYU AŞAĞI ÇEVİR'],
       pouch:['FİŞEKLİK TUR BOYUNCA','ISKA MERMİ YER'],
@@ -1003,24 +1002,6 @@ const STR = {
       steady: ['SABİT EL',      'Bir koşuda 10 sabit atış'],
       clean:  ['KİL USTASI',    'Kil turunu 10/10 bitir'],
       week:   ['YEDİ GÜN',      '7 gün üst üste günlük'],
-    },
-    perks:{
-      // --- cephane ---
-      // --- sabit ---
-      steady:['SABİT EL',['NİŞAN KARARLI','ALAN %15 GENİŞ']],
-      lastshot:['SON MERMİ',['SON MERMİDE','AĞIR ÇEKİM']],
-      quickcalm:['ÇABUK NEFES',['SABİT ATIŞ','ÇOK DAHA KOLAY']],
-      steadyshell:['NEFES İADESİ',['SABİT ATIŞ','1 FİŞEK İADE']],
-      steadypay:['NİŞAN BEDELİ',['SABİT ATIŞ','PUANI x2.5']],
-      // --- kombo ---
-      shield:['KOMBO KALKANI',['ROUND BAŞINA','1 ISKA AFFI']],
-      comboload:['ZİNCİR ŞARJI',['HER 4 ZİNCİR','ŞARJÖR DOLAR']],
-      comboshell:['ZİNCİR KESESİ',['HER 5 ZİNCİR','+2 FİŞEK']],
-      // --- avcılık ---
-      // --- nişan ---
-      wide:['GENİŞ SAÇMA',['VURUŞ ALANI','%30 GENİŞ']],
-      ricochet:['SEKME',['İLK ISKA BİR','KEZ SEKER']],
-      // --- bahis ---
     },
     // HTML arayüzü (tam aksanlı)
     ui:{
@@ -1178,7 +1159,6 @@ const STR = {
       decoy:['STRIPED BIRD IS A DECOY','DO NOT SHOOT - YOU LOSE POINTS'],
       armored:['ARMORED BIRD','TAKES TWO HITS'],
       flock:['FLOCK','HIT THEM ALL FAST - BONUS'],
-      draft:['SHOOT THE CARD YOU WANT','IT LASTS THE WHOLE RUN'],
       clay:['CLAY PIGEON','IT RECEDES - DO NOT WAIT'],
       reload:['MAGAZINE EMPTY','AIM BELOW THE SCREEN'],
       pouch:['SHELLS LAST THE ROUND','MISSES COST THEM'],
@@ -1189,24 +1169,6 @@ const STR = {
       steady: ['STEADY HAND', '10 steady shots in a run'],
       clean:  ['CLAY MASTER', 'Clear a clay round 10/10'],
       week:   ['SEVEN DAYS',  '7-day daily streak'],
-    },
-    perks:{
-      // --- ammo ---
-      // --- steady ---
-      steady:['STEADY HAND',['CALMER AIM','+15% HITBOX']],
-      lastshot:['LAST SHELL',['SLOW MOTION','ON LAST SHOT']],
-      quickcalm:['QUICK BREATH',['STEADY SHOTS','MUCH EASIER']],
-      steadyshell:['BREATH REFUND',['STEADY SHOT','REFUNDS SHELL']],
-      steadypay:['AIMED PRICE',['STEADY SHOT','SCORES x2.5']],
-      // --- chain ---
-      shield:['CHAIN SHIELD',['ONE MISS','FORGIVEN/ROUND']],
-      comboload:['CHAIN RELOAD',['EVERY 4 CHAIN','MAG REFILLS']],
-      comboshell:['CHAIN POUCH',['EVERY 5 CHAIN','+2 SHELLS']],
-      // --- quarry ---
-      // --- aim ---
-      wide:['WIDE SPREAD',['HIT AREA','30% WIDER']],
-      ricochet:['RICOCHET',['FIRST MISS','BOUNCES ONCE']],
-      // --- wager ---
     },
     ui:{
       tagline:'Dawn on the steppe',
@@ -1416,6 +1378,9 @@ const MOD = {
   reloadFrames: 14,          // jiroskop: şarj süresi; asıl bedel namlu seyahati
   reloadFramesTouch: 30,     // dokunmatik: seyahat yok, bedeli tamamen süre taşır
   pouchPerRound: 16,         // tur başına fişeklik: 10 hedef + 6 ıska payı
+  hitbox: 16,                // taban vuruş alanı (yarı-genişlik, px). Perk
+                             // havuzu sökülünce (2026-08-21) buraya taşındı;
+                             // eskiden freshMods()'un içinde çıplak 16'ydı.
   steadyFrames: 22,          // sabit atış için gereken durgunluk (~0.37 sn)
   steadyEps: 0.55,           // "durgun" sayılan kare başına nişan hareketi (px)
   /* Durgunluk izleyicisinin SABİT yumuşatma katsayısı — oyuncunun
@@ -1431,94 +1396,7 @@ const MOD = {
   flockWindow: 100,          // sürü bonusu için tüm kuşların vurulma penceresi (frame)
 };
 
-/* --- run yapısı ---------------------------------------------------------
-   Orijinal tablolar SONSUZ bir arcade koşusu için ayarlanmıştı: geçme çizgisi
-   10/10'a ancak round 20'de çıkıyor. 12 round'luk sınırlı bir run'da bu eğri
-   asla tamamlanmaz. Çözüm: eğrinin ŞEKLİNİ koru, zamanlamasını sıkıştır —
-   run round'u 1..12, orijinalin 1..20 aralığına eşlenir.                    */
-const RUN = {
-  rounds:12,
-  /* Draft 3 -> 4 (1.6). Gerekçe ölçüm: üç parçalı bir sinerji üç seçimle
-     ancak tam isabetle toplanır, yani hiç toplanmaz. Dördüncü seçim
-     "zincirim eksik kaldı" hissini "zincirimi kurdum"a çeviriyor.
-     İlk draft round 3 yerine 2'de: kimlik erken doğsun, koşunun yarısı
-     kartsız geçmesin. Son draft round 10'da — 11 ve 12'de kullanacak
-     zaman var, round 11'de verilen kart ölü karttır.
-     Denge etkisi ölçüldü ("denge tabani"): yeni havuzun yarısı puan
-     ekseninde olduğu için ortalama koşu gücü sabit kaldı.                */
-  /* ================================================================
-     ⚠ BU KATMAN ULAŞILAMAZ — ÖLÇÜLDÜ (2026-08-21)
 
-     `draftAfter` round 2/4/7/10'da perk draft'ı açıyor. Ama gece HİÇ
-     round ilerletmiyor: bir gece koşturuldu (20.000 kare) ve sonuç
-
-         görülen roundlar : 1
-         görülen fazlar   : intro, play, over
-         draft fazı       : 0 kare
-         G.mods           : hep varsayılan
-
-     Gece `finishMorning('dawn')` ile bitiyor; `finishRun` yalnız
-     `roundEnd` dalından çağrılıyor ve o dala hiç girilmiyor. Yani ÖLÜ
-     olan şey yalnız perkler değil: `roundEnd` fazı, `draft` fazı,
-     `startDraft`, `RUN.rounds`, `finishRun` ve `G.mods`'un perk
-     alanlarının TAMAMI.
-
-     SEBEBİ ESKİ: çoban oyunu, round yapılı avcılık oyununun ÜSTÜNE
-     kuruldu ve perkler öksüz kaldı. Bu turda üretilmedi, bu turda
-     GÖRÜLDÜ.
-
-     NİYE SİLİNMİYOR: 30'dan fazla perk gerçek içerik ve silmek ya da
-     yolculuğa taşımak o zamanki tercih (docs/plan-tek-mod.md'nin açık
-     kalan tek maddesi). Teşhis ve öneri yürüyor: docs/perk-karari.md.
-
-     NİYE İŞARETLENİYOR: `G.mods.slowmo` gibi alanlar oynanış kodunun
-     her yerinden okunuyor ve HEP varsayılan dönüyor. Okuyan biri
-     perklerin çalıştığını sanıyor — bu işaret olmadan bir sonraki
-     oturum burada olmayan bir sistemi ayarlamaya çalışır.
-     ================================================================ */
-  draftAfter:[2,4,7,10],
-  // Geçme çizgisi bir YAPI kararıdır, his tablosu değil. ROM eğrisini doğrudan
-  // eşlemek ilk 6 round'u düz bırakıyordu; run için kendi yayımızı yazıyoruz.
-  pass:[6,6,7,7,8,8,8,9,9,9,10,10],
-};
-const dRound = r => Math.round(1 + (r - 1) * 19 / (RUN.rounds - 1));
-
-// Kaçma sayacı: ROM'un üç değeri (125/93/62) çapa olarak korunur, aralar
-// doğrusal doldurulur — orijinaldeki iki basamaklı plato 12 round'da hissizdi.
-
-// hitbox küçülmesi orijinalde round 24/27'de olur — 12 round'a taşınamaz,
-// bu yüzden run'ın son üçte birine yerleştirildi.
-const runHitbox = r => (r >= 11 ? 13 : r >= 9 ? 14.5 : 16);
-
-/* --- perk havuzu --------------------------------------------------------
-   Satır başına en fazla 14 karakter (kart genişliği 92px, 5x7 font).
-
-   TASARIM 1.6 — havuz 10 -> 45. Neden sadece "10 tane daha" olmadığı:
-
-   Ölçüldü (tools/smoke.js "icerik cesitliligi"): 10 perk'le oyuncu MEDYAN
-   4 koşuda havuzun tamamını görüyordu. Daha kötüsü, kartlar birbiriyle
-   KONUŞMUYORDU — her biri `mods` üstünde bağımsız bir skalerdi. "C(10,3)
-   = 120 build" rakamı yanıltıcıydı: gerçekte 10 bağımsız "biraz daha iyi"
-   seçeneği vardı, 120 farklı oynanış değil.
-
-   Bu yüzden yeni havuz AİLE (fam) ve TETİK/ÖDÜL/EŞİK zinciri üstüne kuruldu:
-
-     TETİK  bir olayı işaretler        sabit atış fişek iade eder
-     EŞİK   o olayı ulaşılabilir kılar sabit atış eşiği 22 -> 12 frame
-     ÖDÜL   o olayın değerini büyütür  sabit atış puanı x1.5 -> x2.5
-
-   Üçü bir arada bambaşka bir avcı: nişan alıp bekleyen, mermisi hiç
-   bitmeyen, iki buçuk kat puan alan. Tek başlarına hiçbiri o değil.
-   Sinerji pairwise bir tablodan değil, PAYLAŞILAN SAYAÇLARDAN geliyor —
-   N² bakım maliyeti yok, kart eklemek zinciri kendiliğinden büyütüyor.
-
-   DENGE KURALI — havuz neden simülasyon tablosunu bozmuyor:
-   kartlar iki eksene ayrıldı. PUAN ekseni (çarpan, bonus, zincir) hayatta
-   kalmayı HİÇ etkilemez; YAŞAM ekseni (vuruş alanı, mermi, süre) etkiler.
-   Eski havuzun 10 kartından 9'u yaşam eksenindeydi — o yüzden her perk
-   koşuyu kolaylaştırıyordu. Yeni havuzda oran ~yarı yarıya ve yaşam
-   eksenindeki güçlü kartlar BEDELLİ. Draft sayısı 3'ten 4'e çıkarken
-   ortalama koşu gücü bu sayede sabit kaldı. Ölçüm: "denge tabani" testi.  */
 
 /* Aileler. Renk kartın kenarlığına ve alt etiketine gider: oyuncu üç kartı
    okumadan hangisinin kendi hattını beslediğini GÖRÜR. 42 kartlık bir havuz
@@ -1697,18 +1575,6 @@ const Save = {
 };
 Save.load();
 
-/* Kilit MERDİVENİ. 45 kartı tek tek kilitlemek 45 satır dizge demekti;
-   basamak modeli aynı işi 7 satırda yapıyor. Merdiveni uzatmak = bir satır.
-
-   Basamaklar bilerek FARKLI beceri eksenlerine bakıyor: koşu sayısı
-   (alışkanlık), ulaşılan round (hayatta kalma), bitirme (ustalık), madalya
-   (çeşitlilik). Tek eksene bağlanan merdiven tek tip oyuncuyu ödüllendirir. */
-/* UNLOCKS'un ŞEKLİ korunuyor (id/ok/how) — başlık ekranı, satın alma ve
-   testler bu sözleşmeye bağlı. Yalnız kaynağı değişti: elle liste yerine
-   perk'in kendi tier alanı. Böylece perk eklerken kilidi unutmak imkânsız. */
-const unlockedIds = () =>
-  Monetize.ent.allPerks ? UNLOCKS.map(u => u.id)
-                        : UNLOCKS.filter(u => u.ok(Save.d)).map(u => u.id);
 
 
 
@@ -1848,40 +1714,6 @@ function hint(key){
   G.hint = { lines: T.hints[key], t: 150 };
 }
 
-/* --- run modifikatörleri -------------------------------------------------
-   Kalıcı para ekonomisi yerine bu seçildi: 3 dakikalık koşularda currency
-   biriktirmek öğütme hissi verir. Modifikatör ise anında çeşitlilik ve
-   ustalık ifadesi sağlar — zorluğu sen seçersin, skor çarpanını hak edersin. */
-
-/* Perk'lerin biriktiği tek yer. Alanların çoğu bir PERK'in yazdığı, başka
-   bir perk'in okuduğu PAYLAŞILAN SAYAÇ — sinerji buradan çıkıyor, kartlar
-   arası özel kural tablosundan değil. Örnek zincir:
-     quickcalm  -> steadyFrames     (olayı ulaşılabilir yapar)
-     steadyshell-> steadyShell      (olayı fişeğe çevirir)
-     steadypay  -> steadyMul        (olayın puanını büyütür)
-   Yeni kart eklemek yeni alan eklemek demek; mevcut kartlara dokunmadan
-   zincir uzuyor.                                                          */
-function freshMods(){
-  return { shots:MOD.shotsPerTarget, pouch:MOD.pouchPerRound, hitbox:16, slowmo:false, ricochet:false,
-           steady:false, decoyBonus:false, shield:false,
-           mulRed:1, mulBlack:1, mulBlue:1, fleeMul:1, speedMul:1, dogCatch:false,
-           extraDecoys:false, passBonus:0,
-           // puan ekseni — hayatta kalmayı etkilemez
-           scoreMul2:1, shellMul:1, flockMul:1, armorMul:1, clayFar:1,
-           steadyMul:MOD.steadyMul, steadyCombo:1,
-           comboStep:MOD.comboStep, comboCap:MOD.comboCap, comboGlass:false,
-           // cephane ekseni
-           reloadMul:1, autoLoad:false, instantMag:false, shellEvery:0,
-           steadyShell:0, comboLoad:0, comboShell:0, armorShell:0,
-           // nişan ekseni
-           steadyFrames:MOD.steadyFrames, steadyBox:1, lastBox:1, firstBox:1,
-           bounces:1, noShrink:false,
-           // hedef ekseni
-           armorOne:false, flockWin:MOD.flockWindow, clayMul:1,
-           decoyTeach:false, decoyMul:1, comboKeep:false };
-}
-
-// draft kartı geometrisi
 
 /* ---------------------------------------------------------------------
    2. ÇİZİM — ART bloğu (sadece fillRect; Node'da doğrulanabilir)
@@ -1895,7 +1727,7 @@ function freshMods(){
 /* ART bloğu KENDİ KENDİNE YETER — dışarıdaki `cfg`ye bağlanmamalı, yoksa
    tarayıcısız araçlar (render.js, icon.js) bloğu izole çalıştıramaz.
    Oyun bu bayrakları syncUI() içinde günceller. */
-const ART = { marks:false, env:null, sunUp:1, gok:null, ayGor:0, bulut:true, gokKapali:false };   // env: yüklenmiş arka plan görüntüsü (yoksa prosedürel)
+const ART = { marks:false, env:null, sunUp:1, gok:null, ayGor:0, gunTepe:0, bulut:true, gokKapali:false };   // env: yüklenmiş arka plan görüntüsü (yoksa prosedürel)
 /* ART.sunUp (0..1): güneşin ne kadarının ufkun üstüne çıktığı. Sabahın
    ağarmasıyla oyun tarafı sürer (bkz. GOK_ENV/drawGokcisim/render). ART
    bloğu kendi kendine yeter — dışarıdaki dawnP()'ye bakamaz, bayrak buradan
@@ -2094,6 +1926,11 @@ const GOK_ENV = {
      altta bırakıyor. 101 ikisinin ortası: disk ufuktan ayrık (alt kenar
      y=110, ufuk 111) ama hâlâ halenin içinde. */
   bitis: 101,
+  /* ÖĞLE: güneşin turun tepesindeki yeri. `bitis` şafağın yeri, bu onun
+     devamı — ikisi ayrı sayı çünkü ayrı iki anı tarif ediyorlar.
+     88 seçildi: 13 piksel yükseliş öğleyi okunur kılıyor, ama disk
+     kartalların bandına inmiyor (basıldı, bakıldı). */
+  tepe: 88,
   hale: 0.5,     // hale çarpanı — env'in KENDİ pişmiş halesi durduğu için kısık
   pus: 3,        // ufkun üstünde diskin eridiği satır sayısı
   /* Batan ay. faz NEGATİF: hilalin aydınlık kenarı GÜNEŞE bakar. Güneş
@@ -2176,10 +2013,17 @@ function gokEll(g, cx, cy, rx, ry, renk, alfa, ufuk, pus){
 
 /* GÜNEŞ. up = 0..1 (ART.sunUp) — ufkun ardından çıkışı.
    yalnizDisk: hale ve pus atlanır, sadece disk basılır (perde telafisi). */
-function drawGunes(g, S, up, alfa, yalnizDisk){
+function drawGunes(g, S, up, alfa, yalnizDisk, tepe){
   const t = up < 0 ? 0 : up > 1 ? 1 : up;
   const e = t * t * (3 - 2 * t);                    // smoothstep — sert kalkış yok
-  const cy = S.dogus + (S.bitis - S.dogus) * e;
+  /* ÖĞLE PAYI (2026-08-21). `bitis` ŞAFAĞIN yeri ve kalibre edilmiş
+     (A/B basıldı, bkz. GOK_ENV.bitis notu) — DEĞİŞMİYOR. Öğle onun
+     ÜSTÜNE toplanıyor, yani tepe=0 iken bu satır bugünkü çizimin
+     birebir aynısı. Ölçüldü: eskiden güneş turun 238 saniyesi boyunca
+     y=101'de KIPIRDAMADAN duruyordu — günün %40'ı donmuş bir gökyüzü. */
+  const tp = S.tepe == null ? 0 : Math.min(1, Math.max(0, tepe || 0));
+  const cy = S.dogus + (S.bitis - S.dogus) * e
+             + (tp ? (S.tepe - S.bitis) * tp : 0);
   /* h: diskin ufka göre yüksekliği (0 = ufuk hizası, 1 = iyice yukarıda).
      Renk, yassılık ve hale hep BUNDAN türüyor — tek eksen, tek ayar. */
   const h = Math.max(0, Math.min(1, (S.ufuk - cy) / (S.r * 1.8)));
@@ -2383,7 +2227,7 @@ function drawGokcisim(g, t){
   const S = ART.gok;
   if(!S) return;
   if(S.ay) drawAy(g, S.ay, ART.ayGor || 0);
-  drawGunes(g, S, ART.sunUp, 1, false);
+  drawGunes(g, S, ART.sunUp, 1, false, ART.gunTepe || 0);
 }
 
 /* GECE PERDESİNDEN GERİ ALMA — render()/drawVinyetSky, gece perdesini
@@ -2407,7 +2251,7 @@ function drawGokIsik(g, a, t){
   const S = ART.gok;
   if(!S || !(a > 0.02)) return;
   if(S.ay) drawAy(g, S.ay, (ART.ayGor || 0) * a);
-  drawGunes(g, S, ART.sunUp, a, true);
+  drawGunes(g, S, ART.sunUp, a, true, ART.gunTepe || 0);
 }
 
 /* BACA DUMANI (DUMAN_SEKIL + drawDuman) SILINDI (2026-08-21): yalniz
@@ -4669,7 +4513,7 @@ const CARD_VIEW_LAYOUT = {
    3. SES — WebAudio ile sentez (örneklenmiş dosya yok)
    ------------------------------------------------------------------ */
 const Snd = {
-  ctx:null, master:null, noiseBuf:null, wind:null, windGain:null, muted:false,
+  ctx:null, master:null, noiseBuf:null, wind:null, windGain:null, windFilter:null, muted:false,
   init(){
     if(this.ctx) return;
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -4754,7 +4598,7 @@ const Snd = {
     src.connect(f); f.connect(g); g.connect(this.master);
     g.gain.linearRampToValueAtTime(0.09, this.ctx.currentTime + 2.5);
     src.start(); lfo.start();
-    this.wind = { src, lfo }; this.windGain = g;
+    this.wind = { src, lfo }; this.windGain = g; this.windFilter = f;
   },
   stopWind(){
     if(!this.wind || !this.ctx) return;
@@ -4762,7 +4606,7 @@ const Snd = {
     this.windGain.gain.cancelScheduledValues(t);
     this.windGain.gain.setValueAtTime(this.windGain.gain.value, t);
     this.windGain.gain.linearRampToValueAtTime(0, t + 0.5);
-    const w = this.wind; this.wind = null;
+    const w = this.wind; this.wind = null; this.windFilter = null;
     setTimeout(() => { try{ w.src.stop(); w.lfo.stop(); }catch(e){} }, 700);
   },
 
@@ -4995,6 +4839,48 @@ const Snd = {
     this.tone(f, 0.09, 'triangle', 0.16, f * 0.62, 0.01);
     this.noise(0.04, 700, 0.07);
   },
+  /* --- ISIGIN DONDUGU IKI AN (2026-08-21) ------------------------------
+     Ikisi de ALARM DEGIL, ve bu bir doz meselesi degil BICIM meselesi:
+     alarm dedigimiz sey ANI ATAKTIR. Bu yuzden ikisinin de atagi yavas
+     (0.30 sn) — kulak transient duymaz, KABARMA duyar. bad() ve kayip()
+     tam tersi: sert giris, alcak perde. Oyuncu alacayi duyup "bir sey mi
+     oldu" diye irkilmemeli; gunun dondugunu anlamali.
+
+     Perde de ayri tutuldu: kayip 96 Hz, bad 150 Hz sawtooth (tirmalar).
+     Bunlar ucgen/sinus ve 110-220 bandinda — ayri aile.                 */
+  safak(){
+    // Yukselen: filtre acilir, perde tirmanir. Zafer degil RAHATLAMA.
+    this.noise(0.80, 240, 0.075, 900);
+    this.tone(110, 0.75, 'triangle', 0.10, 220, 0.30);
+    setTimeout(() => this.tone(165, 0.55, 'sine', 0.07, 247, 0.22), 260);
+  },
+  alaca(){
+    // Ayni seklin tersi: filtre kapanir, perde iner. Soguk ama sakin.
+    this.noise(0.80, 900, 0.065, 260);
+    this.tone(220, 0.75, 'triangle', 0.09, 104, 0.30);
+    setTimeout(() => this.tone(165, 0.55, 'sine', 0.06, 110, 0.22), 260);
+  },
+
+  /* RUZGARIN TONU ISIGA BAGLI. k=0 gece, k=1 ogle.
+     Yeni bir ses DEGIL: zaten calan ruzgarin alcak-geciren filtresi ve
+     seviyesi suruluyor. Gece ince ve soguk (260 Hz), ogle dolgun ve
+     sicak (520 Hz).
+
+     setTargetAtTime, setValueAtTime DEGIL: her karede cagrilacak, ani
+     atama fermuar gurultusu (zipper noise) yapardi. 1.5 sn zaman sabiti
+     ~4.5 saniyede oturur, yani gecis DUYULMAZ ama HISSEDILIR.
+
+     LFO'nun `f.frequency`ye baglantisi bozulmuyor: ses-hizli baglanti
+     AudioParam'in tabanina EKLENIR, biz tabani suruyoruz. Ikisi birlikte
+     calisiyor.                                                          */
+  ruzgarIsik(k){
+    if(!this.ctx || !this.wind || !this.windFilter) return;
+    k = k < 0 ? 0 : k > 1 ? 1 : k;
+    const t = this.ctx.currentTime;
+    this.windFilter.frequency.setTargetAtTime(260 + 260 * k, t, 1.5);
+    if(this.windGain) this.windGain.gain.setTargetAtTime(0.07 + 0.035 * k, t, 1.5);
+  },
+
   agilUrk(){
     this.noise(0.28, 1100, 0.055, 420);                 // yun hisirtisi — filtre duser
     setTimeout(() => this.noise(0.10, 320, 0.05, 190), 90);   // toynak
@@ -5288,16 +5174,16 @@ async function requestGyro(){
 
    Dokunmatikte eşdeğeri: alt şeride dokunmak. İki modda da zihinsel model
    aynı — "namluyu indir".                                                  */
-function magCap(){ return G.mods ? G.mods.shots : MOD.shotsPerTarget; }
+function magCap(){ return MOD.shotsPerTarget; }
 
 /* Dokunmatikte şarj daha uzun sürüyor ve bu bilinçli: jiroskopta asıl bedel
    namluyu indirip kaldırmak (~0.5 sn gerçek hareket), dokunmatikte öyle bir
    bedel yok. Süreyi eşitlemek yerine TOPLAM bedeli eşitliyoruz.            */
 function reloadCost(){
   const base = cfg.mode === 'touch' ? MOD.reloadFramesTouch : MOD.reloadFrames;
-  // "çevik el" süreyi kısaltır; taban en az 4 frame kalır ki şarj sesi ve
-  // göstergesi görünür olsun — anlık şarj mekaniği görünmez kılıyordu.
-  return Math.max(4, Math.round(base * (G.mods ? G.mods.reloadMul : 1)));
+  // Taban en az 4 frame kalır ki şarj sesi ve göstergesi görünür olsun —
+  // anlık şarj mekaniği görünmez kılıyordu.
+  return Math.max(4, Math.round(base));
 }
 
 function startReload(){
@@ -5343,9 +5229,7 @@ function updateAim(){
     return Math.sign(n) * Math.pow(Math.abs(n), cfg.expo) * half;
   };
   const tx = W/2 + shape(ax, W/2), ty = H/2 + shape(ay, H/2);
-  // "sabit el" perk'i yumuşatmayı artırır (kullanıcı ayarını kalıcı bozmadan)
-  const perk = (G.mods && G.mods.steady ? 0.6 : 1);
-  const sm = cfg.smooth * perk;
+  const sm = cfg.smooth;
   aim.x += (tx - aim.x)*sm;
   aim.y += (ty - aim.y)*sm;
   /* Durgunluk AYRI bir izleyiciden okunuyor, nişanın kendisinden değil.
@@ -5358,7 +5242,7 @@ function updateAim(){
      Kırpma sırası da eskisiyle aynı: fark önce alınıyor, kırpma sonra —
      ekran kenarına yaslanmış nişanda durgunluk eskiden nasıl sayılıyorsa
      öyle sayılmaya devam ediyor. */
-  const smS = MOD.steadySmooth * perk;
+  const smS = MOD.steadySmooth;
   const sx0_ = aim.sx, sy0_ = aim.sy;
   aim.sx += (tx - aim.sx)*smS;
   aim.sy += (ty - aim.sy)*smS;
@@ -5382,10 +5266,14 @@ function updateAim(){
    5. OYUN DURUMU
    ------------------------------------------------------------------ */
 const G = {
-  phase:'idle',        // idle | intro | play | roundEnd | draft | over
-  t:0, round:1, score:0, combo:0, best:0,
+  /* roundEnd ve draft fazlari SILINDI (round/draft katmani), oyun onlara
+     hic girmiyordu. */
+  phase:'idle',        // idle | intro | play | over
+  t:0, score:0, combo:0, best:0,
   shots:MOD.shotsPerTarget, pouch:MOD.pouchPerRound, reloadT:0,
-  waves:[], waveIdx:0, bounceLeft:0, waveShot:false, hitTick:0,
+  /* bounceLeft / waveShot / hitTick SILINDI: ucu de yalniz perk dallari
+     tarafindan okunuyordu (sekme, dalganin ilk atisi, N isabette fisek). */
+  waves:[], waveIdx:0,
   ducks:[],            // aynı anda 1-3 kuş
   flock:[],            // sabahın sürüsü — korunan şey
   lost:0, saved:0,     // bu sabahın bilançosu
@@ -5424,15 +5312,15 @@ const G = {
      BİREBİR AYNI davranır, regresyon yok. Gerçek oyunda Season.refresh()
      ağıl akışında çağrılır, o yüzden null asla sızmaz. */
   seasonDay:null, dayRule:null,
-  mods:freshMods(),    // perk'lerin biriktiği yer
-  scoreMul:1,
-  perks:[],            // seçilen perk id'leri
-  draft:null,          // {cards, sel, t}
+  /* Burada dort alan daha vardi ve dordu de PERK KATMANINA aitti:
+     mods (perk sayaclari), scoreMul (kosu carpani), perks (secilen kart
+     id'leri), draft (kart secme durumu). Kart secme ekrani cok once
+     silinmisti; kalan alanlar 2026-08-21'de soruldu. */
   paused:false,
   calib:null,          // {t, on, tot, flips, lastSide, bird}
   slowT:0, slowHalf:false,
   shieldLeft:0,
-  stats:null, roundLog:[],
+  stats:null,
   // juice
   shakeT:0, shakeMag:0, shakeDur:0, stopT:0, parts:[],
   /* KAYIP DARBESI — bir hayvan gittiginde calisan uc perdeli an.
@@ -5495,9 +5383,9 @@ const gunAnahtari = dt => dt.getFullYear() + '-' +
    verildiği yer, tekdüzeydi. Yeni sıra: R1 tek kuş (nişan + şarj öğrenilir),
    R2 çift, R3 yem, R4 zırhlı, R5 kil, R6 sürü.                             */
           // ufuktaki kaçış noktası
-// Sürü penceresi artık koşuya özel: MOD.flockWindow taban, G.mods.flockWin
-// perk'le uzayabilen fiili değer. Eski FLOCK_WINDOW sabiti kaldırıldı —
-// iki kaynak bırakmak "hangisi gerçek" sorusunu doğuruyordu.
+// Sürü penceresi tek kaynaktan: MOD.flockWindow. Eskiden bir de perk'le
+// uzayan G.mods.flockWin vardı; o alan HİÇ OKUNMUYORDU (perk havuzuyla
+// birlikte söküldü, 2026-08-21).
 
 
 /* --- attract modu ---------------------------------------------------------
@@ -6168,10 +6056,9 @@ const Attract = {
    ayrı bir "daily" dalı yok. Eski param'ı taşıyan sd/dailySeed de gitti;
    tohum her zaman gerçek zamandan türüyor. */
 function startRun(){
-  G.round = 1; G.score = 0; G.combo = 0;
+  G.score = 0; G.combo = 0;
   const sd = (0x2A6C ^ ((Math.random()*0xFFFF)|0)) || 1;
   G.seed = sd; G.lvlSeed = sd;
-  G.mods = freshMods();
   /* ===== TAKVIM SOKULDU, TEK ZAMAN KAYNAGI KOSUNUN SAATI (2026-08-21) ==
      Burada eskiden gun numarasi "donuyordu": Season.day GERCEK TARIHTEN
      geliyordu ve oyunun yarisi ona bakiyordu — kurt hangi gun cikar, sis
@@ -6220,8 +6107,6 @@ function startRun(){
   // sabah başlar başlamaz oradasın.
   G.dog.show = true; G.dog.pose = 'walk'; G.dog.rise = 0;
   G.dog.x = W / 2; G.dog.y = GROUND + 18;
-  G.perks = [];
-  G.draft = null;
   G.slowT = 0;
   /* Kayip darbesi kosular arasinda TASINMAZ. Tasinsaydi son hayvani
      kaybedip yeniden basladiginda yeni kosu karanlikta ve yari hizda
@@ -6230,7 +6115,6 @@ function startRun(){
   Snd.duckBirak();
   G.stats = { shots:0, hits:0, decoyHits:0, fled:0, perfects:0,
               reloads:0, steady:0, maxCombo:0, bestPouch:0, cleanClay:false };
-  G.roundLog = [];
   G.runFrames = 0;
   G.parts = [];
   startMorning();
@@ -6452,7 +6336,6 @@ function startCalib(){
   G.phase = 'calib';
   G.t = 0;
   G.ducks = [];
-  G.mods = freshMods();
   G.shots = magCap(); G.pouch = MOD.pouchPerRound; G.reloadT = 0;
   /* TAKİP ADIMI HER İKİ MODDA DA VAR. Bir ara dokunmatikte atlanıyordu,
      çünkü o zaman dokunmak = anında ateş demekti ve "parmağınla takip et"
@@ -6534,7 +6417,7 @@ function updateCalib(){
   if(c.step === 1){
     if(c.settle > 0){ c.settle--; return; }   // ilk 1.5 sn ölçüme girmez
     const dx = aim.x - c.x, dy = aim.y - c.y;
-    const hb = G.mods.hitbox;
+    const hb = MOD.hitbox;
     c.tot++; c.wtot++;
     const near = Math.abs(dx) < hb && Math.abs(dy) < hb;
     if(near){ c.on++; c.won++; }
@@ -6631,7 +6514,7 @@ function fireCalib(){
   if(G.shots <= 0){ Snd.empty(); return; }
   G.shots--;
   Snd.shot();
-  const hb = G.mods.hitbox * 1.4;
+  const hb = MOD.hitbox * 1.4;
   if(Math.abs(aim.x - c.x) < hb && Math.abs(aim.y - c.y) < hb){
     c.hits++;
     feathers(c.x, c.y, PAL.bone);
@@ -6658,7 +6541,7 @@ function drawCalib(){
     // Alıştırmada takip edilen şey OYUNDAKİ tehdit olmalı. Burada ördek
     // çizmek oyuncuya baştan yanlış oyunu tanıtıyordu.
     drawEagleTop(g, c.x, c.y, [0, -1, 0, 1][(G.t >> 4) & 3]);
-    const hb = Math.round(G.mods.hitbox);
+    const hb = Math.round(MOD.hitbox);
     const near = Math.abs(aim.x-c.x) < hb && Math.abs(aim.y-c.y) < hb;
     const col = near ? PAL.gold : 'rgba(252,252,252,0.30)';
     px(g, c.x-hb, c.y-hb, hb*2, 1, col); px(g, c.x-hb, c.y+hb, hb*2, 1, col);
@@ -6734,7 +6617,7 @@ function drawCalib(){
   // Şarjör göstergesi 2. ve 3. adımda — dokunmatikte ateş düğmesinde
   // duruyor, sol alt köşe çubuğun altında kalıyor (bkz. drawHUD).
   if(c.step >= 2 && cfg.mode !== 'touch'){
-    for(let i=0;i<G.mods.shots;i++){
+    for(let i=0;i<MOD.shotsPerTarget;i++){
       const bx2 = 5 + i*7, by2 = H - 10, live = i < G.shots;
       px(g, bx2, by2, 4, 7, live ? PAL.gold : 'rgba(16,16,24,0.42)');
       px(g, bx2, by2, 4, 2, live ? PAL.orange : 'rgba(16,16,24,0.42)');
@@ -7136,6 +7019,38 @@ const DAWN = {
   glowBand: 34,      // ufkun üstünde kaç piksel kızarır
 };
 
+let isikSonOlay = '';
+function isikOlay(ad, cal){
+  const anahtar = Math.floor(G.morningT / ISIK_DONGU) + ':' + ad;
+  if(isikSonOlay === anahtar) return;
+  isikSonOlay = anahtar;
+  cal();
+}
+
+/* Donum aninin CIZIMI. `v` -1..+1 (bkz. isikAn), `safak` yon.
+   Bant ANIN ICINDE tek yonde suzuluyor: safakta ufuktan yukari,
+   alacada tepeden asagi. Kenari yumusak, cunku sert kenarli bir bant
+   piksel sanatinda "hata" gibi okunuyor (bir kez basildi, bakildi). */
+function isikBandi(v, safak){
+  const ilerle = (v + 1) / 2;                 // 0 -> 1, tek yonde
+  const guc = 1 - Math.abs(v);                // 0 -> 1 -> 0
+  if(guc < 0.01) return;
+  const KAL = 30;                             // bandin kalinligi
+  const tepeA = safak ? GUN.safakA : GUN.alacaA;
+  const renk  = safak ? GUN.safakC : GUN.alacaC;
+  // Safak ufuktan cikar ve yukari gider; alaca tepeden iner.
+  const y0 = safak ? Math.round(GROUND - ilerle * (GROUND + KAL))
+                   : Math.round(-KAL + ilerle * (GROUND + KAL));
+  for(let i = 0; i < KAL; i++){
+    const y = y0 + i;
+    if(y < 0 || y > GROUND + 10) continue;
+    const k = i / (KAL - 1);                  // 0..1 bant icinde
+    const yumusak = Math.sin(Math.PI * k);    // iki ucu sifir
+    const a = guc * tepeA * yumusak;
+    if(a > 0.004) px(g, 0, y, W, 1, 'rgba(' + renk + ',' + a.toFixed(3) + ')');
+  }
+}
+
 /* İlerleme 0..1 -> gece perdesi. Smoothstep: sessiz açılışta karanlık
    ASILI KALIR (t=0.12'de hâlâ %96), sonra hızla açılır, sonda düzleşir. */
 function dawnDark(p){
@@ -7163,6 +7078,55 @@ function dawnTintMul(p){
    zaten tam gün. */
 function sunUp(p){
   return Math.min(1, Math.max(0, p) / (DAWN.lit * 0.72));
+}
+
+/* ===== GUNUN KENDI YAYI (2026-08-21) ==================================
+   OLCULDU (tur = 36000 kare = 10 dk):
+
+       KARANLIK (perde>0.60)   136 sn
+       GECIS                   226 sn
+       TAM GUN (perde=0.000)   238 sn   <- DONMUS
+
+   O 238 saniyede perde 0, ufuk kizilligi 0, ay/yildiz 0 ve sunUp 1'e
+   yapisik — gunes y=101'de KIPIRDAMADAN duruyor. Yani oyuncunun
+   zamaninin %40'i piksel piksel ayni bir gokyuzunun altinda geciyor.
+   Isik "donuyor" ama GUNUN KENDISI yok: gunes doguyor, ufkun on
+   piksel ustunde takiliyor, ayni yoldan iniyor. Oglen diye bir an
+   yoktu.
+
+   dawnHigh, DAWN.lit'ten (gun doldu) turun tepesine kadar olan yari
+   yeniden hareketlendiriyor: gunes yukselmeye devam ediyor, gok
+   aciliyor, ve sabahin rengi cekiliyor. */
+function dawnHigh(p){
+  const t = Math.min(1, Math.max(0, (p - DAWN.lit) / (1 - DAWN.lit)));
+  return t * t * (3 - 2 * t);
+}
+
+const GUN = {
+  /* Turun icinde gunesin ufku kestigi iki yer. dawnP ucgen oldugu icin
+     p=0.20 iki kez geciliyor: yukselirken x=0.10, inerken x=0.90. */
+  safakX:  0.10,
+  alacaX:  0.90,
+  anKare:  150,     // anin YARIM genisligi (~2.5 sn) — toplam 5 sn
+  safakA:  0.20,    // ilk isik bandinin tepe payi
+  alacaA:  0.30,    // inen soguk perdenin tepe payi
+  safakC: '255,238,200',   // ilk isik — sicak
+  alacaC: '158,176,232',   // aksam — SOGUK ve ACIK (bkz. alacaA notu)
+  ogleA:   0.10,    // oglenin acilma yikamasi
+  ogleC: '255,250,238',
+};
+
+/* Bir donum aninin ICINDEKI yer: -1 (an basliyor) .. 0 (tam ustunde)
+   .. +1 (bitti). Aninin disindaysa null.
+   SAF FONKSIYON, bilerek: bayrak tutulsaydi duraklat/yeniden yukle
+   arasinda kaybolur ya da iki kez calardi. */
+function isikAn(merkez){
+  if(G.phase !== 'play') return null;
+  const x = (G.morningT % ISIK_DONGU) / ISIK_DONGU;
+  let d = x - merkez;
+  if(d > 0.5) d -= 1; else if(d < -0.5) d += 1;   // tur basi/sonu sarmasi
+  const w = GUN.anKare / ISIK_DONGU;
+  return Math.abs(d) >= w ? null : d / w;
 }
 /* Sabahın ilerlemesi. 'intro' sabahın açılış anıdır (köpek havlar, kamera
    yerleşir) — ORASI EN KARANLIK yer; yoksa gün önce doğar, sonra sabah
@@ -8546,18 +8510,10 @@ function fire(){
      için kavga penceresi çoğu kavgada hiç açılamıyordu. */
   if(!G.ducks.length && !kavgaYigini()) return;
   // Durgunluk ATEŞ ANINDA dondurulur: aim.freeze'den sonra ölçüm bozulur.
-  // Eşik artık perk'le düşebiliyor (quickcalm): 22 -> 12 frame.
-  G.steadyShot = cfg.mode === 'gyro' && aim.still >= G.mods.steadyFrames;
+  G.steadyShot = cfg.mode === 'gyro' && aim.still >= MOD.steadyFrames;
   aim.freeze = MOD.aimFreeze;
   aim.still = 0;
   if(G.shots <= 0){
-    // "otomatik sürgü": namluyu indirmeye gerek yok, şarj kendiliğinden
-    // başlar — ama fişeklikten 1 fazla yer. Kolaylık bedava değil.
-    if(G.mods.autoLoad && G.reloadT === 0 && G.pouch > 0){
-      if(G.pouch > 1) G.pouch--;
-      startReload();
-      return;
-    }
     Snd.empty();
     hint('reload');       // ilk kez boşaldığında bir kez anlatılır
     return;
@@ -8570,23 +8526,16 @@ function fire(){
      ateş çıkmadığını SESLE değil GÖZLE de anlamalı. Bu yüzden hem
      mesajı hem ıska parlaması var (raporun KARAR GEREKİR md.3'ü). */
   Snd.shot();
-  /* Kampanya tehditleri kendi vuruş kurallarını işletiyor: vaşağın tek
-     penceresi, sırtlanın ışık çemberi, ayının "mermi yön verir" kuralı,
-     hırsızın havaya ateşi. Karşılandıysa normal isabet yolu koşmuyor. */
-  if(G.mods.slowmo && G.shots === 1) G.slowT = 90;
+  /* VURUŞ ALANI — tek taban, tek çarpan.
+     Burada altı satır daha vardı ve HEPSİ PERK'Tİ: noShrink, firstBox,
+     lastBox, steadyBox, ve geç-round daralması. Hiçbirini açan şey yoktu
+     (perk havuzu 2026-08-21'de söküldü), yani hepsi her koşuda aynı
+     değeri döndürüyordu. Round daralması ayrıca ÖLÜYDÜ: G.round başta
+     1'e kuruluyor ve bir daha hiç artmıyordu, runHitbox(1) === 16, yani
+     çarpan tam olarak 1.
 
-  // Vuruş alanı: taban * geç round daralması * koşullu perk çarpanları.
-  // Koşullu olanlar bilerek durum-bağımlı — sabit bir "%40 geniş" karttan
-  // hem daha zayıf hem daha ilginç: ne zaman geleceğini öğrenmek gerekiyor.
-  let base = G.mods.hitbox * (G.mods.noShrink ? 1 : runHitbox(G.round) / 16);
-  base *= 1 + 0.35 * rookie();     // yeni oyuncuya daha geniş vuruş alanı
-  if(G.mods.firstBox > 1 && !G.waveShot) base *= G.mods.firstBox;   // dalganın ilk atışı
-  if(G.mods.lastBox > 1){                                            // dalgada tek hedef kaldı
-    const alive = G.ducks.filter(b => !b.done && (b.state === 'fly' || b.state === 'rise')).length;
-    if(alive <= 1) base *= G.mods.lastBox;
-  }
-  if(G.steadyShot && G.mods.steadyBox > 1) base *= G.mods.steadyBox;
-  G.waveShot = true;
+     Kalan tek çarpan gerçek: yeni oyuncu rampası. */
+  let base = MOD.hitbox * (1 + 0.35 * rookie());
   const pick = hb => {                            // en yakın vurulabilir hedef
     let best = null, bd = 1e9;
     for(const d of G.ducks){
@@ -8610,15 +8559,7 @@ function fire(){
     const kx = Math.abs(aim.x - G.dog.x), ky = Math.abs(aim.y - (G.dog.y - 6));
     if(kx < base + 6 && ky < base + 6){ fightShot(kavga); return; }
   }
-  let d = pick(base);
-  if(!d && G.mods.ricochet && G.bounceLeft > 0){  // "sekme": dalga başına N kez
-    G.bounceLeft--;
-    d = pick(base * 1.6);
-  }
-  // "cam zincir": ıska zinciri sıfırlar. Normalde zincir yalnız yem vurunca
-  // ve tur sonunda kırılıyordu; bu kart ıskayı da cezalandırıp karşılığında
-  // çarpanı ikiye katlıyor. Tamamen puan ekseninde — hayatta kalmaya dokunmaz.
-  if(!d && G.mods.comboGlass) G.combo = 0;
+  const d = pick(base);
   if(d) hitBird(d);
 }
 
@@ -8627,38 +8568,17 @@ function fire(){
    mods.scoreMul2 = bahis perk'leri
    İkisini tek alanda toplamak modifikatör testini ve kart üstündeki "×"
    göstergesini bozar; ayrı tutulup yalnız puan hesabında çarpılıyorlar.   */
-function pointMul(){ return G.scoreMul * G.mods.scoreMul2; }
+/* İki puan çarpanı vardı (G.scoreMul koşu modifikatörleri, mods.scoreMul2
+   bahis perk'leri) ve İKİSİNE DE hiçbir şey yazmıyordu. pointMul() hep 1
+   dönüyordu; çarpım silindi, çağrı yerlerinden de kalktı. */
 
-/* Zincir çarpanı: adım ve tavan artık perk'le değişebiliyor. "Cam zincir"
-   çarpanı ikiye katlar ama ıska sıfırlar (fire() içinde).                 */
+/* Zincir çarpanı. Adım ve tavan bir ara perk'le değişebiliyordu ("cam
+   zincir" çarpanı ikiye katlardı); o dallar 2026-08-21'de perk havuzuyla
+   birlikte gitti, değerler tek kaynağa (MOD) döndü. */
 function comboMul(){
-  const m = Math.min(G.mods.comboCap, 1 + Math.floor(G.combo / G.mods.comboStep));
-  return G.mods.comboGlass ? m * 2 : m;
+  return Math.min(MOD.comboCap, 1 + Math.floor(G.combo / MOD.comboStep));
 }
 
-/* Fişek iadesi — CEPHANE zincirinin ödeme noktası. Fişekliğe geri koyar,
-   şarjöre değil: oyuncu yine namluyu indirmek zorunda, yani ritim bozulmuyor,
-   yalnız tur ortasında mermisiz kalma korkusu kalkıyor.                    */
-function refund(n, x, y){
-  if(n <= 0) return;
-  const cap = G.mods.pouch;                 // tur başı fişeklik kapasitesini aşamaz
-  const add = Math.min(n, Math.max(0, cap - G.pouch));
-  if(add <= 0) return;
-  G.pouch += add;
-  G.pops.push({ x:x, y:y-24, s:'+' + add + ' ' + T.shellBonus, c:PAL.orange, t:40 });
-}
-
-/* Zincir eşiklerinde tetiklenen ödüller (comboload / comboshell). Eşik
-   GEÇİLDİĞİ anda bir kez çalışsın diye son tetik round içinde saklanıyor. */
-function comboTriggers(x, y){
-  const m = G.mods;
-  if(m.comboLoad > 0 && G.combo > 0 && G.combo % m.comboLoad === 0){
-    const take = Math.min(magCap() - G.shots, G.pouch);
-    if(take > 0){ G.pouch -= take; G.shots += take; Snd.reloadDone(); }
-    else if(G.shots < magCap()){ G.shots = Math.min(magCap(), G.shots + 1); Snd.reloadDone(); }
-  }
-  if(m.comboShell > 0 && G.combo > 0 && G.combo % m.comboShell === 0) refund(2, x, y);
-}
 
 function hitBird(d){
   if(d.wolf){ wolfHit(d); return; }     // kurt: sendeler, asla düşmez (WOLF)
@@ -8668,23 +8588,18 @@ function hitBird(d){
     G.combo++;
     if(G.stats) G.stats.hits++;
     if(w){ w.hits = (w.hits||0)+1; if(w.firstHit < 0) w.firstHit = G.t; w.lastHit = G.t; }
-    if(G.steadyShot) G.combo += (G.mods.steadyCombo - 1);   // "sakin zincir"
     const mult = comboMul();
-    const dr2 = dRound(G.round);
-    const base = dr2 < 6 ? 1000 : dr2 < 11 ? 1500 : 2000;   // ROM kil değerleri
+    /* ROM kil degerleri. Eskiden dRound(G.round) ile kademeleniyordu
+       (1000 / 1500 / 2000) ama G.round basta 1'e kuruluyor ve BIR DAHA
+       HIC ARTMIYORDU -- yani deger her zaman 1000'di. Kademe silindi,
+       sabit yazildi: olmayan bir kademeyi hesaplamak okuyani yaniltiyor. */
+    const base = 1000;
     // uzaktaki disk daha çok puan — beklemenin ödülü, kaçırma riski
-    // "uzak disk" perk'i bu farkı büyütür: beklemek gerçek bir strateji olur
-    const far = 1 + Math.round((1 - d.scale) * 10) / 10 * G.mods.clayFar;
-    const sdy = G.steadyShot ? G.mods.steadyMul : 1;
-    const pts = Math.round(base * mult * far * pointMul() * sdy);
+    const far = 1 + Math.round((1 - d.scale) * 10) / 10;
+    const sdy = G.steadyShot ? MOD.steadyMul : 1;
+    const pts = Math.round(base * mult * far * sdy);
     G.score += pts;
-    if(G.steadyShot){
-      if(G.stats) G.stats.steady = (G.stats.steady || 0) + 1;
-      refund(G.mods.steadyShell, d.x, d.y);
-    }
-    if(G.mods.shellEvery > 0 && ++G.hitTick % G.mods.shellEvery === 0) refund(1, d.x, d.y);
-    if(G.mods.instantMag) G.shots = magCap();
-    comboTriggers(d.x, d.y);
+    if(G.steadyShot && G.stats) G.stats.steady = (G.stats.steady || 0) + 1;
     G.pops.push({x:d.x, y:d.y-14, s:(far>1.1 ? pts+' '+T.far : String(pts)), c:PAL.clayRim, t:52, pop:10});
     for(let i=0;i<7;i++) feathers(d.x, d.y, i%2 ? PAL.clay : PAL.clayDk);
     hitStop(2); shake(2, 5); buzz(10);   // vurusla ayni aile: kisa ve keskin
@@ -8695,33 +8610,28 @@ function hitBird(d){
   }
 
   if(d.decoy){                                    // YEM
-    if(G.mods.decoyBonus){                        // "yem avcısı": ceza ödüle döner
-      G.score += 2000;
-      G.pops.push({x:d.x, y:d.y-16, s:'+2000', c:PAL.gold, t:56});
-      Snd.perfect();
-    } else {
-      // "inatçı": zincir hayatta kalır ama ceza iki katına çıkar. Yem
-      // vurmanın bedeli PUAN olur, ritim olmaz — zincir hattı için sigorta.
-      const pen = Math.round(MOD.decoyPenalty * G.mods.decoyMul);
-      G.score = Math.max(0, G.score - pen);
-      if(!G.mods.comboKeep) G.combo = 0;
-      if(G.stats) G.stats.decoyHits++;
-      G.pops.push({x:d.x, y:d.y-16, s:'-'+pen, c:PAL.red, t:56});
-      Snd.bad();
-      G.missFlash = 22;
-      shake(5);
-      dogPop(d.x, 'angry', 60);
-    }
+    /* Burada iki perk dali daha vardi: "yem avcisi" (ceza odule donerdi)
+       ve "inatci" (zincir yasardi, ceza iki katina cikardi). Ikisini de
+       acan sey yoktu; kalan sey ZATEN calisan daldir. */
+    const pen = MOD.decoyPenalty;
+    G.score = Math.max(0, G.score - pen);
+    G.combo = 0;
+    if(G.stats) G.stats.decoyHits++;
+    G.pops.push({x:d.x, y:d.y-16, s:'-'+pen, c:PAL.red, t:56});
+    Snd.bad();
+    G.missFlash = 22;
+    shake(5, 12);
+    dogPop(d.x, 'angry', 60);
     d.state = 'flee'; d.vy = -d.sp*2.2; d.vx *= 0.4;
     return;
   }
 
-  if(d.hp > 1 && !G.mods.armorOne){               // zırhlı: ilk isabet sersemletir
+  if(d.hp > 1){                                   // zırhlı: ilk isabet sersemletir
     d.hp--; d.flash = 14;
     d.sp *= 0.72; d.vx *= 0.72; d.vy *= 0.72;
     G.pops.push({x:d.x, y:d.y-16, s:T.armor, c:PAL.dim, t:32});
     Snd.ping();
-    shake(2);
+    shake(2, 6);
     return;
   }
 
@@ -8744,7 +8654,6 @@ function hitBird(d){
   if(G.stats) G.stats.maxCombo = Math.max(G.stats.maxCombo || 0, G.combo);
   if(G.stats) G.stats.hits++;
   if(w){ w.hits = (w.hits || 0) + 1; if(w.firstHit < 0) w.firstHit = G.t; w.lastHit = G.t; }
-  if(G.steadyShot) G.combo += (G.mods.steadyCombo - 1);   // "sakin zincir"
   /* PUAN SİLİNDİ (BULGU 5, seçenek D + A birlikte, o zamanki tercih
      2026-08-14). Burada her isabette romPts/dRound/comboMul/tür çarpanı/
      perk çarpanı ile bir sayı hesaplanıyor, G.score'a ekleniyor ve çayırın
@@ -8759,14 +8668,7 @@ function hitBird(d){
      alıyor — kurtarılan hayvan başını kaldırmış tutuyor, sonra otlamaya
      iniyor, ünlemi sönerek kalkıyor. Darbe yuvası (durak, sarsıntı, tüy,
      Snd.hit) zaten doluydu ve olduğu gibi duruyor. */
-  if(G.steadyShot){
-    if(G.stats) G.stats.steady = (G.stats.steady || 0) + 1;
-    refund(G.mods.steadyShell, d.x, d.y);
-  }
-  if(d.armored) refund(G.mods.armorShell, d.x, d.y);
-  if(G.mods.shellEvery > 0 && ++G.hitTick % G.mods.shellEvery === 0) refund(1, d.x, d.y);
-  if(G.mods.instantMag) G.shots = magCap();
-  comboTriggers(d.x, d.y);
+  if(G.steadyShot && G.stats) G.stats.steady = (G.stats.steady || 0) + 1;
   if(G.steadyShot) Snd.perfect();
   feathers(d.x, d.y, DUCK[d.type].lite);
   /* VURUS HAFIFLEDI (2026-08-21, bkz. KAYIP tablosu). Eski doz 4 kare
@@ -9052,6 +8954,8 @@ function render(){
                 Math.round((Math.random()*2-1) * m));
   }
   ART.sunUp = sunUp(dawnP());   // ART bloğu dışarı bakamaz: güneş buradan sürülür
+  // Öğle payı — güneş ufku geçtikten SONRA da yükselmeye devam eder.
+  ART.gunTepe = dawnHigh(dawnP());
   /* Batan ay yalnız gece perdesi ASILIYKEN görünür; perde inince söner.
      Ayrı bir zamanlayıcı değil, var olan eğrinin payı — "bakan görür,
      bakmayan kaçırmaz" (bkz. drawAy). */
@@ -9082,9 +8986,47 @@ function render(){
       }
     }
     if(G.dawn){
-      const m = dawnTintMul(p);
+      /* Sabahin rengi SABAHA aittir: ogleye dogru cekiliyor ve gok
+         temizleniyor — donmus yarinin ikinci hareketi. Cekilme
+         dawnTintMul'un ICINDE DEGIL burada, cunku agil o fonksiyonu bir
+         DURUM ile cagiriyor (G.foldLit ? 1 : 0) ve orada p=1 "aydinlik"
+         demek, "ogle" demek degil. Icine konunca agilin yarinki sabahi
+         haber veren rengi sessizce zayifliyordu. */
+      const m = dawnTintMul(p) * (1 - 0.45 * dawnHigh(p));
       px(g, 0, 0, W, GROUND + 10, G.dawn.replace(/([\d.]+)\)$/, (s, a) => (a * m).toFixed(3) + ')'));
     }
+    /* ÖĞLE — donmuş yarının görünen yüzü. Gök açılıyor: soluk, sıcak-beyaz
+       bir yıkama. Payı BİLEREK küçük (0.10): bu bir olay değil bir HÂL,
+       ve gökteki kartalın siluetini yemesi yasak. */
+    {
+      const yuk = dawnHigh(p);
+      if(yuk > 0.004)
+        px(g, 0, 0, W, GROUND + 10, 'rgba(' + GUN.ogleC + ',' + (GUN.ogleA * yuk).toFixed(3) + ')');
+    }
+    /* ===== IKI DONUM ANI ==============================================
+       Isigin donmesi bir SUREC'ti ve hicbir yerde bir AN olmuyordu.
+       Simdi turun iki yerinde — gunesin ufku kestigi noktalar — besuk
+       saniyelik birer olay var.
+
+       SAFAK: ufuktan yukari suzulen sicak bir ilk isik bandi.
+       ALACA: tepeden inen soguk bir perde.
+
+       Ikisi de ayni sekli kullaniyor ama TERS yonde ve TERS renkte:
+       biri geliyor, oteki gidiyor. Genlik ucgen (guc), bant ise ANIN
+       ICINDE tek yonde ilerliyor — yani olay bir yanip sonme degil,
+       bir GECIS. */
+    {
+      const sa = isikAn(GUN.safakX);
+      if(sa !== null){ isikBandi(sa, true);  isikOlay('safak', () => Snd.safak()); }
+      const al = isikAn(GUN.alacaX);
+      if(al !== null){ isikBandi(al, false); isikOlay('alaca', () => Snd.alaca()); }
+    }
+    /* RUZGARIN TONU ISIGA BAGLI. Gece ince ve soguk, ogle dolgun ve
+       sicak. Gece/gunduz farkinin GORUSE hic dokunmayan tarafi bu —
+       yani zorluga da dokunmuyor. Her karede beslenmesi tasarlanmis
+       (Snd icinde setTargetAtTime ile suzuluyor, fermuar yok). */
+    Snd.ruzgarIsik(Math.min(1, Math.max(0,
+      (1 - dk / DAWN.dark) * 0.70 + dawnHigh(p) * 0.30)));
     /* Sisli gün (bkz. FOG/seasonFog) — aynı DÜNYA/varlık ayrımı: dünya
        sisin ağır payını yer, varlıklar (aşağıda) yalnız hafif payını. */
     if(G.fog > 0.002) px(g, 0, 0, W, H, 'rgba(' + FOG.color + ',' + (G.fog * (1 - FOG.entityMul)).toFixed(3) + ')');
@@ -9239,7 +9181,7 @@ function render(){
   if(G.phase === 'play')
     drawAim(g, aim.x, aim.y, G.shots === 0,
             G.reloadT > 0 ? 1 - G.reloadT / reloadCost() : -1,
-            cfg.mode === 'gyro' && aim.still >= G.mods.steadyFrames);
+            cfg.mode === 'gyro' && aim.still >= MOD.steadyFrames);
 }
 
 /* Kare seçimi: jackal (CAKAL) setinde yalnız sinsi0/1 + kos0/1 var —
@@ -9365,7 +9307,7 @@ function drawHUD(){
   // Şarj düğmesi dolu şarjörde soluklaşır: gerektiğinde göze çarpsın,
   // gerekmediğinde arka planda kalsın.
   const rb = $('btnReload');
-  if(rb) rb.classList.toggle('full', G.shots >= G.mods.shots && G.reloadT === 0);
+  if(rb) rb.classList.toggle('full', G.shots >= MOD.shotsPerTarget && G.reloadT === 0);
   /* Bekçi'nin HUD'u SESSİZ. Eski hâlde skor (2x, iri), round sayacı, kombo
      çarpanı ve tur çubuğu vardı — hepsi skor-atak yapısına aitti ve hiçbiri
      artık bir şey ölçmüyor.
@@ -9398,7 +9340,7 @@ function drawHUD(){
      Dokunmatikte sol alt köşe çubuğun altında kalıyor; mermi sayısı ateş
      düğmesinin üstünde duruyor (syncAmmo). Şarj ŞERİDİ iki modda da kalır:
      "namluyu indir" hem jiroskopta hem çubukta aynı hareket. */
-  const cap = G.mods.shots;
+  const cap = MOD.shotsPerTarget;
   for(let i=0;i<cap && cfg.mode !== 'touch';i++){
     const sx = 5 + i*7, sy = H - 10, live = i < G.shots;
     px(g, sx, sy, 4, 7, live ? PAL.gold : 'rgba(16,16,24,0.42)');
@@ -9435,7 +9377,7 @@ function drawHUD(){
      kilitleniyor, yani oyuncu namlusunu ne kadar indirdiğini göremiyordu —
      "şarj zor" şikâyetinin sebebi eşik değil, geri bildirim yokluğuydu.
      Şerit şarjör boşken belirir, namlu inince yanar. */
-  if(G.phase === 'play' && (G.shots < G.mods.shots || G.reloadT > 0)){
+  if(G.phase === 'play' && (G.shots < MOD.shotsPerTarget || G.reloadT > 0)){
     const armed = aim.below || G.reloadT > 0;
     const empty = G.shots === 0;
     px(g, 0, H - RELOAD_ZONE, W, 1, armed ? PAL.gold : 'rgba(252,252,252,0.16)');
