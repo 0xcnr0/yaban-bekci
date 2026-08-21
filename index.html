@@ -1372,6 +1372,14 @@ const TUFEK = {
   bosTetik: 15,     // bos sarjor: nisangahin irkilmesi (kare)
   kuruTetik: 7,     // bos gok: kuru tik — en sessiz ret (kosunun ~ucte biri)
   doldu:    15,     // sarjor doldu parlamasi (kare)
+  /* Halkanin ODUL PENCERESI. OLCULDU (butun bir kosu oynandi): halka
+     her sarjda caliyordu ve karelerin %11.6'sinda ekrandaydi — 29
+     dakikalik kosuda 736 kez, yani 2.3 saniyede bir. Dakikada 26 kez
+     olan bir "odul ani" duvar kagidi olur; dozu ben yanlis kurmustum.
+     Artik yalniz BEKLENEN sarj odullendiriliyor: oyuncu bos sarjorle
+     tetige basip reddedildiyse (G.bosTetik) ve bu pencere icinde sarj
+     basladiysa. Ritim icinde doldurulan sarjorde ses var, halka yok. */
+  odulPencere: 90,  // ~1.5 sn
 };
 
 const RELOAD_ZONE = 20;              // alt şerit: dokunulunca şarj (HUD bölgesi)
@@ -5162,7 +5170,11 @@ const gyro = { ok:false, beta:0, gamma:0, alpha:0, m:null, ref:null };
    yani "yukseldiyse tetik cekildi" demek. */
 const aim  = { x:W/2, y:H/2, sx:W/2, sy:H/2, freeze:0, below:false, still:0, edge:0,
                geri:0, agiz:0, doldu:0, oncekiFreeze:0,
-               iskaX:W/2, iskaY:H/2, oncekiIska:0 };
+               iskaX:W/2, iskaY:H/2, oncekiIska:0,
+               /* kuruKaldi: oyuncu az once bos sarjorle tetige basti mi
+                  (bkz. TUFEK.odulPencere). sarjOdul: su an suren sarj
+                  BEKLENEN bir sarj mi — halka bunun karsiligi. */
+               kuruKaldi:0, oncekiBos:0, sarjOdul:0 };
 
 /* --- yönelim matrisi ----------------------------------------------------
    Nişan ESKİDEN Euler farkıyla hesaplanıyordu: (beta - refBeta),
@@ -5355,6 +5367,8 @@ function startReload(){
      Şarjör kalıyor — jiroskoba özgü tempo mekaniği ve dalışa geçmiş bir
      tehdide bakarken "şu an ateş edemem" gerilimi tam da bu oyuna ait. */
   G.reloadT = reloadCost();
+  /* BU SARJ BEKLENEN BIR SARJ MI? (bkz. TUFEK.odulPencere) */
+  aim.sarjOdul = aim.kuruKaldi > 0 ? 1 : 0;
   Snd.reload();
   return true;
 }
@@ -5368,8 +5382,12 @@ function updateReload(){
     if(G.stats) G.stats.reloads = (G.stats.reloads || 0) + 1;
     /* DOLDU. Bekleme bir suredir; bitisi bir AN olmali, yoksa oyuncu
        ne zaman yeniden ates edebilecegini nisangahtan degil sayarak
-       ogreniyor. Nisangahin kendi uzerinde, cunku oyuncu oraya bakiyor. */
-    aim.doldu = TUFEK.doldu;
+       ogreniyor. Nisangahin kendi uzerinde, cunku oyuncu oraya bakiyor.
+       AMA YALNIZ BEKLENEN SARJDA — bkz. TUFEK.odulPencere. Ses her
+       sarjda caliyor (o bir BILGI: doldu), halka yalnizca oyuncu
+       gercekten beklediyse (o bir KARSILIK). */
+    if(aim.sarjOdul) aim.doldu = TUFEK.doldu;
+    aim.sarjOdul = 0;
     Snd.reloadDone();
   }
 }
@@ -5394,6 +5412,12 @@ function tufekGuncelle(){
     aim.iskaX = aim.x; aim.iskaY = aim.y;
   }
   aim.oncekiIska = G.iska;
+  /* Bos tetigin YUKSELDIGI kare: tufek reddetti. fire() paralel
+     oturumun bolgesi, o yuzden bayrak oradan degil sayacin
+     KENDISINDEN okunuyor — iska ile ayni desen. */
+  if(G.bosTetik > aim.oncekiBos) aim.kuruKaldi = TUFEK.odulPencere;
+  aim.oncekiBos = G.bosTetik;
+  if(aim.kuruKaldi > 0) aim.kuruKaldi--;
   if(G.iska      > 0) G.iska--;
   if(G.bosTetik  > 0) G.bosTetik--;
   if(G.kuruTetik > 0) G.kuruTetik--;
