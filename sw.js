@@ -7,14 +7,12 @@
 /* SHELL listesi ELLE TUTULMAZ — tools/build.js diskteki gerçek dosyalardan
    üretir. Elle tutulduğunda atlas asset'leri listeye girmemişti ve çevrimdışı
    ilk açılışta oyun prosedürel sanata düşüyordu. */
-const CACHE = 'yaban-9fcce86f';
+const CACHE = 'yaban-acb69b19';
 /* ==SHELL-START== */
 const SHELL = [
   './',
   './index.html',
   './manifest.json',
-  './assets/bakim.json',
-  './assets/bakim.png',
   './assets/birds.json',
   './assets/birds.png',
   './assets/dog.json',
@@ -29,22 +27,10 @@ const SHELL = [
   './assets/gate.png',
   './assets/gecis.json',
   './assets/gecis.png',
-  './assets/goc.json',
-  './assets/goc.png',
-  './assets/gocdag.json',
-  './assets/gocdag.png',
-  './assets/gocon.json',
-  './assets/gocon.png',
-  './assets/goctepe.json',
-  './assets/goctepe.png',
   './assets/kangal.json',
   './assets/kangal.png',
-  './assets/kislak.json',
-  './assets/kislak.png',
   './assets/merapan.json',
   './assets/merapan.png',
-  './assets/sagimham.json',
-  './assets/sagimham.png',
   './icons/icon-1024.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
