@@ -1335,6 +1335,12 @@ let T = STR[LANG];
 const U = () => T.ui;
 function setLang(l){
   LANG = l; T = STR[l];
+  /* ART bloguna dili DEGERLE bildiriyoruz, ADLA degil (bkz. text()).
+     ART burada henuz tanimli degil (asagida, blogun icinde) — o yuzden
+     korumali. Ilk setLang cagrisi ART'tan ONCE gelirse bayrak
+     applyLang'in sonundaki ikinci gecise kalir; pratikte setLang
+     acilista, ART tanimlandiktan sonra cagriliyor. */
+  if(typeof ART !== 'undefined') ART.trBuyuk = (l === 'tr');
   try{ localStorage.setItem('yaban.lang', l); }catch(e){}
   applyLang();
 }
@@ -1747,7 +1753,8 @@ function hint(key){
 /* ART bloğu KENDİ KENDİNE YETER — dışarıdaki `cfg`ye bağlanmamalı, yoksa
    tarayıcısız araçlar (render.js, icon.js) bloğu izole çalıştıramaz.
    Oyun bu bayrakları syncUI() içinde günceller. */
-const ART = { marks:false, env:null, sunUp:1, gok:null, ayGor:0, gunTepe:0, bulut:true, gokKapali:false };   // env: yüklenmiş arka plan görüntüsü (yoksa prosedürel)
+const ART = { marks:false, env:null, sunUp:1, gok:null, ayGor:0, gunTepe:0, bulut:true, gokKapali:false,
+              trBuyuk:false };   // TR buyuk harf esleme — bkz. text()   // env: yüklenmiş arka plan görüntüsü (yoksa prosedürel)
 /* ART.sunUp (0..1): güneşin ne kadarının ufkun üstüne çıktığı. Sabahın
    ağarmasıyla oyun tarafı sürer (bkz. GOK_ENV/drawGokcisim/render). ART
    bloğu kendi kendine yeter — dışarıdaki dawnP()'ye bakamaz, bayrak buradan
@@ -1869,9 +1876,13 @@ const MARK = { uml:['01010',-2], dot:['00100',-2], brv:['01110',-2], ced:['00100
 function textW(s,sc=1){ return s.length*6*sc - sc; }
 function text(g,s,x,y,c,sc=1,shadow){
   s = String(s);
-  // Türkçe'de i -> İ, ı -> I. toLocaleUpperCase('tr') dar ICU ile derlenmiş
-  // ortamlarda sessizce yanlış sonuç veriyor, o yüzden eşleme elle.
-  if(LANG === 'tr') s = s.replace(/i/g, 'İ').replace(/ı/g, 'I');
+  /* Türkçe'de i -> İ, ı -> I. toLocaleUpperCase('tr') dar ICU ile derlenmiş
+     ortamlarda sessizce yanlış sonuç veriyor, o yüzden eşleme elle.
+     BAYRAK `LANG` DEGIL `ART.trBuyuk`: LANG bu blogun DISINDA ve blok
+     kendi kendine yetmek zorunda — 11 arac onu kesip tek basina
+     kosturuyor. `tools/render.js` tam bu yuzden ACILMIYORDU
+     ("LANG is not defined"). Bayragi setLang() suruyor. */
+  if(ART.trBuyuk) s = s.replace(/i/g, 'İ').replace(/ı/g, 'I');
   s = s.toUpperCase();
   if(shadow) text(g,s,x+sc,y+sc,shadow,sc);
   let cx = x;
@@ -6663,7 +6674,7 @@ function fireCalib(){
     feathers(c.x, c.y, PAL.bone);
     hitStop(2); shake(3, 6); buzz(10);   // oyundaki vurusla AYNI doz
     Snd.hit();
-    G.pops.push({x:c.x, y:c.y-16, s:String(c.hits) + '/' + PRACTICE.shots, c:PAL.gold, t:44, pop:8});
+    pushPop({x:c.x, y:c.y-16, s:String(c.hits) + '/' + PRACTICE.shots, c:PAL.gold, t:44, pop:8});
   } else {
     /* Alistirmadaki iska OYUNDAKININ AYNISI olmak zorunda. Eskiden
        burada tam ekran gri yikama vardi, oyunda ise halka cikiyor —
@@ -6869,6 +6880,35 @@ function buzz(ms){
   }
   try{ navigator.vibrate && navigator.vibrate(ms); }catch(e){}
 }
+/* --- BALONCUK YERLESTIRME (2026-08-21) --------------------------------
+   Baloncuklar birbirinin USTUNE biniyordu. Bogusma karesinde yakalandi:
+   "HURT" ve "SAVED" ayni anda cikinca tek kelime gibi okunuyordu
+   (shots/dom/bogusmason-en.png). Sebep basit -- bogusmanin butun
+   baloncuklari `G.dog.y - 26`ya, yani AYNI y'ye yaziliyor.
+
+   SIFIR CAKISMA YETMEZ, ESIK GEREKIR (DERSLER): bu depoda bir test iki
+   yazi arasinda 2 piksel kalinca "cakismiyor" demis, kare tek kelime
+   gibi okunmustu. Esik 10 px: 5x7 fontun satir araligi en az 8, ustune
+   pay.
+
+   YENISI YUKARI cikar, eskisi degil: baloncuklar zaten yukari suzuluyor
+   (0.35 px/kare), yani yeni olan eskinin ARDINDAN gidiyor. Eskisini
+   oynatmak, oyuncunun okumakta oldugu yaziyi kaydirmak olurdu.        */
+const POP_ESIK = 10;
+function popOlcek(p){ return p.pop && (p.t === undefined || p.t > 46) ? 2 : 1; }
+function pushPop(o){
+  for(let dene = 0; dene < 5; dene++){
+    let carpti = false;
+    for(const p of G.pops){
+      const yatay = (textW(o.s, popOlcek(o)) + textW(p.s, popOlcek(p))) / 2;
+      if(Math.abs(p.x - o.x) < yatay && Math.abs(p.y - o.y) < POP_ESIK){ carpti = true; break; }
+    }
+    if(!carpti) break;
+    o.y -= POP_ESIK;
+  }
+  G.pops.push(o);
+}
+
 function feathers(x, y, col){
   const n = REDUCED ? 4 : 9;
   for(let i=0;i<n;i++){
@@ -7979,6 +8019,24 @@ const fightAcik = s => bogusFaz(s) === BOGUS_ACIK;
    kazanıyor" = yığın sağa. Oyuncunun okuduğu işaret bu lunge. */
 const BOGUS_ITIS = [0, 3, 0, -3];
 
+/* ===== BOGUSMANIN HISSI (2026-08-21) ==================================
+   OLCULDU: pencere karelerin %25'i ve 8 karede bir (0.13 sn) donuyor.
+   Oyuncunun elindeki TEK isaret hangi pozun cizildigiydi — ve dort
+   pozun ikisi (bogus1 / bogus2) birbirine benziyor. Birine ates etmek
+   kavgayi kisaltiyor, otekine ates etmek KOPEGI YARALIYOR.
+
+   Dahasi: kavga 17-35 saniye suruyor ve kalan sure EKRANDA HIC YOKTU.
+   Yani hem odul (kavgayi kisaltmak) hem bedel gorunmez bir sayaca
+   yaziliyordu — bu deponun bir numarali yasagi.
+
+   Ikisi de TEK dille cozuluyor: YER. Kopek kazandikca yigin ilerliyor;
+   kalan sure de, isabetin odulu de ayni hareketten okunuyor.        */
+const BOGUS = {
+  kazanim: 22,   // kopegin kavga boyunca kazandigi toplam yer (px)
+  parlak: 0.42,  // acik pencerede kurdun ustundeki isik payi
+  tozAra: 6,     // efor tozunun kare araligi (basta sik, sonda seyrek)
+};
+
 /* KAVGAYA ATEŞ. wolfHit'in kardeşi ve BİLEREK aynı desende: orada isabet kurdu
    yavaşlatıyor (slowMul), burada kavgayı kısaltıyor. Paralel bir sistem değil,
    aynı fikrin boğuşma fazına uzantısı — kurda YAKLAŞIRKEN ateş etmek zaten
@@ -8007,7 +8065,7 @@ function fightShot(s){
        için kavga 37.3s -> 84.0s, meşguliyet %53 -> %83. Taban bir ALT SINIR,
        hedef değil — isabet asla uzatmaz. */
     s.fightT = Math.min(s.fightT, Math.max(WOLF.fightFloor, s.fightT - WOLF.fightHitCut));
-    G.pops.push({ x:G.dog.x, y:G.dog.y - 26, s:T.fightPush, c:PAL.leaf, t:52, pop:8 });
+    pushPop({ x:G.dog.x, y:G.dog.y - 26, s:T.fightPush, c:PAL.leaf, t:52, pop:8 });
     Snd.ping(); shake(2);
   } else if(!s.fightScar){
     /* YARA KAVGA BAŞINA BİR KEZ, ve bu sınır ÖLÇÜLEREK kondu. Sınırsız hâli
@@ -8022,7 +8080,7 @@ function fightShot(s){
     G.dogHurt = DOGRUN.hurtT;
     G.scarsThisMorning = (G.scarsThisMorning || 0) + 1;
     G.dogSore = true;
-    G.pops.push({ x:G.dog.x, y:G.dog.y - 26, s:T.hurtCall, c:PAL.red, t:64, pop:8 });
+    pushPop({ x:G.dog.x, y:G.dog.y - 26, s:T.hurtCall, c:PAL.red, t:64, pop:8 });
     Snd.bad(); shake(4); buzz(30);
   } else {
     /* Aynı kavgada sonraki yanlış zamanlamalar: mermi gitti, iz yok. Sessiz
@@ -8202,9 +8260,17 @@ function updateStrikes(){
          `s.x` DEĞİŞMİYOR — kavganın çapası orada kalıyor, sürüklenen şey
          yalnız çizilen yığın; yoksa kurt sabah boyunca sürünüp giderdi. */
       const faz = bogusFaz(s);
-      dog.x = s.x + BOGUS_ITIS[faz];
+      const ilerle = s.fightT0 ? 1 - s.fightT / s.fightT0 : 0;
+      dog.x = s.x + BOGUS_ITIS[faz] + Math.round(BOGUS.kazanim * ilerle);
       dog.y = s.y + (faz === 1 ? -1 : (faz === 3 ? 1 : 0));
       dog.show = true;
+      /* EFOR TOZU: basta sik, sonda seyrek. Yer kazanimi "nerede
+         oldugumuzu" soyluyor; toz "ne kadar zorlaniyorlar"i. Ikisi
+         birlikte sureyi bir SAYAC olmadan okunur kiliyor. */
+      if(!REDUCED && s.fightT % Math.max(2, Math.round(BOGUS.tozAra / Math.max(0.2, 1 - ilerle))) === 0)
+        G.parts.push({ x: dog.x + lri(20) - 10, y: dog.y + 1,
+                       vx: (Math.random() * 2 - 1) * 0.5, vy: -0.35 - Math.random() * 0.4,
+                       t: 14 + lri(8), c: 'rgba(214,186,150,0.60)' });
       /* ÇAKAL YOLU İÇİN POZ/KARE: kurt kompozit çiziliyor (drawKurt +
          KURT_BOGUS) ve dog.pose'u hiç okumuyor, ama ÇAKAL boğuşmasında
          kompozit yok — köpek normal sprite'ıyla çiziliyor ve bu dalda
@@ -8250,6 +8316,10 @@ function updateStrikes(){
              zaman undefined donuyordu, yani collarMul hep 1'di.
              fedMul'un ikiziydi, o da ayni turda gitti. */
           s.fightT = Math.round((fmin + lri(fmax - fmin + 1)) * (G.dogSore ? WOLF.fightTiredMul : 1));
+          /* Kavganin BASLANGIC suresi. Ilerleme (dolayisiyla yigin nerede
+             duracagi) bunun oranindan okunuyor; saklamadan "ne kadar
+             kaldi" diye bir soru sorulamaz. */
+          s.fightT0 = s.fightT;
           s.x = dog.x; s.y = dog.y;
           // G.dogTask KASITLI temizlenmiyor — köpek bağlı kalıyor.
         } else {
@@ -8279,7 +8349,7 @@ function resolveStrike(s, saved){
   if(saved){
     a.state = 'graze'; a.alarm = 0;
     G.saved++;
-    G.pops.push({ x:a.x, y:a.y - 18, s:T.savedCall, c:PAL.leaf, t:52, pop:8 });
+    pushPop({ x:a.x, y:a.y - 18, s:T.savedCall, c:PAL.leaf, t:52, pop:8 });
     Snd.hit();
     if(s.isWolf){
       /* Yaranın ANA kaynağı burası (mevsim tasarımı, "Kurt" bölümü): kurtla
@@ -8291,7 +8361,7 @@ function resolveStrike(s, saved){
         G.dogHurt = DOGRUN.hurtT;
         G.scarsThisMorning = (G.scarsThisMorning || 0) + 1;
         G.dogSore = true;
-        G.pops.push({ x:G.dog.x, y:G.dog.y - 26, s:T.hurtCall, c:PAL.red, t:64, pop:8 });
+        pushPop({ x:G.dog.x, y:G.dog.y - 26, s:T.hurtCall, c:PAL.red, t:64, pop:8 });
         Snd.bad();
         shake(4); buzz(30);
       }
@@ -8303,7 +8373,7 @@ function resolveStrike(s, saved){
       G.scarsThisMorning = (G.scarsThisMorning || 0) + 1;
       // Yara ALINDIĞI sabah köpek zaten yorulur; etkisi bu sabahtan başlar.
       G.dogSore = true;
-      G.pops.push({ x:G.dog.x, y:G.dog.y - 26, s:T.hurtCall, c:PAL.red, t:64, pop:8 });
+      pushPop({ x:G.dog.x, y:G.dog.y - 26, s:T.hurtCall, c:PAL.red, t:64, pop:8 });
       Snd.bad();
       shake(4); buzz(30);
     }
@@ -8777,7 +8847,7 @@ function hitBird(d){
     const pts = Math.round(base * mult * far * sdy);
     G.score += pts;
     if(G.steadyShot && G.stats) G.stats.steady = (G.stats.steady || 0) + 1;
-    G.pops.push({x:d.x, y:d.y-14, s:(far>1.1 ? pts+' '+T.far : String(pts)), c:PAL.clayRim, t:52, pop:10});
+    pushPop({x:d.x, y:d.y-14, s:(far>1.1 ? pts+' '+T.far : String(pts)), c:PAL.clayRim, t:52, pop:10});
     for(let i=0;i<7;i++) feathers(d.x, d.y, i%2 ? PAL.clay : PAL.clayDk);
     hitStop(2); shake(2, 5); buzz(10);   // vurusla ayni aile: kisa ve keskin
     Snd.clayHit();
@@ -8794,7 +8864,7 @@ function hitBird(d){
     G.score = Math.max(0, G.score - pen);
     G.combo = 0;
     if(G.stats) G.stats.decoyHits++;
-    G.pops.push({x:d.x, y:d.y-16, s:'-'+pen, c:PAL.red, t:56});
+    pushPop({x:d.x, y:d.y-16, s:'-'+pen, c:PAL.red, t:56});
     Snd.bad();
     /* YEME ISABET, UC RETTEN AYRI BIR SEY. Tufek turunda uc "olmadi"
        hali ayri dile kavustu: bos sarjor bir ENGEL, bos gok bir YOKLUK,
@@ -8823,7 +8893,7 @@ function hitBird(d){
   if(d.hp > 1){                                   // zırhlı: ilk isabet sersemletir
     d.hp--; d.flash = 14;
     d.sp *= 0.72; d.vx *= 0.72; d.vy *= 0.72;
-    G.pops.push({x:d.x, y:d.y-16, s:T.armor, c:PAL.dim, t:32});
+    pushPop({x:d.x, y:d.y-16, s:T.armor, c:PAL.dim, t:32});
     Snd.ping();
     shake(2, 6);
     return;
@@ -9257,7 +9327,38 @@ function render(){
          (köpek henüz yetişmedi) kurt/çakal hedefe koşarken de görünür. */
       const wf = G.dogTask && G.dogTask.isWolf ? G.dogTask : null;
       if(wf && wf.phase === 'fight' && !wf.jackal){
+        /* SURUKLENME IZI — kavganin gorunur saati. Yigin kavganin
+           BASLADIGI noktadan (wf.x) uzaklastikca yerde bir surtme izi
+           kaliyor: "ne kadar kaldi" sorusunu bir cubuk degil ZEMIN
+           cevapliyor. Iz kavganin ODULUNU de gosteriyor — pencerede
+           isabet fightT'yi kestigi icin yigin gorunur bicimde ilerliyor.
+           CIZIMDEN ONCE: yigin izin uzerinde durmali. */
+        {
+          const x0 = Math.round(wf.x), x1 = Math.round(dog.x);
+          for(let sx = Math.min(x0, x1); sx <= Math.max(x0, x1); sx++){
+            if((sx & 1) === 0) continue;               // kesik kesik — duz cizgi cubuk gibi okunur
+            px(g, sx, dog.y, 1, 1, 'rgba(96,74,58,0.42)');
+            if((sx & 3) === 1) px(g, sx, dog.y - 1, 1, 1, 'rgba(120,96,74,0.30)');
+          }
+        }
         drawKurt(g, KURT_BOGUS, bogusKare(wf), dog.x, dog.y, 1);
+        /* PENCERE ACIK: kurdun sirti aciga cikiyor ve isik aliyor.
+           Kompozitin SAG yarisi kurt (kopek solda, dir hep 1 — bkz.
+           drawKurt cagrisi). Isik yalniz acik beatte var: beliren bir
+           isaret bilgi tasir, surekli duran tasimaz (ayni ilke agildaki
+           "is var" noktalarinda ve tufegin namlu agzinda da kullanildi). */
+        if(fightAcik(wf)){
+          const x0 = dog.x + 1, yt = dog.y - KURT_BOGUS.h + 1;
+          // Kurdun ust govdesini saran kabarma — ALAN, cunku goz ucuyla
+          // yakalanmasi gereken sey ince bir cizgi olamaz.
+          for(let r = 0; r < 9; r++){
+            const a = BOGUS.parlak * (1 - r / 9) * (1 - r / 9);
+            if(a > 0.01) px(g, x0 + (r >> 1), yt + r, 22 - (r >> 1), 1,
+                            'rgba(255,226,164,' + a.toFixed(3) + ')');
+          }
+          // Tepede ince parlak kontur: kabarmanin ust kenari kesin olsun.
+          px(g, x0, yt - 1, 22, 1, 'rgba(255,244,214,' + (BOGUS.parlak * 0.9).toFixed(2) + ')');
+        }
       } else {
         // Sabahta yeni Kangal sprite'i; eski prosedurel drawDog alistirma ve
         // menu icin duruyor.
