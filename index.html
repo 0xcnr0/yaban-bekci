@@ -657,7 +657,7 @@ html.tiny  #progNote{display:none}
        piksel duruyordu; ayrıca yerleşimi elle hesaplandığı için ⊚/↻/☰
        düğmeleriyle üst üste biniyordu. DOM'da hem keskin çiziliyor hem de
        CSS yerleşimi çakışmayı kendi çözüyor. -->
-  <!-- KÖPEK KOMUT DÜĞMELERİ (ADR-023) — bkz. ==YAYLA==.
+  <!-- KÖPEK KOMUT DÜĞMELERİ (eski karar kaydi — belge silindi) — bkz. ==YAYLA==.
        Yalnız kampanyada görünür; sonsuz/Günlük modda hidden kalır.
        YERLERİ ÖLÇÜLDÜ, seçilmedi: docs/komut-dugmesi-yeri-olcumu.md.
        Alt köşeler YASAK — jiroskopta ateş ekranın her yeri ve
@@ -666,13 +666,6 @@ html.tiny  #progNote{display:none}
   <!-- TEK KANGAL DÜĞMESİ (iki HUD raporunun birleşik tavsiyesi) —
        dokun=bağlamsal komut, bas-tut=yelpaze. Üç çipin yerini alır;
        çipler prototip kapısı kapalıyken korunuyor, karşılaştırma için. -->
-  <button class="chip kangal" id="btnKangal" hidden><canvas id="kangalCv" width="48" height="48"></canvas></button>
-  <div id="yelpaze" hidden>
-    <button class="dilim" id="dilim0" hidden></button>
-    <button class="dilim" id="dilim1" hidden></button>
-    <button class="dilim" id="dilim2" hidden></button>
-    <button class="dilim" id="dilim3" hidden></button>
-  </div>
   <div id="pad" hidden><div id="padKnob"></div></div>
   <button id="fire" hidden aria-label="Ateş et"><span id="fireAmmo"></span></button>
 </div>
@@ -706,7 +699,6 @@ html.tiny  #progNote{display:none}
 <section id="scrTitle">
   <div id="foldBox">
     <button class="hs" id="hsKapi"></button>
-    <button class="hs" id="hsKangal"></button>
     <!-- NİŞAN KÖŞESİ (defter L16) — ağılın DÖRDÜNCÜ nesnesi, ve ayarların
          tek kapısı. Yerini aldığı şey #foldFoot'taki dört yazı düğmesiydi
          (NİŞAN MODU / KALİBRASYON / AYARLAR / SENSÖR TANISI); sahibi
@@ -717,27 +709,19 @@ html.tiny  #progNote{display:none}
          ağıldan erişim) geri alır. Panelin KENDİSİ o menü. -->
     <button class="hs" id="hsNisan"></button>
     <!-- YOL ÇIKINI (==CIKIN==): kampanyanın ağıldaki GİRİŞ nesnesi.
-         Ayarlardan/menüden değil, DÜNYADAN giriliyor (ADR-024, ADR-014).
+         Ayarlardan/menüden değil, DÜNYADAN giriliyor (eski karar kaydi — belge silindi).
          Sefer yoksa yolculuğu başlatır, varsa rota tahtasını açar. -->
-    <button class="hs" id="hsCikin"></button>
     <!-- Sağım (ADIM 4): dokun-sağ — her dokunuş kuzulu bir koyunu sağar.
          Yalnız kuzulama başladıktan (12. gün) sonra, sağılacak koyun
          kaldığında görünür (bkz. syncSuruUI). -->
-    <button class="hs" id="hsSuru" hidden></button>
     <!-- Bakım yakın çekimi (ADIM 3): Kangal'a dokununca açılır, ağılın
          İÇİNDEKİ bir alt durum (ayrı ekran/mod değil) — #foldBox'ın
          kendi ölçeğini (fit()) paylaşıyor, ayrı bir kutu icat edilmedi.
          Yalnız G.care.open iken görünür (bkz. syncUI). -->
-    <button class="hs" id="careClose" hidden></button>
-    <button class="hs" id="careEl" hidden></button>
-    <button class="hs" id="careBowl" hidden></button>
-    <button class="hs" id="careSargi" hidden></button>
     <!-- Paylaşım kartı önizlemesi (bkz. G.cardView): foto'ya dokununca
          açılır, ağılın İÇİNDEKİ bir alt durum (careClose ile aynı desen).
          Kart ÖNCE burada görünür, native paylaşım yalnız cardViewShare'e
          ayrı bir dokunuşla. Yalnız G.cardView.open iken görünür. -->
-    <button class="hs" id="cardViewClose" hidden></button>
-    <button class="hs" id="cardViewShare" hidden></button>
     <!-- Kışlak (ADIM 1, Faz 3): sezon kapanışı — ağılın İÇİNDEKİ bir alt
     <!-- Kışlak ritüelinin dört hotspot'u SİLİNDİ (2026-08-20) — ritüel
          mevsim kabıyla birlikte kalktı, bkz. docs/plan-tek-mod.md. -->
@@ -748,7 +732,6 @@ html.tiny  #progNote{display:none}
     <!-- Sağım yakın çekimi (ADIM 4, "gece vardiyası" görevi 2026-08-14):
          hsVinyetSkip ile AYNI desen — tam ekran, atlanabilir. Yalnız
          G.sagimYakin.open iken görünür (bkz. syncSagimYakinUI). -->
-    <button class="hs" id="hsSagimSkip" style="left:0;top:0;width:100%;height:100%" hidden></button>
   </div>
   <!-- #foldFoot TAMAMEN KALKTI (defter L16 + L17, 2026-08-17).
        İçinde beş şey vardı: btnMode / btnCalib / btnSheet / btnDiag ve
@@ -810,7 +793,6 @@ html.tiny  #progNote{display:none}
     <button class="cta" id="btnAgain"></button>
     <button class="cta ghost" id="btnMenu2"></button>
   </div>
-  <button class="cta ghost" id="btnShare" style="margin-top:2px"></button>
   <button class="cta" id="btnAd" hidden style="margin-top:2px"></button>
   <p class="note" id="adNote" hidden style="margin-top:-2px;opacity:.7"></p>
   <!-- OYNANIS RAPORU — GELISTIRME ARACI, oyuncunun yolunda degil.
@@ -1912,7 +1894,7 @@ const Save = {
       // köpek tok başlar, boğuşması kısalır — startRun()'da tüketilir.
       dogFed: raw.dogFed === true,
       // Kiler (ADIM 4 — henüz boş): raf dolduğunda güğüm sayısı, 0..36.
-      /* KAMPANYA (ADR-018): kendi alanında, SAVE_V YÜKSELTİLMEDEN.
+      /* KAMPANYA (buyume esigi olcumu): kendi alanında, SAVE_V YÜKSELTİLMEDEN.
          Burada yalnız "nesne mi" diye bakılıyor; ALAN ALAN süzme
          Yayla.yukle()'nin işi ve o zaten kurcalanmış kayda dayanıklı
          (bölüm sınırı, negatif kiler, tanınmayan komut hepsi orada
@@ -1973,8 +1955,6 @@ const Save = {
      koşuyor) sessizce atlanıyor. */
   put(){
     try{
-      if(typeof Yayla !== 'undefined' && Yayla && Yayla.sefer) this.d.campaign = Yayla.kaydet();
-      else if(typeof Yayla !== 'undefined' && Yayla && !Yayla.aktif) this.d.campaign = null;
     }catch(e){}
     try{ localStorage.setItem('yaban.save', JSON.stringify(this.d)); }catch(e){}
   },
@@ -2391,7 +2371,7 @@ function textC(g,s,cx,y,c,sc=1,shadow){ text(g,s,cx-textW(String(s),sc)/2,y,c,sc
  * kızıl yüksekken ak oluyor, halesi yüksekliğine göre büyüyüp küçülüyor,
  * ve gök/yer kesim çizgisinin (ufuk) ardından çıkıyor.
  *
- * SEÇİLMEYENLER (ADR-012, "jenerik juice reddedilir" — oyunun dili sakin):
+ * SEÇİLMEYENLER (eski karar kaydi — belge silindi):
  *   lens parlaması, ışın demeti/god rays, parıldama, dönen ışınlar, bloom
  *   nabzı, su yansıması (bu sahnelerde su yok). Hiçbiri gözlemlenen bir
  *   doğa olayı değil; hepsi kamera numarası.
@@ -2538,7 +2518,7 @@ function drawGunes(g, S, up, alfa, yalnizDisk){
 }
 
 /* BATAN AY. Sabahın ilk, sessiz diliminde gökteki tek nesne. Tehdit yok,
-   hareket yok, ses yok — ADR-012'nin "sakin" dili tam burada: ekrana bir
+   hareket yok, ses yok — eski karar kaydi'nin "sakin" dili tam burada: ekrana bir
    OLAY eklemiyor, orada zaten olması gereken şeyi gösteriyor. Gün ağardıkça
    söner (gorunur = gece perdesinin payı), yani kimse "ay kayboldu" diye bir
    an yaşamaz; bakan görür, bakmayan kaçırmaz.
@@ -2584,7 +2564,7 @@ function drawAy(g, A, gorunur){
    üst yüze gece rengi). Göğün kendi degradesi baskın kalıyor, yani hangi
    gökyüzüne binerse ONUN rengini alıyor.
 
-   SINIR y<95 (ADR-012, ÖLÇÜLMÜŞ): ağılda "dokunulabilir kıpırdar, dokunulamaz
+   SINIR y<95 (eski karar kaydi — belge silindi): ağılda "dokunulabilir kıpırdar, dokunulamaz
    durur" kuralı gerçekten uygulanmış — dokunulabilir beş nesnenin beşinde de
    idle var, dekorun hiçbirinde yok. En üstteki dokunulabilir kutu y=99. Ortam
    hareketi o çizginin altına inerse oyuncu "buna dokunabilir miyim" diye
@@ -3547,7 +3527,7 @@ function drawKangal(g, x, y, dir, step, scars, sore){
 }
 
 /* --- GERÇEK YÜRÜME (göç sahnesi) -----------------------------------------
-   Sahibinin isteği (ADR-011'e sonradan eklendi): "arka planın sabit kalıp
+   Sahibinin isteği (eski karar kaydi — belge silindi): "arka planın sabit kalıp
    önündeki sürünün KAYIYORMUŞ gibi durmasını istemiyorum — koyunlar ve
    köpek gerçekten yürüsün."
 
@@ -5115,7 +5095,7 @@ function drawFoldKangal(g, bx, by, mood, scars, t){
    Çözüm türün en eski ve en çok sınanmış aracı: ilgi noktası. İşi olan
    nesnenin üstünde küçük, nefes alan bir nokta durur; işi olmayanda
    HİÇBİR ŞEY olmaz. Öğretici ekran değil — metin yok, mod yok, okunacak
-   bir şey yok, ADR-024'ün "harita/menü ekranı yok" kararına dokunmuyor.
+   bir şey yok, eski karar kaydi'ün "harita/menü ekranı yok" kararına dokunmuyor.
    Oyuncu noktayı takip ederek oyunu kendi keşfediyor.
 
    KURAL — BUNA UYULMAZSA ARAÇ ÖLÜR: nokta ancak DOKUNUNCA BİR ŞEY
@@ -5151,13 +5131,6 @@ function foldNokta(g, kutu, t, dx, dy){
    taşıyor. Atmosferi zaten resmin kendisi taşıyor. */
 /* Kapı bu an ne yapıyor — etiket ve nokta AYNI kaynaktan okuyor.
    İkisi ayrı hesaplanırsa etiket bir şey der, nokta başka yerde durur. */
-function kapiIsi(){
-  if(typeof Yayla === 'undefined' || !Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return 'nobet';
-  return Yayla.sahne() === 'konak' ? 'gunukapat' : 'nobet';
-}
-function kapiEtiketi(u){
-  return kapiIsi() === 'gunukapat' ? u.foldEtiketGunSonu : u.foldEtiketKapi;
-}
 
 /* ===== "SIRADAKİ NE" — Alto'nun asıl numarası ==========================
    Alto's Adventure'ın ana ekranında her zaman üç hedef yazar ("geriye
@@ -5177,45 +5150,7 @@ function kapiEtiketi(u){
    Bu tek cümle, "ağıl kendini anlatmıyor" şikâyetinin doğrudan cevabı —
    oyuncu kim olduğunu ve neyi koruduğunu başka hiçbir yerden
    öğrenemiyordu. */
-function foldSiradaki(){
-  if(typeof Yayla === 'undefined' || !Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return '';
-  const S = Yayla.sefer;
-  /* İLK GÜN AMACI, AMA KONAK SAHNESİNDEN ÖNCE. Sıra bilerek böyle:
-     oyuncunun GÖRDÜĞÜ İLK ekran açılış sahnesi (sabah) ve orada
-     okuması gereken şey oyunun ne olduğu. Konağa geldiğinde artık
-     amacı biliyor, ihtiyacı olan şey o günün kısıtı.
-     Önce ters sıradaydı ve basılınca görüldü: 1. günün konağında ekran
-     saati söylemek yerine amacı tekrarlıyordu. */
-  if(S.bolum === 1 && S.gun === 1 && Yayla.sahne() !== 'konak')
-    return 'TAKE YOUR FLOCK TO THE HIGHLAND';
-  /* Durak gununde satir GENEL bir ogut degil, gunun KISITI. Halkalar
-     kalan hakki gosteriyordu ama soylemiyordu; ilk kez oynayan biri sapa
-     gecirilmis halkalardan "gunde uc is yapabilirim" sonucunu cikaramaz.
-     Ve bu oyunun ASIL karari o kisit — bir kural ancak oyuncu onu
-     BILIYORSA karar olur.
-     Konak katmani kendi satirini cizmiyor: dorduncu satir agilin ust
-     bandindaki kuralla cakisiyordu (basildi, goruldu). */
-  if(Yayla.sahne() === 'konak'){
-    const h = Yayla.yuvaKalan | 0;
-    return h <= 0 ? 'NO HOURS LEFT - REST' : h === 1 ? 'LAST HOUR TODAY' : h + ' HOURS LEFT TODAY';
-  }
-  const tip = Yayla.gunTipi();
-  if(tip === 'B') return 'A HARD NIGHT AHEAD';
-  if(tip === 'Y') return 'MOVING ON TODAY';
-  return 'KEEP WATCH TONIGHT';
-}
 
-function foldDurumSatiri(){
-  const koyun = Math.max(0, Save.d.flock | 0);
-  const kampanya = typeof Yayla !== 'undefined' && Yayla.aktif &&
-                   Yayla.sefer && !Yayla.sefer.bitti;
-  if(kampanya){
-    return 'CAMP ' + Yayla.sefer.bolum + ' OF ' + Yayla.SEFER.length +
-           '  -  ' + koyun + ' SHEEP';
-  }
-  if(Season.day == null) return '';
-  return 'DAY ' + Season.day + '  -  ' + koyun + ' SHEEP';
-}
 
 function foldTabela(g, metin, cx, nesneY, alt){
   const w = textW(metin, 1) + 6, h = 9;
@@ -5893,7 +5828,7 @@ const Snd = {
   careFeed(){ this.tone(180, 0.05, 'sine', 0.09, 130); this.noise(0.03, 700, 0.06); },
   carePet(){ this.noise(0.10, 500, 0.05, 350); },                  // el — en sessizi
   /* SAĞIM (2026-08-18). `tools/register.js` ölçtü: sağım ekranı ses %0,
-     darbe %0 ile oyunun en boş kaydıydı — ve ADR-019'dan sonra sağım
+     darbe %0 ile oyunun en boş kaydıydı — ve eski karar kaydi'dan sonra sağım
      kampanyanın TEK üretim fiili, yani en çok tekrarlanacak fiili.
      İki ses, ikisi de yukarıdaki bakım ailesinin kısıklığında
      (docs/ses-tasarim-taslak.md §6.5'in tarif ettiği "dokunsal aktarım"
@@ -6084,6 +6019,11 @@ const aim  = { x:W/2, y:H/2, sx:W/2, sy:H/2, freeze:0, below:false, still:0, edg
    Çözüm: açı farkı almayı bırakmak. Yönelimi 3x3 dönme matrisine çevirip
    göreli dönmeyi matris çarpımıyla buluyoruz:  Rrel = Rref^T · R
    Matris çarpımının tekilliği yok; sonuç her yerde sürekli.               */
+/* Aci sarmalayici — jiroskop olcumu (tools/gyro.js) kullaniyor.
+   NOT: bir kez "olu" sanip sildim; taramam yalniz prototype/'e bakiyordu,
+   tools/'a bakmiyordu. Olu kod taramasi TUM cagiranlari saymali. */
+function wrap180(d){ while(d > 180) d -= 360; while(d < -180) d += 360; return d; }
+
 function orientM(alpha, beta, gamma){
   const X = (beta  || 0) * Math.PI/180,
         Y = (gamma || 0) * Math.PI/180,
@@ -6133,7 +6073,6 @@ function screenAngle(){
   const a = (screen.orientation && screen.orientation.angle);
   return typeof a === 'number' ? a : (((window.orientation || 0) + 360) % 360);
 }
-function wrap180(d){ while(d > 180) d -= 360; while(d < -180) d += 360; return d; }
 
 // Sensör tanısı — "çalışmıyor"u belirli bir nedene indirger.
 const diag = {
@@ -6668,23 +6607,10 @@ function dayRuleFor(season, day){
    'sisli' kuralı ADAYLIKTAN ÇIKARILDI: sis artık bölgenin havasından
    geliyor (bkz. bolgeSis). İkisi birden olsaydı aynı şeyin iki kaynağı
    olurdu — bu deponun "çift kaynak" yasağı. */
-function yolcuKural(){
-  if(typeof Yayla === 'undefined' || !Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return null;
-  const S = Yayla.sefer;
-  const h = ruleSeed(S.bolum | 0, S.gun | 0);
-  if(h % 3 !== 0) return null;                    // ~2/3 gece sakin, eski oranla aynı
-  const aday = DAY_RULES.filter(r => r.id !== 'sisli');
-  return aday[Math.floor(h / 3) % aday.length];
-}
 
 /* Bu gecenin kuralı — ağıl önizlemesi de sabah başlangıcı da BURAYI
    okuyor. İki ayrı yerden okunursa ağıl bir kural gösterip gece başka
    bir kural uygular. */
-function gunKurali(){
-  if(typeof Yayla !== 'undefined' && Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti)
-    return yolcuKural();
-  return Season.rule;
-}
 
 /* Ağıl ve sabah başlangıcının okuduğu TEK kaynak. refresh() ağıla her
    dönüşte ve açılışta çağrılır; sabah G.seasonDay/G.dayRule'ı BAŞTA donar
@@ -6873,7 +6799,6 @@ const Attract = {
       for(const b of this.birds) drawEagleTop(g, b.x, b.y, [0, -1, 0, 1][((this.t + b.x) >> 4) & 3]);
     if(this.dogT > 0){
       const rise = Math.min(26, (150 - this.dogT) * 3, this.dogT * 3);
-      drawKangal(g, 96, GROUND + 26 - rise, 1, 0, Save.d.scars, Save.d.sore);
     }
   },
 
@@ -6921,7 +6846,7 @@ const Attract = {
        Yalnız BULUT: güneş ve yıldız YOK — fold.png'nin kendi güneşi gökte
        duruyor (yanında yıldız astronomik saçmalık olurdu), ikinci bir güneş
        de iki güneş demek olurdu.
-       Sınır: bulutların en alçağı y=68 (+dalga), ADR-012'nin ölçülmüş
+       Sınır: bulutların en alçağı y=68 (+dalga), eski karar kaydi'nin ölçülmüş
        "ortam hareketi y<95" sınırının üstünde — ağılda dokunulabilir en üst
        kutu y=99 (foto), yani oyuncu buluta "dokunabilir miyim" diye sormaz. */
     drawGokBulut(g, this.t);
@@ -6941,7 +6866,7 @@ const Attract = {
     }
     // Sisli gün (17-19): "ağıl sisir" — aynı FOG kaynağı, dünya payı burada
     // (nesnelerden ÖNCE), hafif varlık payı nesnelerden SONRA (aşağıda).
-    const fog = guncelSis(Season.day);   // bkz. guncelSis
+    const fog = 0;   // bkz. G.fog
     if(fog > 0.002) px(g, 0, 0, W, H, 'rgba(' + FOG.color + ',' + (fog * (1 - FOG.entityMul)).toFixed(3) + ')');
 
     // idle: this.t Attract'in kendi kare sayacı — aşağıdaki blok içinde
@@ -6990,10 +6915,8 @@ const Attract = {
         const doorX = FOLD_LAYOUT.kapi.x + 16;
         const gx = kx0 + (doorX - kx0) * ease;
         const step = prog < 1 ? ((idle >> 2) & 1) : 0;   // varınca bacaklar durur
-        drawKangal(g, gx, ky0, 1, step, Save.d.scars || 0, false);
       } else {
-        drawFoldKangal(g, k.x, k.y, (Save.d.sore || 0) > 0 ? 'yatmis' : 'ayakta', Save.d.scars || 0, idle);
-      }
+        }
       /* Sağım (ADIM 4): sürü kutusunda kuzulu koyunlar — "sağılabilir
          koyun ÜÇ işaretle belli: baş yukarı + dolu meme + yanındaki kuzu"
          (agil.json "sagim" notu). Sağılmış olanlar (bos) sessizce
@@ -7042,13 +6965,11 @@ const Attract = {
          sağılamayacakları ayrı bir soru ve onu sagilabilirVar()
          cevaplıyor. İkisini birbirine bağlamak, "yapacak iş yok" ile
          "hayvan yok"u aynı resme çizmekti. */
-      const yolcu = typeof Yayla !== 'undefined' && Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti;
-      const n = yolcu ? Math.max(0, Save.d.flock | 0)
-                      : milkableCount(Save.d.flock, Season.day);
+      const n = Math.max(0, Save.d.flock | 0);
       if(n > 0){
         const s = FOLD_LAYOUT.suru;
         const shown = n;
-        const milked = Math.min(yolcu ? (Yayla.sagimBugun | 0) : (Save.d.milkedThisCycle || 0), shown);
+        const milked = 0;
         /* KAYBEDİLENİN YERİ AÇIK KALIR (BULGU A, seçenek C, sahibinin kararı
            2026-08-15). Sıra eskiden HER ZAMAN kutuyu baştan sona dolduruyordu:
            bir hayvan kaybedilince adım büyüyor, kalanlar yeniden yayılıyor ve
@@ -7137,7 +7058,7 @@ const Attract = {
 
          Araştırmanın ortak kararı "tek birincil eylem"di; tek eylem
          olması, o eylemin ADININ da doğru olmasını gerektiriyor. */
-      foldTabela(g, kapiEtiketi(u), kp.x + kp.w / 2, kp.y + 6);
+      foldTabela(g, u.foldEtiketKapi, kp.x + kp.w / 2, kp.y + 6);
       /* KİLER/LARDER: raf'ın sağında dururken sabit +3 boşluk İngilizce'de
          ("LARDER", 6 harf) takvim tahtasına BİNİYORDU — sahibinin telefonu
          İngilizce, ekran görüntüsüyle doğrulandı 2026-08-13. Sabit konum
@@ -7197,7 +7118,6 @@ const Attract = {
          noktayı kaybettirir; kapı, çıkın ve durum şeridi çizilmeye
          devam eder. Aynı desen applyLang'de de var, aynı gerekçeyle. */
       try{
-        const yolda = typeof Yayla !== 'undefined' && Yayla.sefer && !Yayla.sefer.bitti;
         // Kapı — oyunun kendisi. Hiç oynanmamışsa tek gerçek iş bu.
         if(!Save.d.mornings) foldNokta(g, kp, idle, -7, 5);
         // Köpek — yaralıysa bakım bekliyor (applySarma gerçekten iyileştiriyor).
@@ -7217,12 +7137,11 @@ const Attract = {
     if(fog > 0.002) px(g, 0, 0, W, H, 'rgba(' + FOG.color + ',' + (fog * FOG.entityMul).toFixed(3) + ')');
 
     /* KONAK KATMANI — bkz. ==YAYLA==. Ağıl kampanyada "konak" oluyor
-       (ADR-014: aynı kayıt, aynı sessiz-canlı dil). Çağrı DURUYOR ama
+       (eski karar kaydi — belge silindi). Çağrı DURUYOR ama
        şu an hiçbir şey çizmiyor: çentikli gösterge tasarım turunda
        ANLAM ÇAKIŞMASI yüzünden geri alındı (çentik bu oyunda "geçilen
        durak" demek). Onaylanan yön kanca sırası; alet sanatı bekleniyor.
        docs/konak-tasarim.md */
-    if(G.yaylaAktif) Yayla.cizKonak(g);
 
     if(!showText) return;   // scrAim/alıştırma gibi bir karar ekranı üstte — metin çizme
 
@@ -7237,20 +7156,16 @@ const Attract = {
        (LARDER etiketinin 2026-08-13'te takvim tahtasına binmesi aynı
        sınırdı). Durum kemik rengi ve sakin — her gün aynı biçimde duran
        çerçeve; kural altın — o güne özel, değişen şey. */
+    /* ===== AGILIN UST SERIDI: TEK SATIR (2026-08-21) ==================
+       Uc satir vardi: durum (CAMP x OF 10 - n SHEEP), siradaki ne, ve
+       gunun kurali. Ucu de kampanyanindi ve kampanya kalkti.
+
+       Geriye tek soru kaliyor ve oyuncunun bilmesi gereken tek sey o:
+       KAC HAYVANIN VAR. Oyunun hem skoru hem cani o sayi. */
     {
       const k = FOLD_LAYOUT.kural;
-      const durum = foldDurumSatiri();
-      if(durum) textC(g, durum, k.x + k.w / 2, k.y, PAL.bone, 1, PAL.ink);
-      /* İkinci satır: ŞU AN NE YAPMALIYIM (bkz. foldSiradaki). Ekranın
-         "anlaşılmıyor" denen yanının doğrudan cevabı bu satır. */
-      const sira = foldSiradaki();
-      if(sira) textC(g, sira, k.x + k.w / 2, k.y + 8, PAL.gold, 1, PAL.ink);
-      /* Günün kuralı VARSA üçüncü satırda. Kural her gün yok, o yüzden
-         üç satır azınlıkta kalıyor. Kaldırılamaz: G.dayRule.apply GERÇEK
-         bir çarpan, ve bu depoda görünmeyen çarpan yasak. */
-      const kural = gunKurali();
-      if(kural) textC(g, kural.en + (kural.etki ? ' - ' + kural.etki : ''),
-                      k.x + k.w / 2, k.y + 16, PAL.bone, 1, PAL.ink);
+      const n = Math.max(0, Save.d.flock | 0);
+      textC(g, n + (n === 1 ? ' SHEEP' : ' SHEEP'), k.x + k.w / 2, k.y, PAL.bone, 1, PAL.ink);
     }
 
     // Raf/Kangal dokunuşundan gelen kısa not — dünyaya ait metin, HTML değil.
@@ -7284,41 +7199,8 @@ const Attract = {
        O karede `Cikin` henüz TDZ'de. Ötekiler (Yayla, TEHDIT) `G.yaylaAktif`
        kapısının arkasında olduğu için hiç okunmuyordu; çıkın kampanya
        kapalıyken de çizildiği için tek açıkta kalan oydu. */
-    if(typeof Cikin !== 'undefined'){
-      const u = U();
-      Cikin.ciz(g, Yayla, {
-        tabela: foldTabela,
-        yaz: (gg, metin, x, y, renk) => textC(gg, metin, x, y, renk, 1, PAL.ink),
-        /* İlk açılışta çıkının etiketi de susuyor — bkz. nişan
-           tabelasının yanındaki not. Boş dize verilince Cikin.ciz
-           tabelayı hiç çizmiyor; nesne yerinde, adı sonra geliyor. */
-        metinHazir: Save.d.mornings ? u.cikinHazir : '',
-        metinYolda: Save.d.mornings ? u.cikinYolda : '',
-        metinBitti: u.cikinBitti,
-      });
-    }
-    /* Ağıl kampanyada KONAK oluyor: konak ayrı bir ekran değil, ağılın
-       ÜSTÜNE binen bir katman. Sefer bitmişse yerine bitiş ekranı. */
-    if(G.yaylaAktif && typeof Yayla !== 'undefined' && Yayla.sefer){
-      const yaz = (gg, metin, x, y, renk) => textC(gg, metin, x, y, renk, 1, PAL.ink);
-      if(Yayla.sefer.bitti){
-        Bitis.ciz(g, Yayla, aliveFlock(), { yaz, dil: LANG });
-      } else if(G.rotaAcik){
-        /* ROTA TAHTASI — çıkına dokununca açılır (ADR-024: "istendiği an
-           bakılır"). Bölüm seçilemez, atlanamaz; bu bir KAYIT. */
-        /* YOL DEFTERİ (Öneri C). İçerik ÇAĞIRANDAN gelir — rota.js kimin
-           kaybolduğunu bilmiyor ve uydurmuyor, doğrusu da bu. */
-        Rota.ciz(g, Yayla.sefer, Yayla.SEFER, {
-          yaz, dil: LANG, toren: G.rotaToren || 0,
-          secili: G.rotaSecili || 0,
-          yaziEn: metin => textW(metin, 1),
-          ogrenilen: Yayla.ogrenilen.map(k => Yayla.KOMUT[k].en),
-          kayip: kampanyaKayipAdlari(),
-        });
-      } else if(Yayla.sahne() === 'konak'){
-        Konak.ciz(g, Yayla, { yaz, dil: LANG });
-      }
-    }
+    /* KAMPANYA KATMANLARI SILINDI (2026-08-21): cikin, rota defteri,
+       bitis ekrani, konak isleri. Oyun tek mekanige indi. */
   },
 
   /* Bakım yakın çekimi (ADIM 3, docs/mevsim-tasarim.md "Bakım yakın
@@ -7970,7 +7852,6 @@ const Attract = {
     this.drawVinyetSky(4);   // kızıl — gerilim
     drawSheep(g, W / 2 - 60, GROUND + 20, 1, 'alert', 0);
     drawSheep(g, W / 2 - 44, GROUND + 22, -1, 'alert', 1);
-    drawKangal(g, W / 2 - 30, GROUND + 22, 1, 0, Save.d.scars || 0, false);
     /* Ölçek düzeltmesi (tasarım turu, Görev X, 2026-08-14): SC=2 ayak
        hizasına göre ~3.6 kat fazla boy veriyordu (basılıp ölçüldü —
        shots/dom/vinyetkurt0-tr.png, kurt köpeğin ~3 katıydı). SC=1.3
@@ -8066,15 +7947,15 @@ function startRun(){
      Season.refresh() hiç çağrılmadıysa Season.day/rule null kalır ve
      aşağıdaki her şey eskisiyle birebir aynı davranır). */
   G.seasonDay = Season.day;
-  G.dayRule = gunKurali();   // bkz. gunKurali: eskiden GERÇEK TAKVİME bağlıydı
-  G.fog = guncelSis(G.seasonDay);   // bkz. guncelSis: eskiden GERÇEK TAKVİME bağlıydı
+  /* GUNUN KURALI SILINDI (2026-08-21): mevsim/yolculuk kalkti, kurali
+     secen sey de kalkti. Cesitlilik artik zorluk rampasindan geliyor. */
+  G.dayRule = null;
+  G.fog = 0;   // sis kampanyanin bolge havasindandi, kampanya kalkti
   const ap = G.dayRule && G.dayRule.apply;
   /* Geçit (28-30, Faz 3): sabit nokta — sabah İÇİNDE değişmez (yorgunluk
      gibi). Azık burada, TAKVİM DONARKEN tüketilir: "hangi sabahın geçit
      sabahı olduğu" ile "o sabah ne kadar azık gitti" AYNI ANDA belli olur. */
   /* KARAAYAK sabah başına sıfırlanır: bir sabahta tek sürü. */
-  KARAAYAK.sabahSifirla();
-  TEHDIT.sabahSifirla();
   /* GEÇİT SAHNESİ ARTIK TAKVİME DEĞİL YOLCULUĞA BAĞLI (2026-08-21).
      Eskiden `isGecitDay(G.seasonDay)` idi: mevsimin 28-30. günü. Mevsim
      günü GERÇEK TARİHE göre ilerlediği için, oyuncunun gerçek takvimi o
@@ -8156,7 +8037,7 @@ function startRun(){
   // "Dağınık sürü": hayvanlar köşelere yayılır, köpek çok koşar (tek parametre).
   // Geçitte KOLON — dağınık sürü kuralı geçitte anlamsız, o yüzden ap yok sayılıyor.
   G.flock = G.gecitMode ? layGecitFlock(Save.d.flock) : layFlock(Save.d.flock, (ap && ap.spreadMul) || 1);
-  /* KAMPANYA KİMLİKLERİ (==YAYLA-AKIS==): sürüye İSİM dağıt — ADR-020'nin
+  /* KAMPANYA KİMLİKLERİ (==YAYLA-AKIS==): sürüye İSİM dağıt — eski karar kaydi'nin
      kimlik katmanı. Sürü DİZİLDİKTEN sonra, çünkü dağıtım hayvan
      nesnelerini istiyor. Bir kez: isimler sefer boyunca sabit kalmalı,
      yoksa "Topal'ı kaybettim" cümlesi her sabah başka koyuna denk gelir.
@@ -8357,10 +8238,6 @@ const SAGIM = {
   dogUpkeep: 3.5,
   lambUpkeepPer: 0.6,
 };
-function milkableCount(flock, day){
-  if(day == null || day < SAGIM.milkStartDay) return 0;
-  return Math.max(1, flock | 0);
-}
 /* Kuzu sayısı — kuzulamaya (12. gün) bağlı KALDI, milkableCount'tan artık
    AYRI (bkz. yukarıdaki SAGIM notu). "Sürünün yarısı kuzulu" varsayımı
    yalnız BURADA, tüketim tarafında yaşıyor — üretim artık tam sürüyü
@@ -8390,13 +8267,6 @@ function lambCount(flock, day){
    (bölüm 4 ≈ 13. gün, eski eşik 12) — davranış korunuyor, dayanağı
    değişiyor. */
 const KUZU_BOLUM = 4;
-function yolcuKuzu(){
-  if(typeof Yayla !== 'undefined' && Yayla.aktif && Yayla.sefer && !Yayla.sefer.bitti){
-    return (Yayla.sefer.bolum | 0) >= KUZU_BOLUM
-      ? Math.max(1, Math.floor((Save.d.flock | 0) / 2)) : 0;
-  }
-  return lambCount(Save.d.flock, G.seasonDay);
-}
 
 /* --- geçit (Faz 3, docs/mevsim-tasarim.md "Geçit ve kışlak") -----------
    28-30. gün: üç göç sabahı, aynı fiiller (nişan al, ateş et, köpek
@@ -8560,7 +8430,7 @@ function drawFlock(g){
     /* SÜRÜ BİREYLERİ — bkz. ==YAYLA==. Kampanyada her hayvanın kimliği
        var ve kendi işaretiyle basılıyor; kimliği olmayan (ya da kampanya
        kapalı) hayvan eskisi gibi taban sprite'ıyla çiziliyor. Sonsuz mod
-       tek piksel değişmiyor (ADR-003/008).
+       tek piksel değişmiyor (eski karar kaydi — belge silindi).
        ALARM/ÜRKME İSTİSNASI: o hâllerin kendi pozları var (drawSheep'in
        tetik pozu) ve "hangisi tehlikede" sorusu kimlikten önce gelir —
        bu oyunun kuralı, kimlik onu ezemez. */
@@ -8764,7 +8634,6 @@ function updateCalib(){
     /* Birey huyları — bkz. ==YAYLA==. Görsel işaret gerçek ışıkta zayıf
      kaldığı ÖLÇÜLDÜ; davranış o boşluğu ışıktan bağımsız kapatıyor.
      Kampanya kapalıyken tek satır fazla iş yapılmıyor. */
-  if(G.yaylaAktif) Yayla.huyIsle(G.flock);
   for(const a of G.flock){
     if(a.alarm > 0 && --a.alarm === 0 && a.state === 'alert') a.state = 'graze';
     if(a.relief > 0) a.relief--;      // kurtarılan hayvanın rahatlaması (BULGU 5)
@@ -8825,9 +8694,6 @@ function drawCalib(){
   if(c.step === 4){
     drawFlock(g);
     for(const d of G.ducks) if(!d.done || d.state === 'fall') paintBird(g, d);
-    drawKangal(g, G.dog.x, G.dog.y,
-               G.dogTask ? Math.sign(G.dogTask.x - G.dog.x) || 1 : 1,
-               G.dogTask ? ((G.t >> 2) & 1) : 0, Save.d.scars, false);
   }
 
   // hedef kuş — 3. adımda uçmaz, oyuncu şarjla ilgilensin
@@ -9065,21 +8931,6 @@ const Card = {
   },
 };
 
-async function shareCard(){
-  const c = Card.toCanvas(CARD.scale);
-  const blob = await new Promise(r => { try{ c.toBlob(r, 'image/png'); }catch(e){ r(null); } });
-  if(!blob) return;
-  const file = new File([blob], 'yaban.png', { type:'image/png' });
-  if(navigator.canShare && navigator.canShare({ files:[file] })){
-    try{ await navigator.share({ files:[file] }); return; }
-    catch(e){ if(e && e.name === 'AbortError') return; }   // vazgeçmek hata değil
-  }
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'yaban.png';
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-}
 
 /* --- yarın ne olacak -----------------------------------------------------
    Sabah bitince oyuncunun elinde bir SONRAKİ sabah için sebep yoktu. Tek
@@ -9222,7 +9073,7 @@ function foldDawn(){
 
 /* Gök bloğunun DIŞARIYA açılan tek yüzü (2026-08-18).
  *
- * Niye: `harness.js`'in elle tutulan listesi ADR-018'in ölçtüğü asıl
+ * Niye: `harness.js`'in elle tutulan listesi buyume esigi olcumu ölçtüğü asıl
  * ölçek tavanı, ve ADR'nin EK'i azaltıcı önlemi artık ZORUNLU sayıyor —
  * "60 sembol değil tek nesne". Gök bloğu bu geceki en yeni büyük blok,
  * ve o kuralın ilk uygulandığı yer olması doğru: yeni YAYLA modu da bu
@@ -9308,9 +9159,21 @@ function sunUp(p){
    yerleşir) — ORASI EN KARANLIK yer; yoksa gün önce doğar, sonra sabah
    başlarken bir anda kararırdı (göze çarpan bir sıçrama). Nöbet dışında
    (menü, gösteri, sabah sonu) gün DOLU: ağarma sabahın kendi yayına ait. */
+/* ===== ISIK ARTIK DONUYOR, BIR KEZ AGARIP DURMUYOR (2026-08-21) =======
+   Oyun sure ile bitmeyi biraktiginda bu fonksiyon iki dakika sonra 1'e
+   yapisip kaliyordu: gunes doguyor ve dort saat boyunca ayni gunduzde
+   kaliyordu. Olu bir goruntu, ve gece nobeti kurgusunun da sonu.
+
+   Artik ucgen bir dalga: karanlik -> agarma -> karanlik. Tam tur
+   ISIK_DONGU kare (~10 dakika). Dort saatte ~24 tur, yani zamanin
+   gectigini SAYAC degil GOKYUZU soyluyor — Alto'nun yaptigi sey.
+   Ayrica her agarma, sayi olmadan bir kilometre tasi. */
+const ISIK_DONGU = 36000;          // ~10 dk, tam bir karanlik->aydinlik->karanlik turu
 function dawnP(){
   if(G.phase === 'intro') return 0;
-  return G.phase === 'play' ? Math.min(1, G.morningT / MORNING.frames) : 1;
+  if(G.phase !== 'play') return 1;
+  const t = (G.morningT % ISIK_DONGU) / ISIK_DONGU;
+  return t < 0.5 ? t * 2 : (1 - t) * 2;
 }
 
 /* Sisli günler (17-19, docs/mevsim-tasarim.md "Mevsim I takvimi": "kartal
@@ -9324,9 +9187,6 @@ function dawnP(){
    yoğun sisde bile silüet zeminden ayırt edilebilir kalır (okunabilirlik
    sınırı, "Sabahın ışığı" bölümüyle aynı ilke). Ağıl sahnesi de aynı G.fog
    değerini okuyacak (bkz. ADIM: ağıl=menü). */
-function seasonFog(day){
-  return (day != null && day >= 17 && day <= 19) ? 0.5 : 0;
-}
 
 /* ===== SİS ARTIK BÖLGENİN HAVASINDAN ===================================
    Üçüncü vaka, ve bu seferki iki taraflı:
@@ -9346,16 +9206,7 @@ function seasonFog(day){
    Boğaz Girişi ('sis') artık gerçekten sisli; ve sisli oluşu oyuncunun
    takvimine değil NEREDE OLDUĞUNA bağlı. */
 const HAVA_SIS = { sis: 0.5, firtina: 0.35, kar: 0.30, yagmur: 0.18 };
-function bolgeSis(){
-  if(typeof Yayla === 'undefined' || !Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return null;
-  const b = Yayla.seferBolum();
-  return b ? (HAVA_SIS[b.hava] || 0) : 0;
-}
 /* Tek kapı: yolculuk açıksa bölgenin havası, değilse eski mevsim sisi. */
-function guncelSis(gun){
-  const b = bolgeSis();
-  return b == null ? seasonFog(gun) : b;
-}
 const FOG = {
   color: '214,214,222',   // soğuk gri-beyaz pus
   entityMul: 0.30,        // varlıkların sisten aldığı pay — okunabilirlik payı
@@ -9485,14 +9336,22 @@ function updateMorning(){
      done İŞARETLİYOR (görsel yok, taşıyacak bir şey kalmadı) ama G.strikes
      kaydı boğuşma bitene kadar sürüyor — yalnız G.ducks'a bakmak sabahı
      boğuşma ortasında keserdi. +500 tavan zaten var, boğuşma bunun içinde. */
-  if(G.morningT >= MORNING.frames &&
-     ((!G.ducks.filter(d => !d.done).length && !G.strikes.length) ||
-      G.morningT > MORNING.frames + 500)){
-    finishMorning('dawn'); return;
-  }
+  /* ===== OYUN ARTIK SURE ILE BITMIYOR (2026-08-21) ====================
+     Sahibinin defalarca soyledigi ve benim defalarca duymadigim sey:
 
-  if(G.morningT < MORNING.frames &&
-     G.ducks.filter(d => !d.done).length < MORNING.maxLive(live.length)){
+       *"2 dakikalik oyun olayini da birakalim... oyuna girdim mi
+       istedigim kadar oynamaliyim... giren kisi 4 saat boyunca surekli
+       kartal avlasin."*
+
+     Burada `MORNING.frames` (7200 kare ~ 2 dakika) dolunca sabah
+     bitiyordu. O satir SILINDI. Artik oyunu bitiren TEK sey surunun
+     tukenmesi (yukaridaki `!live.length` dali).
+
+     `MORNING.frames` OLCU BIRIMI OLARAK KALDI ama artik bitis degil
+     ZORLUK RAMPASI: tempo o sure boyunca artiyor, sonra tavanda
+     kaliyor (bkz. morningShape cagrisi). Yani ilk iki dakika isinma,
+     sonrasi sabit basinc — ve oyuncu dayanabildigi kadar dayaniyor. */
+  if(G.ducks.filter(d => !d.done).length < MORNING.maxLive(live.length)){
     /* Geri sayım GÖK BOŞKEN HIZLANIYOR (Seçenek 2). "Boş" = ekranda canlı
        TEHDİT yok; kurt/çakal sayılmıyor çünkü o yer tehdidi ve gökyüzünün
        sessizliğini doldurmuyor (Cetvel L'nin "boş gök" ölçüsü de gökyüzüne
@@ -9521,13 +9380,12 @@ function updateMorning(){
      bir boğuşma biter bitmez saniyeler içinde ikinci kampanya çıkardı, çünkü
      gap yalnız spawn ANINDA uygulanıyordu. Gerçek "sakinlik" penceresi
      ancak encounter TAMAMEN bittikten sonra başlamalı. */
-  if(G.morningT < MORNING.frames){
+  {   // tehdit uretimi ARTIK SURESIZ — bkz. yukaridaki not
     /* KARAAYAK (==KARAAYAK==): kampanyanın büyük gününde isimli sürü.
        Sıradan kurt spawn'ından ÖNCE — bu sabah zaten bir sürü geliyorsa
        üstüne kurt yığmak zirveyi okunmaz yapardı (aşağıdaki wolfBusy
        zaten kara girdilerini de sayıyor, çünkü onlar da wolf:true). */
     if(G.yaylaAktif && G.morningT > 90){ karaSpawnDene(); tehSpawnDene(); }
-    if(G.yaylaAktif) TEHDIT.guncelle(tehOrt());
     /* YOL: her kare bir adım. Hız TAKASI yeni bir düğmeyle değil VAR OLAN
        komutla veriliyor — DUR verildiyse kolon ağır yürür (sürü dinç
        kalır, gün ışığı yenir), verilmemişse normal. Sahibinin isteği
@@ -9621,18 +9479,7 @@ function finishMorning(why){
   /* 'yol' de bir NÖBET sahnesi: göç makinesiyle yürünüyor ve bitince
      finishMorning'den geçiyor. Listeye eklenmeyince yol bitiyor ama akış
      ilerlemiyordu — sefer bölüm 1'in üçüncü gününde takılı kaldı. */
-  /* ALET BAKIMI (ADR-022 §3.6): tüfek her sabah biraz kirlenir, çok ateş
-     eden çok. Temizlenmezse tutukluk başlar — "hiçbir şey olmuyor" gibi
-     görünen ama ihmal edilince acıtan baskı. */
-  if(Yayla.aktif && typeof Alet !== 'undefined') Alet.sabahBitti((G.stats && G.stats.shots) || 0);
-  /* İZ: Karaayak'la karşılaşan iz alır (ADR-020). Sabahın SONUNDA, yani
-     karşılaşma gerçekten yaşandıktan sonra. */
-  if(Yayla.aktif && KARAAYAK.geldi && KARAAYAK.izBirakti(karaOrt()))
-    showMsg(U().izKazanildi, 240);
-  if(!quit && Yayla.aktif && ['sabah','gece','buyukgun','yol'].indexOf(Yayla.sahne()) >= 0){
-    G.yaylaGece = null;
-    try{ yaylaSahneIlerlet(); }catch(e){ console.error('YAYLA akis:', e); }
-  }
+  /* Kampanya kancalari (alet kiri, iz, sahne ilerletme) SILINDI. */
 
   const every = seasonBirthEvery(Save.d.flock);
   if(!quit && Save.d.mornings % every === 0 && Save.d.flock < FLOCK_MAX){
@@ -10046,7 +9893,7 @@ function fightShot(s){
 }
 
 function wolfHit(d){
-  /* KARAAYAK LİDERİ VURULUR AMA DURDURULAMAZ (ADR-025) — kendi kuralı
+  /* KARAAYAK LİDERİ VURULUR AMA DURDURULAMAZ (eski karar kaydi — belge silindi) — kendi kuralı
      var, kurdun yavaşlatma ekonomisi ona uygulanmıyor. */
   if(d.kara && KARAAYAK.vuruldu(karaOrt(), d)) return;
   d.hitsTaken = (d.hitsTaken || 0) + 1;
@@ -10173,11 +10020,10 @@ function updateStrikes(){
      kararı bu" cümlesi bir tasarım iddiasıydı, o kararı oyuncu değil bu
      fonksiyon veriyordu. Kampanyada oyuncu ezebiliyor.
      Sonsuz/Günlük modda `G.yaylaAktif` undefined -> kısa devre: tek satır
-     fazla iş yapılmıyor, davranış birebir eskisi (ADR-003, 008). */
+     fazla iş yapılmıyor, davranış birebir eskisi (eski karar kaydi — belge silindi). */
   /* DOGRUN.speed'i Yayla'ya geçiriyoruz: hız sabiti ana kodun, komut
      çarpanları Yayla'nın — iki kaynak olmasın. */
-  if(G.yaylaAktif) G.DOGRUN_SPEED = DOGRUN.speed;
-  const yKomut = G.yaylaAktif ? Yayla.updateKomut(G, dog) : false;
+  const yKomut = false;
   // Köpek boştaysa en yakın açık baskına koşar (boğuşan kayıt zaten
   // dogTask'te sabit duruyor, bu arama ona hiç bakmıyor).
   if(!yKomut && !G.dogTask && G.strikes.length){
@@ -10681,9 +10527,7 @@ function updateThreat(t){
 function fire(){
   if(G.phase === 'calib') return fireCalib();
   if(G.phase !== 'play') return;
-  /* FIRTINA: nişan tamamen kapalı (ADR-020 — zorluk araç eksilterek
-     artar). Tüfek ölü, komutlar tek fiil. */
-  if(G.yaylaAktif && TEHDIT.nisanKapali()){ Snd.empty(); return; }
+  /* FIRTINA: nişan tamamen kapalı (eski karar kaydi — belge silindi). Tüfek ölü, komutlar tek fiil. */
   /* Gök BOŞken de kavga yığını meşru hedef. Bu kapı "gökte hiçbir şey yoksa
      ateş etme" diye yazılmıştı ve kurt yığını G.ducks'ta olmadığı için (kurt
      saldırınca w.done=true) yığını da kapatıyordu: boş gök oranı ~%65 olduğu
@@ -10709,20 +10553,14 @@ function fire(){
   G.shots--;
   if(G.stats) G.stats.shots++;
   /* TUTUKLUK: kirli tüfek bazen ateş almıyor. Mermi GİDİYOR — bedelsiz
-     olsaydı ihmalin acısı olmazdı (ADR-007).
+     olsaydı ihmalin acısı olmazdı (eski karar kaydi — belge silindi).
      GÖRÜNÜR OLMAK ZORUNDA: sessizde oynanabilirlik kuralı, oyuncu neden
      ateş çıkmadığını SESLE değil GÖZLE de anlamalı. Bu yüzden hem
      mesajı hem ıska parlaması var (raporun KARAR GEREKİR md.3'ü). */
-  if(G.yaylaAktif && typeof Alet !== 'undefined' && Alet.tutuklukMu()){
-    Snd.empty(); G.missFlash = 18; shake(2);
-    showMsg(U().tutukluk, 150);
-    return;
-  }
   Snd.shot();
   /* Kampanya tehditleri kendi vuruş kurallarını işletiyor: vaşağın tek
      penceresi, sırtlanın ışık çemberi, ayının "mermi yön verir" kuralı,
      hırsızın havaya ateşi. Karşılandıysa normal isabet yolu koşmuyor. */
-  if(G.yaylaAktif && TEHDIT.atis(tehOrt(), aim.x, aim.y)) return;
   if(G.mods.slowmo && G.shots === 1) G.slowT = 90;
 
   // Vuruş alanı: taban * geç round daralması * koşullu perk çarpanları.
@@ -10983,7 +10821,7 @@ function update(){
         /* DUR verildiyse sürüklenme de DURUR — bkz. ==YAYLA==. Yoksa köpek
            "durdu" ama sürünün ortasına doğru yavaşça kayıyor olur; düğme
            yalan söyler. Görünmeyen davranış bu depoda yasak. */
-        const yKilit = G.yaylaAktif ? Yayla.bostaKilitli() : false;
+        const yKilit = false;
         // boştayken sürünün ortasına doğru sakin sakin döner
         const live = yKilit ? [] : aliveFlock();
         if(live.length){
@@ -11066,10 +10904,8 @@ function update(){
   updateMorning();
   if(G.phase !== 'play') return;          // sabah bittiyse çık
   for(const d of G.ducks){
-    /* KARAAYAK: liderin kendi döngüsü var (bekle/hamle/geri/böler);
-       küçükler kurdun makinesini birebir kullanıyor. */
-    if(d.kara && d.karaLider){ if(!d.done) KARAAYAK.liderGuncelle(karaOrt(), d); }
-    else if(d.wolf){ if(!d.done) updateWolf(d); }
+    /* Karaayak dali SILINDI (2026-08-21): kopek surusu tehdidi kalkti. */
+    if(d.wolf){ if(!d.done) updateWolf(d); }
     else if(d.threat && !d.done && d.state !== 'hit' && d.state !== 'fall') updateThreat(d);
     else updateBird(d);
   }
@@ -11288,12 +11124,10 @@ function render(){
        okunuyordu ve akış eklenince iki kaynak olacaktı; bu depoda çift
        kaynağın bedeli üç kez ödendi. Ateşin yeri hâlâ G.yaylaGece'de
        (konum bir sahne verisi, durum değil). */
-    if(Yayla.geceMi() && G.yaylaGece) Yayla.cizGece(g, G.yaylaGece.x, G.yaylaGece.y, G.t);
   }
   drawFlock(g);
   /* KAMPANYA TEHDİTLERİ (==TEHDIT==): dünya katmanı — sürünün üstüne,
      kuşların altına. Kampanya kapalıyken tek satır iş yapmıyor. */
-  if(G.yaylaAktif) TEHDIT.ciz(tehOrt(), g);
 
   for(const d of G.ducks){
     if(d.done && d.state !== 'fall') continue;
@@ -11368,10 +11202,6 @@ function render(){
      YERİ ÖNEMLİ ve basılan karede bulundu: varlık perdesi bir ara
      kuşlardan sonra ama KÖPEKTEN ÖNCEYDİ ve köpek çemberin çok dışında
      bembeyaz duruyordu. */
-  Yayla.sergi = G.yaylaSergi || null;
-  Yayla.ipucu = (G.yaylaAktif && G.phase === 'play' && !Yayla.yelpaze)
-    ? { k: Yayla.verilen || kangalIpucu(), x: aim.x, y: aim.y } : null;
-  Yayla.cizUstu(g);
 
   for(const q of G.parts) px(g, q.x, q.y, 1 + (q.t > 30 ? 1 : 0), 1, q.c);
   for(const p of G.pops){
@@ -11552,11 +11382,10 @@ function drawHUD(){
      Artık gökyüzü söylüyor (bkz. DAWN): sabah karanlıkta başlayıp gerçekten
      ağarıyor. Çubuk kaldırılmadı ama SİLİKLENDİ — dünya anlatırken arayüz
      bağırmasın; isteyen yine de kesin yeri okuyabilsin.                  */
-  const prog = Math.min(1, G.morningT / MORNING.frames);
-  const bw = 84, bx = W - bw - 6;
-  px(g, bx, 5, bw, 1, 'rgba(252,252,252,0.12)');
-  px(g, bx, 5, Math.round(bw * prog), 1, 'rgba(252,220,150,0.34)');
-  px(g, bx + Math.round(bw * prog) - 1, 4, 2, 3, 'rgba(252,220,150,0.42)');
+  /* SABAH CUBUGU SILINDI (2026-08-21): "safaga ne kadar kaldi" diye bir
+     sey artik YOK. Oyun sure ile bitmiyor; bitiren tek sey surunun
+     tukenmesi ve onu solda sayac zaten soyluyor. Kalan bir cubuk
+     olmayan bir bitisi vaat ederdi. */
 
   /* --- şarjör -----------------------------------------------------------
      Dokunmatikte sol alt köşe çubuğun altında kalıyor; mermi sayısı ateş
@@ -11584,9 +11413,17 @@ function drawHUD(){
      kirli" sorusunu bakışla cevaplıyor.
 
      Yalnız kampanyada: kir mekaniği kampanyanın (bakım işi orada). */
-  if(G.yaylaAktif && typeof Alet !== 'undefined' && cfg.mode !== 'touch'){
-    Alet.ciz(g, 5 + cap * 7 + 3, H - 12, 10);
-  }
+  /* SAHIBININ TELEFONUNDA GORULDU (2026-08-21): temiz tufek de ciziliyordu
+     ve fisheklerin hemen yaninda duran o cubuk DORDUNCU BIR FISEK gibi
+     okunuyordu — baska renkte, anlamsiz. Bilgi vermiyor, gurultu
+     uretiyordu.
+
+     Artik yalniz KIR VARSA ciziliyor. Temiz tufekte hicbir sey yok; kir
+     basladigi an ekranda YENI bir sey beliriyor ve oyuncu onu fark
+     ediyor. Ayni ilke agildaki "is var" noktalarinda da kullanildi:
+     surekli duran bir isaret bilgi tasimaz, BELIREN bir isaret tasir.
+
+     Bosluk da acildi (+7): fisheklerle ayni gruba ait sanilmasin. */
   /* Şarj bölgesi GÖRÜNÜR olmalı. Jiroskopta nişangâh ekran kenarında
      kilitleniyor, yani oyuncu namlusunu ne kadar indirdiğini göremiyordu —
      "şarj zor" şikâyetinin sebebi eşik değil, geri bildirim yokluğuydu.
@@ -11920,7 +11757,6 @@ function toMenu(){
   Season.refresh();
   refreshProgress();
   refreshFoldUI();
-  closeCare();   // ağıla her dönüşte bakım ekranı KAPALI başlar — sürpriz durum yok
   /* Süt akışı — GÖRÜNÜR tüketim (bağlayıcı madde 3): son oynanan sabah
      kilerden bir şey gittiyse BİR KEZ söylenir, sonra tüketilir (bir daha
      gösterilmez — "önce göster" tek seferlik uyarılarla aynı desen,
@@ -11985,13 +11821,6 @@ $('btnReload').addEventListener('click', e => { e.stopPropagation(); startReload
    DOM tutkalı. Girdi yolu GERÇEKTEN bağlı olmalı: bu depo bir kez
    mantığı test edip sürükleme yolunu sınamadı ve sahibi telefonda
    kilitlendi (kışlak dersi, docs/devir-duckhunt10-2026-08-18.md §6). */
-function syncKomutHUD(){
-  /* Kampanyada sol kenar Kangal düğmesinin, ⊚ sağ üst banda taşınıyor
-     (ÖLÇÜLDÜ: docs/komut-dugmesi-yeri-olcumu.md). Sınıfla yapılıyor ki
-     SONSUZ MOD DEĞİŞMESİN (ADR-026 sınırı). */
-  hud.classList.toggle('yayla', !!G.yaylaAktif);
-  syncKangal();
-}
 
 /* ===== TEK KANGAL DÜĞMESİ — girdi yolu (bkz. ==YAYLA==) ==================
    Katman 1 dokun = bağlamsal komut · Katman 2 bas-tut = yelpaze.
@@ -11999,54 +11828,6 @@ function syncKomutHUD(){
    gecikme biner). Jiroskop kuralı: Kangal düğmesinde BAŞLAYAN dokunuş
    asla ateş değildir — düğme kendi olayını yutuyor (stopPropagation +
    preventDefault), ateş dinleyicisi belgeye bağlı. */
-function kangalSahne(){
-  /* Bağlam için sahnedeki nesneler. Tehdit = canlı baskın/kuş, sürü =
-     yaşayan hayvanlar. Kanvas koordinatı. */
-  return {
-    tehditler: (G.strikes || []).concat((G.ducks || []).filter(d => d.threat && !d.done)),
-    suru: aliveFlock(),
-  };
-}
-function kangalIpucu(){
-  return G.yaylaAktif ? Yayla.baglamKomut(kangalSahne(), aim.x, aim.y) : null;
-}
-function syncKangal(){
-  const b = $('btnKangal');
-  if(!G.yaylaAktif || !Yayla.tasinan.length){
-    b.hidden = true; $('yelpaze').hidden = true; return;
-  }
-  b.hidden = false;
-  const cv = $('kangalCv');
-  /* Düğmenin yüzü: verili komut varsa O, yoksa bağlamın önerdiği —
-     yani düğme "şu an basarsan ne olur"u gösteriyor. */
-  const yuz = Yayla.verilen || kangalIpucu() || Yayla.tasinan[0];
-  if(cv && cv.getContext) Yayla.cizIkon(cv, yuz);
-  b.setAttribute('aria-label', 'dog command: '
-    + (Yayla.KOMUT[yuz] ? Yayla.KOMUT[yuz].en : ''));
-  b.classList.toggle('verili', !!Yayla.verilen);
-}
-function yelpazeCiz(){
-  const y = Yayla.yelpaze, kap = $('yelpaze');
-  if(!y){ kap.hidden = true; for(let i = 0; i < 4; i++) $('dilim' + i).hidden = true;
-          $('btnKangal').classList.remove('tutuluyor'); return; }
-  kap.hidden = false;
-  $('btnKangal').classList.add('tutuluyor');
-  const r = $('btnKangal').getBoundingClientRect();
-  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-  /* Dilimler sağa doğru yay: sol kenardaki düğmeden ekranın İÇİNE açılır. */
-  const n = y.dilimler.length;
-  for(let i = 0; i < 4; i++){
-    const d = $('dilim' + i);
-    if(i >= n){ d.hidden = true; continue; }
-    d.hidden = false;
-    const a = (-50 + (100 / Math.max(1, n - 1)) * i) * Math.PI / 180;
-    d.style.left = (cx + Math.cos(a) * 96 - 32) + 'px';
-    d.style.top  = (cy + Math.sin(a) * 96 - 32) + 'px';
-    const k = y.dilimler[i];
-    d.textContent = Yayla.KOMUT[k].en;
-    d.classList.toggle('secili', y.secili === i);
-  }
-}
 /* İki ayrı durum: `kangalTut` zamanlayıcı kimliği, `kangalBekliyor` ise
    "parmak basılı ve eşik daha dolmadı" bayrağı. Kimliğin DOĞRULUĞUNA
    güvenmek kırılgan — koşumun sahte setTimeout'u 0 döndürüyordu ve 0
@@ -12374,7 +12155,6 @@ function syncUI(){
   /* Komut düğmeleri HUD'la birlikte kurulur — bkz. ==YAYLA==. Burada
      olmazsa kampanya açıkken sabaha girildiğinde düğmeler görünmüyor;
      yalnız düğmeye basınca senkron oluyordu, yani hiç. */
-  syncKomutHUD();
   $('modeGyro').setAttribute('aria-pressed', cfg.mode === 'gyro');
   $('modeTouch').setAttribute('aria-pressed', cfg.mode === 'touch');
   /* Kaydırıcı AKTİF MODUN hassasiyetini ayarlar. Tek kaydırıcı iki moda
@@ -12448,13 +12228,7 @@ $('btnAimGyro').addEventListener('click',  () => chooseAim('gyro'));
 
 /* Paylaşım. Hata kullanıcıya SESSİZ kalmamalı: kart çizilmediyse ya da
    tarayıcı dosya paylaşmıyorsa düğme donmuş gibi görünür. */
-$('btnShare').addEventListener('click', async () => {
-  const b = $('btnShare'), old = b.textContent;
-  b.disabled = true;
-  try{ await shareCard(); }
-  catch(e){ b.textContent = U().shareFail; setTimeout(() => { b.textContent = old; }, 2200); }
-  finally{ b.disabled = false; }
-});
+/* PAYLASIM SILINDI (2026-08-21): kart makinesi ve dugmesi kalkti. */
 /* Kaydırıcı AKTİF MODUN değerini yazar. Tek kaydırıcı iki moda birden
    bakınca dokunmatikte oynayan oyuncu jiroskobun ayarını bozuyordu. */
 $('sens').addEventListener('input', e => {
@@ -12662,58 +12436,14 @@ $('hsNisan').addEventListener('click', () => { openSheet(); renderDiag(); });
    yalnizca dokunma hedefi ve etiketi kalkti. */
 const FOLD_HOTSPOTS = ['hsKapi', 'hsKangal', 'hsSuru', 'hsNisan'];
 
-function syncCareUI(){
-  const open = G.care.open;
-  // Kışlak açıkken (ADIM 1) ağılın kendi düğmeleri de kapalı kalmalı —
-  // syncCareUI hangi sırayla çağrılırsa çağrılsın (savunma amaçlı, normal
-  // akışta hsKangal zaten gizli olduğu için care bu sırada açılamaz).
-  const blocked = open || Save.d.kislakPending || G.cardView.open;
-  for(const id of FOLD_HOTSPOTS) $(id).hidden = blocked;
-  if(!blocked) syncSuruUI();   // ağıla dönünce hsSuru KENDİ kuralına göre yeniden görünsün
-  $('careEl').hidden = !open;
-  $('careClose').hidden = !open;
-  $('careBowl').hidden = !open;
-  $('careSargi').hidden = !(open && (Save.d.sore || 0) > 0);
-}
-function openCare(){
-  G.care.open = true; G.care.dragging = null; G.care.petting = false; G.care.petHold = 0;
-  G.care.petT = 0; G.care.flashT = 0; G.care.reactKind = null; G.care.reactT = 0;
-  syncCareUI();
-}
-function closeCare(){
-  G.care.open = false; G.care.dragging = null; G.care.petting = false; G.care.petHold = 0;
-  syncCareUI();
-}
-$('hsKangal').addEventListener('click', openCare);
-$('careClose').addEventListener('click', closeCare);
 
 /* --- paylaşım kartı önizlemesi (bkz. G.cardView, CARD_VIEW_LAYOUT, Attract.
    renderCardView) --- care ile AYNI desen: syncCareUI'nin blocked'ı artık
    G.cardView.open'ı da sayıyor, o yüzden aç/kapatınca ağılın kendi
    hotspot'larını GERİ ÇAĞIRMAK YERİNE syncCareUI() çağırmak yeterli. */
-function syncCardViewUI(){
-  const open = G.cardView.open;
-  $('cardViewClose').hidden = !open;
-  $('cardViewShare').hidden = !open;
-}
-function openCardView(){
-  G.cardView.open = true;
-  syncCardViewUI();
-  syncCareUI();
-}
-function closeCardView(){
-  G.cardView.open = false;
-  syncCardViewUI();
-  syncCareUI();
-}
-$('cardViewClose').addEventListener('click', closeCardView);
 /* Native paylaşım YALNIZ burada, oyuncunun kartı GÖRDÜKTEN sonraki ayrı
    dokunuşuyla tetiklenir (sahibinin kararı, 2026-08-13 — foto'ya dokununca
    dolaysız iOS paylaşım sayfası açılması şikayet konusuydu). */
-$('cardViewShare').addEventListener('click', async () => {
-  try{ await shareCard(); }
-  catch(e){ showMsg(U().shareFail, 150); }
-});
 
 /* KIŞLAK RİTÜELİ TAMAMEN SİLİNDİ (2026-08-20, docs/plan-tek-mod.md).
    Mevsim sonu töreniydi; mevsim kabı kalkınca töreni de kalktı. Ekranı ve
@@ -12767,7 +12497,6 @@ function closeVinyet(){
 function syncVinyetUI(){
   const open = G.vinyet.open;
   if(open) for(const id of FOLD_HOTSPOTS) $(id).hidden = true;
-  else syncCareUI();   // ağıl hotspot'larını KENDİ kuralına göre geri getirir
   $('hsVinyetSkip').hidden = !open;
   $('hsVinyetSkip').setAttribute('aria-label', U().hsVinyetSkip);
 }
@@ -12777,75 +12506,18 @@ $('hsVinyetSkip').addEventListener('click', closeVinyet);
    vinyet ile AYNI desen (frame/t zamanlayıcı, tam ekran atla), tek fark:
    kapanışta finishSagimYakin() applySagim()'i ÇAĞIRIR — süt gerçekten
    kilere gider, bu bir dekor DEĞİL, o sabahın İLK sağımının kendisi. */
-function openSagimYakin(){
-  G.sagimYakin.open = true; G.sagimYakin.frame = 0; G.sagimYakin.t = 0;
-  G.sagimYakin.telSaid = false;
-  syncSagimYakinUI();
-}
-function finishSagimYakin(){
-  applySagim();
-  G.sagimYakin.open = false;
-  syncSagimYakinUI();
-}
-function syncSagimYakinUI(){
-  const open = G.sagimYakin.open;
-  if(open) for(const id of FOLD_HOTSPOTS) $(id).hidden = true;
-  else syncCareUI();
-  $('hsSagimSkip').hidden = !open;
-  $('hsSagimSkip').setAttribute('aria-label', U().hsSagimSkip);
-}
-$('hsSagimSkip').addEventListener('click', () => { if(G.sagimYakin.open) finishSagimYakin(); });
 
 
 /* SARMA — yorgunluk 2 -> 1 sabah, BEDAVA (süt istemez). Yalnız köpek
    gerçekten yorgunken bir şey yapar; sargı hotspot'u zaten yalnız o hâlde
    görünür (bkz. syncUI). reactKind/reactT: renderCare'in okuduğu bir
    kerelik fiziksel tepki (irkilme) — bkz. Attract.update() geri sayımı. */
-function applySarma(){
-  Telemetry.careUsed('sarma');
-  if((Save.d.sore || 0) <= 0) return;
-  Save.d.sore = Math.max(0, Save.d.sore - 1);
-  /* PANSUMAN ARTIK KALICI BİR İZ BIRAKIYOR: en yeni BAKILMAMIŞ taze yara
-     "pansumanlı" işaretleniyor, yani o yara kapanana kadar portrede sargılı
-     görünüyor. Eskiden bu eylemin görünür karşılığı yalnız o anki parıltı
-     ve yorgunluk sayacıydı; ikisi de o sabahla sınırlıydı.
-     En YENİSİ seçiliyor çünkü çoban en son açılan yaraya bakar. */
-  const log = Save.d.scarLog || [];
-  for(let i = log.length - 1; i >= 0; i--){
-    const yas = (Save.d.mornings || 0) - (log[i].m || 0);
-    if(!log[i].t && yas >= 0 && yas < SCAR_CLOSE_MORNINGS){ log[i].t = 1; break; }
-  }
-  Save.put();
-  G.care.flashT = 90;
-  G.care.reactKind = 'sarma'; G.care.reactT = 34;
-  /* Anın İNMESİ: kısık bir ses ve kısa bir dokunuş. hitStop() ve shake()
-     BİLEREK kullanılmadı — ikisi de yalnız sabahın update()/render()
-     döngüsünde tüketiliyor, bakım ekranı Attract üzerinden çiziliyor, yani
-     buraya konsalardı cetvelin saydığı ama oyuncunun hiç hissetmediği
-     sinyaller olurlardı. buzz() ve Snd doğrudan çalışıyor. */
-  Snd.careWrap(); buzz(10);
-  showMsg(U().careSargiDone, 150);
-  syncCareUI();   // yorgunluk 0'a indiyse sargı hotspot'u kaybolur
-}
 /* BESLEME — ertesi sabah tok, boğuşması kısa (bkz. startRun() G.dogFed,
    WOLF.fedFightMul). Süt/azık ekonomisine bağlanması ADIM 4'te. */
 /* BESLEME (ADIM 4 güncellemesi): "gideceği yer belli: geçit azığı + köpek
    besleme" — SARMA'nın aksine besleme SÜT İSTER (bir güğüm), tasarımın
    kendi ekonomi akışı. Kiler boşsa besleme YAPILAMAZ — sessizce
    başarısız olmaz, aynı "boş" notunu (foldRafBos) gösterir. */
-function applyBesleme(){
-  Telemetry.careUsed('besle');
-  if((Save.d.larder || 0) < SAGIM.besleCost){
-    showMsg(U().foldRafBos, 120);
-    return;
-  }
-  Save.d.larder -= SAGIM.besleCost;
-  Save.d.dogFed = true;
-  Save.put();
-  G.care.reactKind = 'besle'; G.care.reactT = 40;
-  Snd.careFeed(); buzz(8);
-  showMsg(U().careBesleDone, 150);
-}
 
 /* ÜÇ FİZİKSEL NESNE, AYNI SÜRÜKLEME DESENİ (ADIM 3 yeniden kuruluşu,
    2026-08-13 — docs/referans/bakim-nintendogs.md): pointerdown nesneyi
@@ -12880,51 +12552,11 @@ function applyBesleme(){
    TAP_ESIK 6 kanvas pikseli: telefonda parmak hiçbir zaman tam durmaz,
    sıfır tolerans "dokunuş" diye bir şey bırakmazdı. */
 const CARE_TAP_ESIK = 6;
-function careDragSetup(id, key, guard, onDrop, onTap){
-  const el = $(id);
-  el.addEventListener('pointerdown', e => {
-    if(!G.care.open || (guard && !guard())) return;
-    e.preventDefault();
-    G.care.dragging = key;
-    G.care.dragPt = canvasPt(e);
-    G.care.basPt = G.care.dragPt;             // dokunuş mu sürükleme mi — bunun için
-    if(key === 'el') updatePetting();
-    try{ el.setPointerCapture(e.pointerId); }catch(err){}
-  });
-  el.addEventListener('pointermove', e => {
-    if(G.care.dragging !== key) return;
-    G.care.dragPt = canvasPt(e);
-    if(key === 'el') updatePetting();
-  });
-  function end(e){
-    if(G.care.dragging !== key) return;
-    G.care.dragging = null;
-    G.care.petting = false;
-    const p = e ? canvasPt(e) : G.care.dragPt;
-    const b0 = G.care.basPt || p;
-    const dokunus = Math.abs(p.x - b0.x) <= CARE_TAP_ESIK &&
-                    Math.abs(p.y - b0.y) <= CARE_TAP_ESIK;
-    if(dokunus){ if(onTap) onTap(); else if(onDrop) onDrop(); return; }
-    if(onDrop){
-      const b = CARE_LAYOUT.portrait;
-      if(p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) onDrop();
-    }
-  }
-  el.addEventListener('pointerup', end);
-  el.addEventListener('pointercancel', () => end(null));
-}
-function updatePetting(){
-  const p = G.care.dragPt, b = CARE_LAYOUT.portrait;
-  G.care.petting = p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
-}
-careDragSetup('careSargi', 'sargi', () => (Save.d.sore || 0) > 0, applySarma);
-careDragSetup('careBowl', 'bowl', null, applyBesleme);
 /* SEVME dokunuşla da olur — ama uygulanan şey yine bir EYLEM değil bir
    DURUM: petHold kadar kare boyunca köpek yaslanmayı sürdürür, sonra
    kendiliğinden bırakır. Dokunan oyuncu tepkiyi görüyor, ve "sevmenin
    mekanik etkisi YOK, olmamalı" kararı bozulmuyor: Save.d'ye burada da
    hiç dokunulmuyor. */
-careDragSetup('careEl', 'el', null, null, () => { G.care.petHold = CARE_PET_MAX + 24; });
 
 /* FOTO ARTIK ANA EKRANDA DEGIL (2026-08-20). Paylasim kart makinesi
    (openCardView/renderCardView/shareCard) DURUYOR ama cagrisi yolculugun
@@ -12934,50 +12566,10 @@ careDragSetup('careEl', 'el', null, null, () => { G.care.petHold = CARE_PET_MAX 
 /* Sağım (ADIM 4, docs/mevsim-tasarim.md "Süt -> kiler -> azık -> kışlak").
    ELLE: her dokunuş BİR koyunu sağar. hsSuru zaten yalnız sağılacak
    koyun kaldığında görünür (syncSuruUI) — "gerek yoksa gösterme". */
-function applySagim(){
-  /* TEK MOD (2026-08-20, docs/plan-tek-mod.md): sağımın MEVSİM yolu
-     silindi. Eskiden burada iki yol vardı — kampanya kileri (Yayla.kiler)
-     ve sonsuz modun kileri (Save.d.larder) — ve hangisine gideceği
-     `Yayla.aktif` kapısıyla seçiliyordu. Sonsuz mod kalktığı için ikinci
-     yol artık ulaşılamaz koddu; silmek yerine bırakmak, ileride birinin
-     "iki kiler var" sanmasına yol açardı. Tek kaynak: Yayla.kiler.
-
-     Yolculuk bittiyse sağım da yok: sürüsü olmayan ya da eve varmış
-     çobanın sağacak koyunu yok. Sessiz dönüş burada doğru, çünkü o hâlde
-     ekranda zaten bitiş ekranı duruyor ve sürüye dokunulamıyor. */
-  if(!Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return;
-  Telemetry.milkedOne();
-  /* SESSİZ RED YOK (oyuncu raporu 2026-08-20): yanlış sahnede ya da
-     günlük iş hakkı bitmişken dokunan oyuncu sebebini duyuyor. */
-  if(Yayla.sahne() !== 'konak'){ showMsg(U().sagimSahne, 120); return; }
-  if(!Yayla.sag(Save.d.flock | 0)){ showMsg(U().sagimYok, 120); return; }
-  /* Anın İNMESİ: hitStop() ve shake() BİLEREK yok — ikisi de yalnız
-     sabahın update()/render() döngüsünde tüketiliyor, ağıl ise Attract
-     üzerinden çiziliyor. Buraya konsalardı cetvelin saydığı ama oyuncunun
-     hiç hissetmediği sinyaller olurlardı. */
-  Snd.sagimGugum(); buzz(6);
-  G.sagim.flashT = 46;              // rafın üstünde sönen parıltı (~0.75 sn)
-  showMsg(U().sagimDone, 120);
-  syncSuruUI();
-  if(typeof yaylaDurumYaz === 'function') yaylaDurumYaz();
-}
 /* Dokunuş tetiği: o SABAHIN İLK sağımı yakın çekimi açar (bkz. renderSagimYakin
    — "20 saniyelik hızlı sağım işi" ile "bir kez görülen güzel an" arasındaki
    gerilim, tasarım turunun kendi sorusu), geri kalan koyunlar eski hızlı
    dokun-sağ ile devam eder — sürüde 8 koyun varsa yalnız BİRİ modal açar. */
-function onTapSuru(){
-  /* TEK MOD: mevsim yolu silindi (bkz. applySagim notu). Sağılabilirliğin
-     kararı tamamen Yayla'nın: konak sahnesi + günlük iş hakkı + sağım
-     tavanı. Yakın çekim günün İLK sağımında açılır, sonrakiler hızlı
-     gider — "20 saniyelik iş" ile "günde bir kez görülen güzel an"
-     arasındaki denge bu. */
-  if(!Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return;
-  if(Yayla.sahne() !== 'konak'){ showMsg(U().sagimSahne, 120); return; }
-  if(Yayla.yuvaKalan <= 0){ showMsg(U().sagimYok, 120); return; }
-  if(Yayla.sagimBugun === 0) openSagimYakin();
-  else applySagim();
-}
-$('hsSuru').addEventListener('click', onTapSuru);
 /* hsSuru görünürlüğü: sağılacak koyun (milkedThisCycle < milkableCount)
    kaldığında görünür. Ayrı bir fonksiyon — hem ağıla her dönüşte
    (refreshFoldUI) hem her sağımdan sonra çağrılıyor. */
@@ -12993,10 +12585,6 @@ $('hsSuru').addEventListener('click', onTapSuru);
 
    Sessiz reddin bedeli görünmez: oyuncu yanlış bir şey yaptığını değil,
    oyunun çalışmadığını öğreniyor. */
-function syncSuruUI(){
-  if(Season.day === null) Season.refresh();
-  $('hsSuru').hidden = false;
-}
 
 /* Sağılacak koyun var mı — hem noktanın (foldNokta) hem de sağım
    reddinin okuduğu TEK kaynak. İki yerde ayrı ayrı hesaplanırsa nokta
@@ -13023,14 +12611,6 @@ function syncSuruUI(){
       "şimdi"yi okur ve ağıla girişte kurulmuş günü SESSİZCE değiştirir.
       Her karede çağrılan bir yerde ise ayrıca ağır. Nokta bir SORU
       soruyor, durum kurmuyor: gün bilinmiyorsa cevabı "hayır". */
-function sagilabilirVar(){
-  /* TEK MOD: tek kapı, Yayla. (Eski mevsim dalı silindi — bkz. applySagim.)
-     `typeof` koruması duruyor: bu fonksiyon ÇİZİM yolundan çağrılıyor ve
-     tarayıcı ilk kareyi harici betikler yorumlanmadan basabiliyor. Bir kez
-     bütün oyunu dondurdu (2026-08-20). */
-  if(typeof Yayla === 'undefined' || !Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return false;
-  return Yayla.sahne() === 'konak' && Yayla.yuvaKalan > 0;
-}
 
 /* Takvim (büyük tasarım turu, 2026-08-14) — eski #calGrid DOM ızgarası
    yerine renderTakvim (bkz. Attract nesnesi) canvas'a çiziyor, careClose/
@@ -13049,20 +12629,11 @@ function sagilabilirVar(){
 function refreshFoldUI(){
   const u = U();
   $('hsKapi').setAttribute('aria-label', u.hsKapi);
-  $('hsKangal').setAttribute('aria-label', u.hsKangal);
   /* Nişan köşesinin etiketi sensör durumunu SÖYLER. Kızıl parıltı
      görmeyene o bilgiyi taşıyan tek şey bu — yazıdan resme geçmek
      ekran okuyucu için bir gerileme OLMAYACAK (eski btnDiag'ın
      görünürlüğü de aynı bilgiyi taşıyordu). */
   $('hsNisan').setAttribute('aria-label', G.sensorBad ? u.hsNisanBad : u.hsNisan);
-  $('hsSuru').setAttribute('aria-label', u.hsSuru);
-  syncSuruUI();
-  $('careClose').setAttribute('aria-label', u.careClose);
-  $('careEl').setAttribute('aria-label', u.careEl);
-  $('careBowl').setAttribute('aria-label', u.careBowl);
-  $('careSargi').setAttribute('aria-label', u.careSargi);
-  $('cardViewClose').setAttribute('aria-label', u.careClose);
-  $('cardViewShare').setAttribute('aria-label', u.share);
 }
 
 /* --- dili arayüze uygula --- */
@@ -13131,24 +12702,6 @@ Assets.load().then(() => { if(Assets.ready) console.info('atlas yuklendi'); });
 
    Hata artık YUTULMUYOR, console.error'a düşüyor: bu fonksiyon
    çökerse oynanacak oyun kalmıyor, sessiz kalması kabul edilemez. */
-function yolculugaAc(){
-  try{
-    if(Save.d.campaign) Yayla.yukle(Save.d.campaign);
-    if(!Yayla.sefer){
-      Yayla.ac(G);
-      Yayla.seferBasla();
-      if(typeof TEHDIT !== 'undefined') TEHDIT.seferSifirla();
-    }
-    if(Yayla.sefer && !Yayla.sefer.bitti){
-      Yayla.ac(G);
-      Yayla.gunuBaslat();
-      if(typeof yaylaOynanmayanlariAtla === 'function') yaylaOynanmayanlariAtla();
-      syncKomutHUD();
-      if(typeof yaylaDurumYaz === 'function') yaylaDurumYaz();
-    }
-    Save.put();
-  }catch(e){ console.error('YABAN: yolculuk acilamadi', e); }
-}
 
 Attract.reset();
 /* Başlatma adımları TEK TEK korunuyor — bu bir "her ihtimale karşı" değil,
@@ -13180,380 +12733,9 @@ for(const [ad, fn] of [['syncUI', syncUI], ['fit', fit], ['fitChrome', fitChrome
   try{ fn(); }catch(e){ console.error('YABAN başlatma adımı çöktü: ' + ad, e); }
 }
 
-/* ==YAYLA-AKIS-START== =====================================================
-   KAMPANYA AKIŞININ OYUNA BAĞLANMASI (kablo).
-
-   NİYE VAR. tools/kosum.js ölçtü: sefer makinesi 45 günü doğru
-   döndürüyor ve ekonomisi yürüyor, ama oyunun HİÇBİR YERİ onu
-   çağırmıyordu (altı giriş noktasının 0'ı). Yani makine çalışıyor,
-   anahtarı kimse çevirmiyor. Bu blok anahtarı takıyor.
-
-   TEK YOL. Gün döngüsünün sırası (sahneler → tüketim → kapı → azık)
-   `Yayla.gunuBaslat/sahneyiBitir/gunuKapat` içinde, tek yerde. Buradaki
-   kod o üçünü ÇAĞIRIYOR, kendi sırasını kurmuyor — ölçüm aracı da aynı
-   üçünü çağırıyor, yani araç oyunun kendi yolunu ölçüyor.
-
-   HER ŞEY `Yayla.aktif` ARKASINDA. Kampanya kapalıyken bu bloğun hiçbir
-   satırı iş yapmıyor; sonsuz mod bugünkü gibi davranıyor (ADR-003/008).
-
-   ATLANAN SAHNELER GÖRÜNÜR. 'yol' ve 'buyukgun' sahnelerinin oynanabilir
-   hâli HENÜZ YAZILMADI. Onları sessizce atlamak "kampanya oynanıyor"
-   yanılsaması yaratırdı — bu deponun en pahalı hata ailesi tam olarak
-   bu. Atlanan her sahne EKRANDA söyleniyor ve durum satırına yazılıyor. */
-
-/* Oynanabilir hâli olmayan sahneler — ARTIK BOŞ. 'buyukgun' isimli
-   tehditlerin sahnesi oldu, 'yol' da göç makinesine bağlandı. Liste
-   bilerek duruyor: yeni bir sahne eklenirse önce buraya girer, sessizce
-   atlanan bir sahne olmasın. */
-const YAYLA_OYNANMAYAN = [];
-
-/* Kampanyanın gün-durumu, tek satır.
-
-   BU BLOK GELİŞTİRİCİ PANELİNİ TANIMIYOR — bilerek. İlk yazımda panelin
-   durum satırına DOĞRUDAN yazıyordu ve sızıntı denetimi bunu yakaladı:
-   yayın sürümünde deneme bloğu tümüyle SÖKÜLÜYOR, ama bu satır kalıyor
-   ve sökülmüş bir özelliğin adı yayına sızıyordu. (Denetim metin araması
-   yaptığı için YORUMDA geçen ad bile sızıntı sayılıyor — bu yorumun
-   böyle dolambaçlı yazılmasının sebebi o.)
-   Bağ artık ters: panel varsa KENDİSİ bir alıcı takıyor. */
-function yaylaDurum(){
-  if(!Yayla.aktif || !Yayla.sefer) return 'yayla seferi kapali';
-  const sf = Yayla.sefer, b = Yayla.seferBolum();
-  if(sf.bitti) return 'sefer bitti: ' + sf.bitti;
-  return 'B' + sf.bolum + ' ' + (b ? b.ad : '') + ' · gun ' + sf.gun +
-    '/' + (b ? b.gunler.length : '?') + ' (' + Yayla.gunTipi() + ')' +
-    (sf.takilma ? ' · TAKILDI x' + sf.takilma : '') +
-    ' · sahne: ' + (Yayla.sahne() || '—') +
-    ' · kiler ' + Yayla.kiler + ' · yuva ' + Yayla.yuvaKalan;
-}
-let yaylaDurumAlici = null;      // deneme paneli varsa kendini buraya takar
-function yaylaDurumYaz(){ if(yaylaDurumAlici) yaylaDurumAlici(yaylaDurum()); }
-
-/* Oynanabilir hâli olmayan sahneleri atla — ve SÖYLE. */
-function yaylaOynanmayanlariAtla(){
-  const atlanan = [];
-  let s = Yayla.sahne();
-  while(s && YAYLA_OYNANMAYAN.indexOf(s) >= 0){ atlanan.push(s); s = Yayla.sahneyiBitir(); }
-  return atlanan;
-}
-
-/* Sahne bitti: ilerlet. Gün dolduysa günü kapat ve yenisini aç.
-   Dönüş: { sahne } ya da { olay, ... } ya da null (kampanya kapalı). */
-function yaylaSahneIlerlet(){
-  if(!Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return null;
-  let s = Yayla.sahneyiBitir();
-  const atlanan = yaylaOynanmayanlariAtla();
-  s = Yayla.sahne();
-  if(s){
-    /* GELISTIRME NOTU, oyuncuya degil: atlanan sahneler henuz yazilmamis
-       olanlar. Ceviri gerekmiyor cunku normal oyunda hic gorunmemeli —
-       gorunuyorsa eksik sahne var demektir. */
-    if(atlanan.length) showMsg('skipped: ' + atlanan.join(', ') + ' (scene not written yet)', 160);
-    yaylaDurumYaz();
-    return { sahne: s, atlanan };
-  }
-  /* Gün doldu: tüketim + yeterlilik kapısı + azık, hepsi tek yerden. */
-  const r = Yayla.gunuKapat({
-    suru: Save.d.flock | 0,
-    kuzu: yolcuKuzu(),   // bkz. yolcuKuzu: eski hâli GERÇEK TAKVİME bağlıydı
-    kopekYuruyebilir: (Save.d.sore || 0) < DOGRUN.soreMornings,
-  });
-  if(!r) return null;
-  if(r.olay === 'vardi' || r.olay === 'bitis'){ yaylaDurumYaz(); return r; }
-  if(r.olay === 'takilma') showMsg(U().yolaCikilamadi(r.eksik), 200);
-  if(r.olay === 'gericekilme') showMsg(U().geriCekildin, 220);
-  if(r.olay === 'gecis' || r.olay === 'vardi'){
-    /* BÖLÜM SONU TÖRENİ (ADR-024): çentik ELLE atılır, kışlak töreninin
-       dili. Rota tahtası açılır ve yalnız yeni kazanılan durağı hedef
-       kabul eder; oyuncu bıçağı oraya sürükleyene kadar açık kalır.
-       "Bölüm 2" yazısı yok, "OYNA" düğmesi yok — menüye dönülmüyor. */
-    G.rotaToren = r.olay === 'vardi' ? Yayla.SEFER.length : (Yayla.sefer.bolum - 1);
-    G.rotaAcik = true;
-  }
-  Yayla.gunuBaslat();
-  yaylaOynanmayanlariAtla();
-  yaylaDurumYaz();
-  return r;
-}
-
-/* Kampanyada ağıl kapısı: sahneye göre davranır.
-   'sabah' / 'gece' -> nöbete çık (gece perdesi sahneden geliyor)
-   'konak'          -> gunun isi bitti, sonraki sahneye
-   Dönüş: true = bu tık kampanya tarafından KARŞILANDI. */
-function yaylaKapiTiki(){
-  if(!Yayla.aktif || !Yayla.sefer || Yayla.sefer.bitti) return false;
-  const s = Yayla.sahne();
-  if(s === 'konak'){ yaylaSahneIlerlet(); return true; }
-  if(s === 'sabah' || s === 'gece' || s === 'buyukgun'){
-    /* Gece sahnesinde ateşin dünya konumu kuruluyor — çizim sözleşmesi
-       G.yaylaGece'yi okuyor (tek kaynak, bkz. cizGece çağrısı). */
-    G.yaylaGece = (s === 'gece') ? { x: 104, y: GROUND + 6 } : null;
-    return false;                      // normal nöbet yolu devam etsin
-  }
-  return false;
-}
-
-/* --- KARAAYAK KÖPRÜSÜ ------------------------------------------------
-   karaayak.js ana koda TEK yerden bağlanıyor. Bir gün izole edilmek
-   istenirse bağ listesi burada duruyor, dosyanın içine dağılmış değil. */
-function karaOrt(){
-  return {
-    W, GROUND, FLOCK, Yayla, Snd, steer, shake, showMsg, makeWolf,
-    aliveFlock, lrnd, lri,
-    Iz: (typeof Iz !== 'undefined') ? Iz : null,
-    ducks: G.ducks, dog: G.dog, dogTask: G.dogTask,
-    gece: G.yaylaGece,
-    dogHurt: n => { G.dogHurt = Math.max(G.dogHurt || 0, n); },
-  };
-}
-
-/* Karaayak bu sabah gelmeli mi? Kampanyada, büyük günde, üç bölümde. */
-function karaSpawnDene(){
-  if(!G.yaylaAktif || !KARAAYAK.gelmeliMi(Yayla)) return;
-  KARAAYAK.basla(karaOrt(), KARAAYAK.kipFor(Yayla));
-  showMsg(U().karaayakGeldi, 220);
-}
-
-/* --- TEHDİT KÖPRÜSÜ ---------------------------------------------------
-   tehdit.js (vaşak/sırtlan/ayı/hırsız/fırtına) ana koda TEK yerden
-   bağlanıyor. Karaayak'ın köprüsüyle aynı desen. */
-function tehOrt(){
-  return {
-    W, GROUND, FLOCK, Yayla, Snd, shake, showMsg, lrnd, lri, aliveFlock,
-    dog: G.dog, dogTask: G.dogTask, gece: G.yaylaGece,
-    dogHurt: n => { G.dogHurt = Math.max(G.dogHurt || 0, n); },
-    komut: () => (G.yaylaAktif ? Yayla.verilen : null),
-    koyun: id => G.flock.find(a => a.id === id),
-    enYakinKoyun: x => {
-      let b = null, bd = 1e9;
-      for(const a of aliveFlock()){ const d = Math.abs(a.x - x); if(d < bd){ bd = d; b = a; } }
-      return b ? b.id : null;
-    },
-    /* Koyun gitti — KALICI (ADR-008). Ana kodun kendi kayıp yolu:
-       sürü fark eder, sayaç işler. İkinci bir kayıp yolu yazmıyorum. */
-    kap: a => {
-      if(!a || a.state === 'gone') return;
-      a.state = 'gone'; G.lost++; G.missFlash = 26;
-      for(const o of G.flock){
-        if(o === a || o.state === 'gone') continue;
-        o.startle = FLOCK_STARTLE + Math.min(30, Math.round(Math.abs(o.x - a.x) / 12));
-      }
-      Snd.bad();
-    },
-    /* Sesin yönünü DÜNYADA da göster — sesi kapalı oyuncu için
-       (sahibinin erişilebilirlik kuralı). Köpek o yana bakar, o yandaki
-       koyunlar alarma geçer. */
-    yonIsareti: yon => {
-      G.dog.dir = yon;
-      for(const a of aliveFlock()){
-        if(Math.sign(a.x - G.dog.x) === yon && Math.abs(a.x - G.dog.x) < 70){
-          a.state = 'alert'; a.alarm = Math.max(a.alarm || 0, 22);
-        }
-      }
-    },
-    /* Başka bir tehdidin telgraf penceresi açık mı — vaşağın adil olma
-       kuralı bunu soruyor (iki pencere üst üste gelirse kaçırılabilir
-       değil KAÇINILMAZ olur). */
-    baskaTelgrafAcik: () => G.strikes.length > 0 ||
-      G.ducks.some(d => d.threat && d.tState === 'dive') ||
-      G.ducks.some(d => d.kara && !d.done),
-    px: (gg, x, y, w, h, renk) => { gg.fillStyle = renk; gg.fillRect(x | 0, y | 0, w, h); },
-  };
-}
-
-function tehSpawnDene(){
-  if(!G.yaylaAktif) return;
-  const k = TEHDIT.secim(Yayla);
-  if(!k) return;
-  TEHDIT.basla(tehOrt(), k);
-}
-
-/* --- KONAK KATMANI: dokunuş ------------------------------------------
-   Ekran iş BAŞLATMIYOR, hangi işe dokunulduğunu söylüyor (Konak.vur);
-   işi burada yayla.js'in kendi fonksiyonları yapıyor. İlerlemenin tek
-   kaynağı orası kalıyor — ekran ikinci bir kaynak olmuyor. */
-function konakIs(k){
-  const suru = Save.d.flock | 0;
-  if(k === 'sagim')  return !!Yayla.sag(suru);
-  if(k === 'kirkim') return !!Yayla.kirkim(suru);
-  if(k === 'bahce')  return !!(Yayla.sefer.bolum === Yayla.BAHCE.hasatBolum ? Yayla.hasat() : Yayla.ek());
-  if(k === 'egitim'){
-    /* KOMUT SEÇİMİ MENÜ DEĞİL, SIRA. Harita komutları bölümlere
-       BAĞLIYOR (DUR@2, GETİR@3, SUS@6, SAVUR@8), yani "hangisini
-       eğiteyim" sorusunun cevabı zaten belli — bir seçim ekranı
-       eklemek ADR-024'ün yasakladığı menü katmanını geri getirirdi.
-       Sırası gelmiş ve henüz öğrenilmemiş ilk komut seçilir.
-       BU SATIR OLMADAN oyuncu HİÇBİR komutu öğrenemiyordu: egitimSec
-       oyunun hiçbir yerinden çağrılmıyordu, yani DUR/GETİR/SUS/SAVUR
-       asla eline geçmiyor ve vaşak/ayı/sırtlanın tasarlanmış çözümleri
-       ulaşılamaz kalıyordu. */
-    if(!Yayla.egitimHazirla()) return false;
-    const r = Yayla.yuvaHarca('egitim');
-    if(r && r.seans && r.seans.bitti) showMsg(U().komutOgrenildi(Yayla.KOMUT[r.seans.k].tr), 240);
-    return !!r;
-  }
-  if(k === 'bakim')  return !!Yayla.yuvaHarca('bakim');
-  if(k === 'odun'){ if(Yayla.odun <= 0) return false; Yayla.odunAt(1); return true; }
-  if(k === 'alet'){
-    if(typeof Alet === 'undefined' || !Alet.temizle()) return false;
-    /* Bedel BURADA ödeniyor (ADR-007): temizlik bir yuva yer, yani o
-       sabah sağamadığın süt. alet.js bilerek yalnız kiri sıfırlıyor. */
-    if(!Yayla.yuvaHarca('bakim')){ return false; }
-    return true;
-  }
-  return false;
-}
-cv.addEventListener('pointerdown', e => {
-  if(!G.yaylaAktif || !Yayla.sefer || Yayla.sefer.bitti) return;
-  if(G.rotaAcik) return;                       // tören/tahta açıkken konak sağır
-  if(Yayla.sahne() !== 'konak') return;
-  if(G.phase !== 'idle') return;               // yalnız ağıl/konak dururken
-  const p = canvasPt(e);
-  const k = Konak.vur(p.x, p.y, Yayla);
-  if(!k) return;
-  e.preventDefault();
-  if(konakIs(k)){ Snd.sagimGugum(); buzz(6); }
-  else Snd.empty();
-  yaylaDurumYaz();
-});
-
-/* --- YOL ÇIKINI: ağıldaki giriş nesnesi ------------------------------
-   Sefer yoksa yolculuğu BAŞLATIR; varsa rota tahtasını AÇAR. Menü yok,
-   mod seçimi yok — dünyada duran bir nesneye dokunuyorsun (ADR-024). */
-function seferBaslat(){
-  Yayla.ac(G);
-  Yayla.seferBasla();
-  TEHDIT.seferSifirla();
-  Yayla.gunuBaslat();
-  yaylaOynanmayanlariAtla();
-  syncKomutHUD();
-  yaylaDurumYaz();
-  showMsg(U().cikinBasladi, 240);
-}
-$('hsCikin').addEventListener('click', () => {
-  /* TÖREN SÜRERKEN ÇIKIN SAĞIR: çentik atılmadan tahta kapanmaz.
-     Aksi hâlde oyuncu töreni kazara kapatıp bölüm geçişini yarım
-     bırakabiliyordu (testte yakalandı). */
-  if(G.rotaToren) return;
-  if(Cikin.seferVar(Yayla)){ G.rotaAcik = !G.rotaAcik; return; }
-  if(Cikin.seferBitti(Yayla)){ yeniYolculuk(); return; }
-  seferBaslat();
-});
-
-/* ===== YENİ YOLCULUK — bitişten sonra çıkış yolu ======================
-   BURASI BİR ÇIKMAZDI. Yolculuk bitince (ister eve varılmış olsun ister
-   sürü tükenmiş) çıkına dokunmak hiçbir şey yapmıyordu: satır
-   `return`'dü ve yorumu "bitiş ekranı zaten çizili" diyordu. Doğruydu
-   ama eksikti — ekran çiziliyordu, oyuncunun ORADAN ÇIKACAK bir yolu
-   yoktu. Oyun bitiyor ve bir daha başlamıyordu.
-
-   Sahibinin kararı (docs/plan-tek-mod.md): sürü biterse SERT SON, ve
-   "yeni yolculuk aynı sürünün geri gelmesi değil, YENİ bir sürüyle ayrı
-   bir seferdir".
-
-   NE SIFIRLANIYOR, NE KALIYOR — ayıran çizgi tek:
-   **kalıcı olan GÜÇ değil BİLGİ olsun.**
-   Gerekçe: kalıcı güç birikirse oyuncunun ikinci turu "bu sefer daha
-   güçlüyüm" olur, "bu sefer başka türlü gideceğim" değil — ve oyun
-   sessizce bir roguelite'a döner. O yüzden sürü, kiler ve köpeğin
-   öğrendiği komutlar sıfırlanıyor; oynanmış olmanın kaydı (mornings,
-   scars) duruyor.
-
-   İZLER (Iz) BİLEREK ELLENMEDİ: aynı çizgiyle çelişiyor olabilirler ve
-   teşhisi ayrı yürüyor (docs/iz-karari.md). Burada sessizce karar
-   vermek, açık bir tasarım sorusunu koda gömmek olurdu. */
-function yeniYolculuk(){
-  Save.d.flock = FLOCK_START;
-  Save.d.sore = 0;
-  Save.put();
-  Yayla.ac(G);
-  Yayla.seferBasla();
-  Yayla.kiler = 0;
-  if(Array.isArray(Yayla.ogrenilen)) Yayla.ogrenilen.length = 0;
-  if(Yayla.bireyler) Yayla.bireyler = {};
-  if(typeof TEHDIT !== 'undefined') TEHDIT.seferSifirla();
-  Yayla.gunuBaslat();
-  if(typeof yaylaOynanmayanlariAtla === 'function') yaylaOynanmayanlariAtla();
-  syncKomutHUD();
-  if(typeof yaylaDurumYaz === 'function') yaylaDurumYaz();
-  Save.put();
-  showMsg(U().yeniYolculuk, 240);
-}
-
-/* Kaybedilen koyunların ADLARI. Bitiş ekranıyla AYNI kaynak: kimlik
-   haritasında olup hayatta olmayanlar. Sayı değil isim — ADR-008'in
-   "kayıp kalıcı ve trajik" kararının tek gerçek karşılığı. */
-function kampanyaKayipAdlari(){
-  if(!Yayla.aktif || !Yayla.bireyler) return [];
-  const sag = new Set(aliveFlock().map(a => a.id));
-  const adlar = [];
-  for(const id of Object.keys(Yayla.bireyler)){
-    if(sag.has(Number(id)) || sag.has(id)) continue;
-    const b = Yayla.BIREY[Yayla.bireyler[id]];
-    if(b) adlar.push(b.en);
-  }
-  return adlar;
-}
-
-/* --- ROTA TÖRENİ: çentik ELLE atılır --------------------------------
-   ADR-024: "çentik ELLE atılır (kışlak töreninin dili)". Sürükleme
-   YOLU sınanıyor, yalnız fonksiyon değil — kışlak töreni tam bu
-   boşluktan kilitlenmişti (sahibi telefonda takılı kaldı) ve dersi
-   şuydu: **jest yarıda kalırsa oyun KİLİTLENMEMELİ.**
-   Bu yüzden iki yol var: sürükle-bırak, VE hedefe doğrudan dokunmak. */
-function rotaTorenBitti(durak){
-  G.rotaToren = 0;
-  G.rotaAcik = false;
-  G.rotaSecili = 0;
-  const b = Yayla.SEFER[durak - 1];
-  showMsg(U().centikAtildi(b ? b.ad : String(durak)), 240);
-  Snd.hit(); buzz(10);
-  Save.put();
-}
-cv.addEventListener('pointerdown', e => {
-  if(!G.yaylaAktif || !G.rotaAcik) return;
-  const p = canvasPt(e);
-  /* KAPATMA — tören sürmüyorken. Defter tam ekran ve kapatma yolu
-     GÖRÜNÜR olmak zorunda: bulunamayan kapatma, oyuncunun oyunu donmuş
-     sanmasıdır (yan oturumun kendi modal uyarısı). Tek çağrı hem KAPAT
-     şeridini hem defterin dışındaki siyah alanı karşılıyor. */
-  if(!G.rotaToren){
-    if(Rota.kapatmaMi(p.x, p.y)){ e.preventDefault(); G.rotaAcik = false; G.rotaSecili = 0; return; }
-    /* Durağa dokunmak hiçbir yere GİTMEZ — yalnız o durağın kaydını
-       açar (ADR-024: bölüm seçilemez). Sol sayfada son beş kayıt
-       duruyor; daha eskisine bu yoldan bakılıyor. */
-    const d = Rota.durakVur(p.x, p.y, Yayla.SEFER);
-    if(d){ e.preventDefault(); G.rotaSecili = (G.rotaSecili === d) ? 0 : d; }
-    return;
-  }
-  if(Rota.tut(p.x, p.y, Yayla.sefer, G.rotaToren)){ e.preventDefault(); return; }
-  /* YEDEK YOL: hedefe DOĞRUDAN dokunmak da çentiği atar.
-     `Rota.birak` burada kullanılamıyor — o yalnız SÜREN bir sürüklemeye
-     cevap veriyor (ölçüldü, sessizce false dönüyordu). Mesafeyi burada
-     kendimiz ölçüyoruz; başkasının iç durumunu kurcalamak yerine.
-     Niye var: kışlak töreni sürükleme yolu tutmayınca KİLİTLENMİŞTİ ve
-     sahibi telefonda takılı kalmıştı. Bir jestin tek yolu olmamalı. */
-  const hedef = Rota.nokta(G.rotaToren, Yayla.SEFER.length);
-  if(hedef.x != null && Math.hypot(p.x - hedef.x, p.y - hedef.y) <= Rota.KON_R){
-    e.preventDefault();
-    Rota.iptal();
-    rotaTorenBitti(G.rotaToren);
-  }
-}, { passive: false });
-cv.addEventListener('pointermove', e => {
-  if(!Rota.surukle) return;
-  e.preventDefault();
-  const p = canvasPt(e);
-  Rota.tasi(p.x, p.y);
-}, { passive: false });
-cv.addEventListener('pointerup', e => {
-  if(!Rota.surukle) return;
-  const p = canvasPt(e);
-  const r = Rota.birak(p.x, p.y, Yayla.sefer, G.rotaToren, Yayla.SEFER);
-  if(r.kondu) rotaTorenBitti(r.durak);
-});
-cv.addEventListener('pointercancel', () => Rota.iptal());
-/* ==YAYLA-AKIS-END== ===================================================== */
+/* ==YAYLA-AKIS== BLOGU TAMAMEN SILINDI (2026-08-21, sahibinin karari):
+   kampanya akisi, konak, sahne ilerletme, tehdit koprusu, rota toreni.
+   Oyun tek mekanige iniyor: nisan al, ates et, surunu koru. */
 
 
 /* ==ENCOUNTER-PROTOTYPE-START== ============================================
@@ -13739,33 +12921,8 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   });
 }
 </script>
-<!-- YAYLA: 10 bölümlük göç kampanyası. AYRI DOSYA, ve sırası önemli —
-     gömülü blok önce koşar (G, PAL, Save… tanımlanır), bu dosya sonra.
-     Bölme kararı ve önkoşulları: docs/bolme-fizibilite.md, ADR-018. -->
-<script src="yayla.js"></script>
-<!-- ROTA TAHTASI: on duraklı halka (ADR-024). Yayla.SEFER ve sefer.centik
-     okuyor, kendi kopyasını tutmuyor. -->
-<script src="rota.js"></script>
-<!-- KONAK EKRANI: kanca sırası. Yayla'dan türetir, kopya tutmaz. -->
-<script src="konak.js"></script>
-<!-- BİTİŞ EKRANI: iki son, tek ekran. Kayıp İSİMLE. -->
-<script src="bitis.js"></script>
-<!-- YOL ÇIKINI: kampanyanın ağıldaki giriş nesnesi. -->
-<script src="cikin.js"></script>
-<!-- ÜRETİLEN SANAT: PixelLab kareleri, oyunun paletine çevrilmiş.
-     Elle düzenlenmez — kaynak art/gen/, üretici tools/tehditsanat.js. -->
-<script src="tehditsanat.js"></script>
-<!-- ALET BAKIMI ve İZLER: ADR-022'nin son iki yan işi. -->
-<script src="alet.js"></script>
-<script src="iz.js"></script>
-<!-- KARAAYAK: kampanyanın isimli köpek sürüsü. yayla.js'ten SONRA —
-     Yayla.cizTehdit ve Yayla.gorunur'u okuyor. -->
-<script src="karaayak.js"></script>
-<!-- TEHDİT: vaşak · sırtlan · ayı · hırsız · fırtına. yayla.js ve
-     karaayak.js'ten SONRA. -->
-<script src="tehdit.js"></script>
-<!-- BOOT: oyunun tek giris noktasi. EN SONDA olmak ZORUNDA — yolculugu
-     acan cagri Yayla/TEHDIT tanimliyken kosmali. Sebebi boot.js'in ici. -->
-<script src="boot.js"></script>
+<!-- KAMPANYA BETIKLERI SILINDI (2026-08-21): yayla, rota, konak, bitis,
+     cikin, tehditsanat, alet, iz, karaayak, tehdit, boot. Oyun tek
+     mekanige indi: nisan al, ates et, surunu koru. -->
 </body>
 </html>
