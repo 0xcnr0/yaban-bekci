@@ -711,9 +711,15 @@ html.tiny  #progNote{display:none}
     <!-- YOL ÇIKINI (==CIKIN==): kampanyanın ağıldaki GİRİŞ nesnesi.
          Ayarlardan/menüden değil, DÜNYADAN giriliyor (eski karar kaydi — belge silindi).
          Sefer yoksa yolculuğu başlatır, varsa rota tahtasını açar. -->
-    <!-- Sağım (ADIM 4): dokun-sağ — her dokunuş kuzulu bir koyunu sağar.
-         Yalnız kuzulama başladıktan (12. gün) sonra, sağılacak koyun
-         kaldığında görünür (bkz. syncSuruUI). -->
+    <!-- KÖPEK ve SÜRÜ (2026-08-21): ağılın iki canlı nesnesi. Dokunuş
+         MEKANİK bir şey yapmıyor ve yapmamalı — bakım katmanı tam da o
+         yüzden söküldü. Yaptığı tek şey CEVAP vermek: köpek dikilip
+         başını çevirir ve havlar, sürü ürküp otlamayı keser.
+         Duran bir nesneye dokunup hiçbir şey olmaması, oyuncuya "yapacak
+         iş yok" değil "oyun bozuk" diye okunuyor (oyuncu raporu
+         2026-08-20) — bu iki düğme tam o boşluğu kapatıyor. -->
+    <button class="hs" id="hsKangal"></button>
+    <button class="hs" id="hsSuru"></button>
     <!-- Paylaşım kartı önizlemesi (bkz. G.cardView): foto'ya dokununca
          açılır, ağılın İÇİNDEKİ bir alt durum.
          Kart ÖNCE burada görünür, native paylaşım yalnız cardViewShare'e
@@ -1034,6 +1040,9 @@ const STR = {
          daha vardı (DENE/TRY) ve adaya bağlıydı; seçim o bağı kaldırdı, anahtar
          da silindi — kullanılmayan dizge sonraki turda "bu ne?" diye zaman yakar. */
       foldEtiketNisan:'NİŞAN', foldEtiketKapi:'NÖBET',
+      /* Ağılın üst şeridi: oyuncunun bilmesi gereken tek sayı. KANVASA
+         çiziliyor — font testine giriyor (bkz. smoke.js FOLDFN). */
+      foldSuru:n => n + ' HAYVAN',
       hsNisan:'Nişan ayarları', hsNisanBad:'Nişan ayarları — sensör sorunu var',
       /* Ağıl etiketleri (o zamanki tercih, 2026-08-13: "pixel hunt" geri
          bildirimi — sanat beğenildi, işlev anlaşılmadı; dokunmatikte
@@ -1042,7 +1051,7 @@ const STR = {
          okunuyor). NESNENİN ADI değil İŞİ yazılır: "KAPI" değil NÖBET.
          KANVASA çiziliyor (renderFold) — font testine girmek ZORUNDA. */
       // ADIM 4: dokun-sağ. sagimDone KANVASA çiziliyor (G.msg) — ASCII tire.
-      hsSuru:'Sürü — sağmak için dokun',
+      hsSuru:'Sürün',
       /* ASCII tire (em-tire "—" DEĞİL, 2026-08-14): DOM'dayken fark etmiyordu
          (textContent Unicode'u basar), takvim KANVASA taşınınca bitmap
          fontta em-tire olmadığı için "?" basardı — dil bütünlüğü testi
@@ -1233,9 +1242,11 @@ const STR = {
          fiil. 3 harf, yani kanvasta takvim tahtasına binme riski (LARDER'ın
          2026-08-13'te yaşadığı hata) hiç doğmuyor. */
       foldEtiketNisan:'AIM', foldEtiketKapi:'GUARD',
+      // "sheep" tekil/çoğul aynı — dal yok, ama Türkçesiyle aynı yoldan geçsin.
+      foldSuru:n => n + ' SHEEP',
       hsNisan:'Aim settings', hsNisanBad:'Aim settings — sensor problem',
       // ADIM 4 — SÖZLÜKTE YOK, FİNALİZE EDİLMEDİ. sagimDone KANVASA çiziliyor.
-      hsSuru:'Your sheep — touch one to milk it',
+      hsSuru:'Your flock',
       /* SESSİZ REDDİN KARŞILIKLARI (oyuncu raporu 2026-08-20). Üçü de
          oyuncuya NEDEN olmadığını söylüyor; "olmadı" demek yetmez, çünkü
          cevapsız bir dokunuş bozukluk gibi okunuyor. Bitmap fontta eğik
@@ -4603,6 +4614,31 @@ const FOLD_LAYOUT = {
   cikin: { x:188, y:120, w:22, h:30 },
 };
 
+/* ===== AGILIN CANLILIGI (2026-08-21) ====================================
+   Agil oyuncunun oyunu ACTIGINDA gordugu ve her kosudan sonra dondugu
+   ekran, ve bugune kadar orada DAVRANAN hicbir sey yoktu: koyunlar tek
+   sprite'in duz bir sirasi, kopek hic cizilmiyor, iki dugme dokunusa
+   sessiz. Buradaki her sayi bir DAVRANISIN dozu.
+
+   KAYIP tablosuyla ayni gerekce: dozu degistirmek icin kod okumak
+   gerekmesin, tek yerde dursun.                                        */
+const AGIL = {
+  yer:       166,   // kopegin ayak hizasi — koyun sirasiyla AYNI cizgi
+  solX:       92,   // devriyenin sol siniri (nisan kosesine girmez)
+  sagX:      292,   // sag siniri (surunun sonu)
+  hiz:      0.34,   // px/kare — yuruyus. Kosmuyor: agil sakin bir yer.
+  hizYorgun:0.20,   // yorgun kopek gorunur bicimde agir hareket eder
+  beklerMin:  80,   // varista duraklama (kare)
+  beklerMax: 220,
+  beklerYorgunEk: 240,
+  bakisAra:   96,   // duraklarken basini cevirme araligi — heykel olmasin
+  urkMesafe:  26,   // koyun kopegi bu yakinlikta fark eder
+  urkSure:   150,   // dokunusla urkme
+  donusUrk:  190,   // kayipla donuste surunun urkuklugu
+  selam:      70,   // kopege dokununca dikilme suresi
+  basim:       11,  // dugmeye basilinca gorunen tepki (kare)
+};
+
 
 
 /* Paylaşım kartı önizlemesi (ADIM 3, sahibinin geri bildirimi 2026-08-13:
@@ -4928,6 +4964,41 @@ const Snd = {
   thud(){ this.noise(0.12, 260, 0.45, 90); },
   laugh(){ this.seq([700,610,540,470], 0.075, 'square', 0.33); },
   bark(){ this.tone(this.vary(300), 0.07, 'square', 0.38, 180); this.noise(0.05, 900, 0.28); },
+
+  /* --- AGIL SESLERI (2026-08-21, yan oturumun istegi uzerine) ----------
+     Agil ekraninda calarlar, yani TEMANIN USTUNE binerler. Nobetteki
+     seslerle ayni ses seviyesinde olurlarsa temayi ezerler ve ekran
+     "alarm" gibi okunur — oysa agil oyunun SAKIN ekrani. Ucu de
+     oynanis seslerinin altinda: karsilastirma icin hit() 0.38,
+     bark() 0.38, meleme() 0.13, flap() 0.09.
+
+     Ucu de mevcut bir sesin YAKININDA ama AYRI olmak zorunda:
+       agilKapi  <-> kayip()   ikisi de tok vurus. Kayip 96 Hz sinus ve
+                               uzun; kapi 140 Hz ucgen ve kisa. Biri
+                               GOVDE darbesi, oteki AHSAP.
+       agilHavla <-> bark()    bark TEHLIKE (kare dalga, sert, gurultulu);
+                               havla SELAM (ucgen, dusen perde, kisik).
+       agilUrk   <-> meleme()  meleme SES cikarir; urkme YALNIZ hisirti —
+                               yun ve toynak. Melemesiz olmasi kasitli:
+                               surunun sesi ile HAREKETI ayri seyler.   */
+  agilKapi(){
+    this.noise(0.06, 900, 0.05, 1500);                  // mentese — kuru, kisa gicirti
+    setTimeout(() => {
+      this.noise(0.10, 300, 0.16, 130);                 // ahsap tok vurus
+      this.tone(this.vary(140), 0.12, 'triangle', 0.10, 96);
+    }, 60);
+  },
+  agilHavla(){
+    // Tek havlama. Perde DUSER — havlamanin sekli budur; sabit perde
+    // "bip" gibi okunuyordu.
+    const f = this.vary(250);
+    this.tone(f, 0.09, 'triangle', 0.16, f * 0.62, 0.01);
+    this.noise(0.04, 700, 0.07);
+  },
+  agilUrk(){
+    this.noise(0.28, 1100, 0.055, 420);                 // yun hisirtisi — filtre duser
+    setTimeout(() => this.noise(0.10, 320, 0.05, 190), 90);   // toynak
+  },
   bad(){ this.tone(150, 0.30, 'sawtooth', 0.42, 70); this.noise(0.3, 500, 0.22); },
 
   /* KAYIP — govdeye inen darbe. Alcak, kisa, MELODISIZ.
@@ -5435,10 +5506,92 @@ const gunAnahtari = dt => dt.getFullYear() + '-' +
    kuşlar, ara ara çimden bakan köpek. HTML katmanı üstte yarı saydam durur. */
 const Attract = {
   birds:[], t:0, dogT:0,
+  /* AGILDAKI KOPEK. x/hx: bulundugu ve gittigi yer; bekle: varista
+     duraklama; sel: oyuncu dokundu, dikildi; adim: bacak karesi. */
+  kopek:{ x:113, hx:113, dir:1, bekle:0, sel:0, adim:0 },
+  urk:0,        // surunun urkuklugu (kare) — sonerek biter
+  kapiT:0,      // NOBET kapisina basildi
+  nisanT:0,     // nisan kosesine basildi
   reset(){
     this.birds = [];
     this.t = 0;
+    const k = this.kopek;
+    k.x = k.hx = FOLD_LAYOUT.kangal.x + 13;
+    k.dir = 1; k.bekle = 0; k.sel = 0; k.adim = 0;
+    this.urk = 0; this.kapiT = 0; this.nisanT = 0;
     for(let i=0;i<3;i++) this.spawn(true);
+  },
+
+  /* Kopegin nereye gidecegi. Isi suruyu korumak, o yuzden en sik oraya
+     gider — devriye rastgele degil, ANLAMLI olsun. */
+  kopekHedef(){
+    const r = Math.random();
+    if(r < 0.40) return FOLD_LAYOUT.suru.x + 8 + Math.random() * 40;
+    if(r < 0.65) return FOLD_LAYOUT.kapi.x + FOLD_LAYOUT.kapi.w / 2;
+    return AGIL.solX + Math.random() * (AGIL.sagX - AGIL.solX);
+  },
+
+  /* Kopegin bir karesi. REDUCED'ta yurumez ama YOK OLMAZ — hareketi
+     kismak varligi silmek degildir. */
+  kopekGuncelle(){
+    const k = this.kopek;
+    if(k.sel > 0) k.sel--;
+    if(REDUCED){ k.adim = 0; return; }
+    const yorgun = (Save.d.sore | 0) > 0;
+    if(k.bekle > 0){
+      k.bekle--;
+      // Dokunulduysa yerinde kipirdanir — duruyor ama CANLI duruyor.
+      k.adim = k.sel > 0 ? ((this.t >> 2) & 1) : 0;
+      // Duraklarken etrafa bakar. Bu olmazsa duran kopek yine heykel.
+      if(k.sel === 0 && k.bekle % AGIL.bakisAra === 0) k.dir = -k.dir;
+      return;
+    }
+    const hiz = yorgun ? AGIL.hizYorgun : AGIL.hiz;
+    const d = k.hx - k.x;
+    if(Math.abs(d) > hiz){
+      k.dir = d > 0 ? 1 : -1;
+      k.x += hiz * k.dir;
+      k.adim = (this.t >> 3) & 1;
+      return;
+    }
+    k.x = k.hx; k.adim = 0;
+    k.bekle = AGIL.beklerMin + ((Math.random() * (AGIL.beklerMax - AGIL.beklerMin)) | 0)
+              + (yorgun ? AGIL.beklerYorgunEk : 0);
+    k.hx = Math.max(AGIL.solX, Math.min(AGIL.sagX, this.kopekHedef()));
+  },
+
+  /* ===== DOKUNUSUN CEVABI =============================================
+     Uc nesne de bir sey VAAT ETMIYOR, yalnizca CEVAP veriyor. Bu ayrimi
+     bilerek koruyorum: mekanik bir odul baglamak bakim katmanini geri
+     getirirdi. Dokunulan bir hayvanin kimildamasi ise vaat degil,
+     dunyanin canli oldugunun kanitidir.                                */
+  kopegeDokun(){
+    const k = this.kopek;
+    k.sel = AGIL.selam;                 // dikilir: yorgunluk cokusu gecici olarak kalkar
+    k.bekle = Math.max(k.bekle, AGIL.selam);
+    k.dir = k.x > W / 2 ? -1 : 1;       // basini ortaya, yani sana cevirir
+    Snd.agilHavla();
+  },
+  suruyeDokun(){
+    this.urk = AGIL.urkSure;
+    Snd.agilUrk();
+  },
+
+  /* Kosudan DONUS. Sayi degil MANZARA: kayipla donen oyuncu suruyu
+     urkek, kopegi acilan yerin basinda bulur; kayipsiz donende kopek
+     kapiya kosup karsilar. Hicbiri yazi yazmiyor. */
+  donusBasla(){
+    const k = this.kopek;
+    if((Save.d.lastLost | 0) > 0){
+      this.urk = AGIL.donusUrk;
+      k.x = k.hx = Math.max(AGIL.solX, Math.min(AGIL.sagX, FOLD_LAYOUT.suru.x - 8));
+      k.dir = 1;
+      k.bekle = AGIL.donusUrk;          // once bekler, sonra devriyeye doner
+      Snd.agilUrk();
+    } else if(Save.d.mornings){
+      k.hx = FOLD_LAYOUT.kapi.x + FOLD_LAYOUT.kapi.w / 2;
+      k.bekle = 0;
+    }
   },
   spawn(anywhere){
     const dir = Math.random() < 0.5 ? -1 : 1;
@@ -5456,6 +5609,11 @@ const Attract = {
   update(){
     this.t++;
     if(G.msgT > 0) G.msgT--;   // ağıl notu (raf/Kangal dokunuşu) — bkz. renderFold
+    // Ağılın canlılığı — bkz. AGIL tablosu.
+    this.kopekGuncelle();
+    if(this.urk > 0) this.urk--;
+    if(this.kapiT > 0) this.kapiT--;
+    if(this.nisanT > 0) this.nisanT--;
     for(let i=this.birds.length-1;i>=0;i--){
       const b = this.birds[i];
       b.life++;
@@ -5588,7 +5746,9 @@ const Attract = {
       /* Nişan köşesi (defter L16) — ayarların ağıldaki nesnesi. Rafın
          ARDINDAN çiziliyor: zeminde ve rafın önünde duruyor. */
       const ns = FOLD_LAYOUT.nisan;
-      drawFoldNisan(g, ns.x, ns.y, FOLD_NISAN_ADAY, G.sensorBad, idle);
+      // Basildiginda nesne 1px cokuyor — tahta bir sey itilince oyle durur.
+      drawFoldNisan(g, ns.x, ns.y + (this.nisanT > 0 ? 1 : 0),
+                    FOLD_NISAN_ADAY, G.sensorBad, idle);
       const k = FOLD_LAYOUT.kangal;
       /* İLK SABAH: köpek kapıya yürür (sahibinin geri bildirimi, 2026-08-13
          — "nereye dokunulacağı anlaşılmıyor", türün pixel-hunt sorunu,
@@ -5598,16 +5758,23 @@ const Attract = {
          Eskiden kosula bir de "sezonun 1. gunu" giriyordu — o takvimdi,
          silindi; kalan kosul zaten dogru olani soyluyor. */
       const guideDog = !Save.d.mornings;
+      const kop = this.kopek;
       if(guideDog){
         const WALK = 90;                            // ~1.5s @60fps, tek seferlik
         const prog = Math.min(1, idle / WALK);
         const ease = prog * prog * (3 - 2 * prog);  // smoothstep — sert başlayıp sert durmasın
-        const kx0 = k.x + 13, ky0 = k.y + 20;
+        const kx0 = k.x + 13;
         const doorX = FOLD_LAYOUT.kapi.x + 16;
         const gx = kx0 + (doorX - kx0) * ease;
         const step = prog < 1 ? ((idle >> 2) & 1) : 0;   // varınca bacaklar durur
+        drawKangal(g, Math.round(gx), AGIL.yer, 1, step, 0, false);
       } else {
-        }
+        /* DEVRIYE. `sel` (oyuncu dokundu) yorgunluk cokusunu gecici
+           olarak kaldiriyor: kopek dikiliyor. Yorgunluk KAYBOLMUYOR,
+           sel bitince geri geliyor — gorunen ceza gorunur kaliyor. */
+        drawKangal(g, Math.round(kop.x), AGIL.yer, kop.dir, kop.adim,
+                   Save.d.scars | 0, kop.sel > 0 ? false : (Save.d.sore | 0) > 0);
+      }
       /* Suru kutusu: agilda kac hayvanin oldugu buradan okunuyor.
 
          THE ROW COMPRESSES INSTEAD OF CAPPING (FINDING 2, option A, the
@@ -5677,13 +5844,25 @@ const Attract = {
            elle çizilmiş DEĞİL) ve her hayvan KENDİ fazında gidip geliyor:
            11 karelik kayma, 32 karelik (~0.53 sn) tempo. Faz olmasaydı
            sıra hep birlikte nabız atardı, kıpırdamazdı. */
+        /* KOPEK YAKLASINCA KOYUN BASINI KALDIRIR. Ekrandaki tek
+           iliski bu: iki ayri animasyon degil, birbirine BAKAN iki
+           varlik. Urkme (this.urk) ayni kanaldan gecer — otlama keser,
+           govde sonen bir genlikle sarsilir. */
+        const kx = kop.x;
+        const urkP = this.urk > 0 ? this.urk / AGIL.urkSure : 0;
         let i = 0;
         for(let slot = 0; slot < yer && i < shown; slot++){
           if(bos.has(slot)) continue;               // burada bir hayvan vardı
           const sx = s.x + 10 + stepX * slot, sy = s.y + s.h - 6;
+          const yakin = !guideDog && Math.abs(sx - kx) < AGIL.urkMesafe;
           const isir = ((idle + i * 11) >> 5) & 1;
-          const kare = 'koyun_dolu' + (isir ? '_b' : '');
-          drawKurt(g, SUT_KOYUN, kare, sx, sy, i % 2 ? -1 : 1);
+          // Basi kalkik koyun ISIRMAZ: taban kare zaten kalkik bas.
+          const kare = (yakin || urkP > 0) ? 'koyun_dolu' : ('koyun_dolu' + (isir ? '_b' : ''));
+          let ox = 0;
+          if(yakin) ox += (sx < kx ? -1 : 1);       // bir adim geri cekilir
+          if(urkP > 0) ox += Math.round(Math.sin((idle + i * 7) * 0.5) * 2 * urkP);
+          const sdir = yakin ? (sx < kx ? -1 : 1) : (i % 2 ? -1 : 1);
+          drawKurt(g, SUT_KOYUN, kare, sx + ox, sy, sdir);
           i++;
         }
         // Kuzu: kuralın kendisi — ilk koyunun yanında, "yanındaki hayvanla söyleniyor".
@@ -5699,6 +5878,32 @@ const Attract = {
          eski -9'luk boşluktan -4'e çekildi (sahibinin geri bildirimi,
          2026-08-13: "havada duruyor" — BASILDI, BAKILDI). */
       const u = U(), kp = FOLD_LAYOUT.kapi;
+      /* KAPIYA BASILDI. Kanat fold.png'de PISMIS, kaydiramiyorum — itilme
+         hissi iki seyle veriliyor: kanadin ust ve ic kenarina inen golge
+         (iceri gitti) ve dibinden kalkan toz. Toz zeminde, kanadin
+         onunde: agirligi olan bir sey hareket etti. */
+      if(this.kapiT > 0){
+        const bp = this.kapiT / AGIL.basim;              // 1 -> 0
+        const orta = kp.x + kp.w / 2;
+        /* ISIK CIZGISI: kanat araladi, obur taraftaki mera sizdi.
+           Genislik bp ile acilip kapaniyor — kapi bir kez soluk aliyor. */
+        const en = Math.max(1, Math.round(3 * bp));
+        px(g, Math.round(orta - en / 2), kp.y + 8, en, kp.h - 14,
+           'rgba(252,226,170,' + (0.55 * bp).toFixed(3) + ')');
+        px(g, Math.round(orta - en / 2) - 1, kp.y + 8, 1, kp.h - 14,
+           'rgba(60,38,30,' + (0.45 * bp).toFixed(3) + ')');   // kenarda koyu kontur
+        px(g, Math.round(orta + en / 2), kp.y + 8, 1, kp.h - 14,
+           'rgba(60,38,30,' + (0.45 * bp).toFixed(3) + ')');
+        /* TOZ: zeminde, kanadin onunde. Agirligi olan bir sey oynadi. */
+        const tozY = kp.y + kp.h - 3;
+        for(let i = 0; i < 7; i++){
+          const yay = (1 - bp) * 7;
+          const yon = i & 1 ? 1 : -1;
+          px(g, Math.round(orta - 21 + i * 7 + yon * yay),
+             Math.round(tozY - yay * 0.8), 3, 1,
+             'rgba(240,214,176,' + (0.60 * bp).toFixed(3) + ')');
+        }
+      }
       /* ===== ÖNERİ A: ETİKET NESNEYE GİRER (sahibi seçti, 2026-08-20) ===
          Eskiden bu beş etiket resmin üstünde HAVADA duruyordu: hiçbir
          şeye tutunmuyor, soluk, ve yan yana gelince göz hangisinin neye
@@ -5789,9 +5994,10 @@ const Attract = {
         /* KÖPEK NOKTASI KALDIRILDI (bakım katmanı söküldü): nokta bir
            eylem vaat ediyordu, ama dokunulacak bir şey kalmadı. Yorgunluk
            kendiliğinden geçiyor (finishMorning), oyuncunun yapacağı iş yok. */
-        // Sürü — sağılacak koyun varsa. sagilabilirVar() sağımın KENDİ
-        // kapısını okuyor, ayrı bir kopya hesap değil.
-        if(sagilabilirVar()) foldNokta(g, FOLD_LAYOUT.suru, idle, -8, 3);
+        /* SÜRÜ NOKTASI KALDIRILDI: `sagilabilirVar()` sağımla birlikte
+           SİLİNMİŞ ama çağrısı kalmıştı — ağılın her karesinde
+           ReferenceError atıyordu ve altındaki sensör noktasını da
+           götürüyordu (try/catch yuttuğu için kimse görmedi). */
         // Nişan köşesi — yalnız sensör bozuksa; ayar kurcalamak "iş" değil.
         if(G.sensorBad) foldNokta(g, ns, idle, -5, 0);
         /* ÇIKIN NOKTASI KALDIRILDI: yolculuk artık açılışta kendiliğinden
@@ -5832,7 +6038,9 @@ const Attract = {
     {
       const k = FOLD_LAYOUT.kural;
       const n = Math.max(0, Save.d.flock | 0);
-      textC(g, n + (n === 1 ? ' SHEEP' : ' SHEEP'), k.x + k.w / 2, k.y, PAL.bone, 1, PAL.ink);
+      /* Sozlukten: satir Turkce oynayana da INGILIZCE yaziyordu, ustelik
+         tekil/cogul dalinin ikisi de ayni dizgeyi donduruyordu. */
+      textC(g, U().foldSuru(n), k.x + k.w / 2, k.y, PAL.bone, 1, PAL.ink);
     }
 
     // Raf/Kangal dokunuşundan gelen kısa not — dünyaya ait metin, HTML değil.
@@ -9548,6 +9756,10 @@ function toMenu(){
   G.foldLit = true;
   refreshProgress();
   refreshFoldUI();
+  /* DONUSUN MANZARASI (bkz. Attract.donusBasla): kayipla donen oyuncu
+     suruyu urkek, kopegi acilan yerin basinda bulur. Attract.reset()'ten
+     SONRA cagriliyor — reset kopegi baslangic yerine koyuyor. */
+  Attract.donusBasla();
   /* Süt akışı — GÖRÜNÜR tüketim (o zamanki tercih madde 3): son oynanan sabah
      kilerden bir şey gittiyse BİR KEZ söylenir, sonra tüketilir (bir daha
      gösterilmez — "önce göster" tek seferlik uyarılarla aynı desen,
@@ -10125,6 +10337,15 @@ initFoldHotspots();
    devreye girer — İLK açılışta pan OYNAMAZ, kapıdan çıkan şey bir ayar
    ekranı olur, sinematik yanlış yere denk gelir. Sonraki HER sabah
    (en sık görülen yol) pan oynar, bitince begin() zaten kendisini çağırır. */
+$('hsKapi').addEventListener('pointerdown', () => {
+  /* Kapi PARMAK KALKMADAN cevap veriyor: kanat iceri bastiriliyor,
+     dibinden toz kalkiyor, kopek basini kapiya ceviriyor. `click`'te
+     olsaydi hicbiri gorunmezdi — o an ekran zaten kapi panina geciyor. */
+  Attract.kapiT = AGIL.basim;
+  Attract.kopek.dir = Attract.kopek.x > FOLD_LAYOUT.kapi.x + FOLD_LAYOUT.kapi.w / 2 ? -1 : 1;
+  Attract.kopek.bekle = Math.max(Attract.kopek.bekle, AGIL.basim);
+  Snd.agilKapi();
+});
 $('hsKapi').addEventListener('click', () => {
   /* KAMPANYA KANCASI (==YAYLA-AKIS==): sefer açıkken kapı sahneye göre
      davranır — konak sahnesinde "günün işi bitti", nöbet sahnelerinde
@@ -10133,6 +10354,11 @@ $('hsKapi').addEventListener('click', () => {
   if(!Save.d.seen['aim'] || !Save.d.seen['practice']) begin();
   else startDoorPan();
 });
+
+/* Kopek ve suru: dokunusun tek karsiligi hayvanin KENDISI. Save.d'ye
+   hicbir sey yazilmiyor — bilerek (bkz. #hsKangal yorumu). */
+$('hsKangal').addEventListener('pointerdown', () => Attract.kopegeDokun());
+$('hsSuru').addEventListener('pointerdown', () => Attract.suruyeDokun());
 
 /* RAF ARTIK DOKUNULMUYOR (2026-08-20): kiler sayisi surekli gorunmesin,
    HARCANDIGI yerde gorunsun — uc bagimsiz AI'nin ortak karari. Rafin
@@ -10148,6 +10374,7 @@ $('hsKapi').addEventListener('click', () => {
    renderDiag ÇAĞRILIYOR çünkü tanı kutusu 250 ms'lik bir zamanlayıcıyla
    yenileniyor; panel açılırken bir kare boyunca eski değerleri göstermesin
    (eski btnDiag da tam bunu yapıyordu). */
+$('hsNisan').addEventListener('pointerdown', () => { Attract.nisanT = AGIL.basim; });
 $('hsNisan').addEventListener('click', () => { openSheet(); renderDiag(); });
 
 /* AGILIN DOKUNULABILIR NESNELERI. Raf ve foto CIKARILDI (2026-08-20):
@@ -10255,6 +10482,8 @@ function refreshFoldUI(){
      ekran okuyucu için bir gerileme OLMAYACAK (eski btnDiag'ın
      görünürlüğü de aynı bilgiyi taşıyordu). */
   $('hsNisan').setAttribute('aria-label', G.sensorBad ? u.hsNisanBad : u.hsNisan);
+  $('hsKangal').setAttribute('aria-label', u.hsKangal);
+  $('hsSuru').setAttribute('aria-label', u.hsSuru);
 }
 
 /* --- dili arayüze uygula --- */
