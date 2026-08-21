@@ -2759,10 +2759,22 @@ const EAGLE_TOP = {
    yolu alfa değil TARAMA: her pikselin kendi eşiği var, miktar düştükçe daha
    çoğu gerçek rengine dönüyor. Yeni sanat ve yeni renk gerekmiyor. */
 const BAYER4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
-function drawEagleTop(g, x, y, lift, uzak){
+
+/* ZIRH PLAKASI — kartalin ustunde ve yanindan. Renkler ZATEN VAR OLAN
+   zirh dilinden aynen aliniyor (bkz. drawDuck ve atlas dali): oyuncu
+   plakayi kus tipinden bagimsiz olarak TANIYOR olmali, yoksa iki ayri
+   zirh ogrenmesi gerekir. */
+const ZIRH = { govde:'#8C94A0', ust:'#C8D0DC', koyu:'#6C7480' };
+function drawEagleTop(g, x, y, lift, uzak, zirh, flash){
   const S = EAGLE_TOP, x0 = x - (S.w >> 1), y0 = y - (S.h >> 1);
   const SPAN = 10;    // how far in from each tip the beat still reaches
   const u = typeof uzak === 'number' ? uzak : (uzak ? 1 : 0);
+  /* ISABET FLASI (0..1). OLCULDU: zirhlinin ILK isabetinin kus
+     uzerindeki karsiligi TAM OLARAK 0 PIKSELDI — `d.flash` set
+     ediliyordu ama tehdit dali onu hic okumuyordu. Oyuncunun tek
+     geri bildirimi ses ve bir yaziydi. Pus ile AYNI tarama tekniği:
+     yeni renk icat edilmiyor, piksel esige gore aciliyor. */
+  const f = flash || 0;
   for(let r = 0; r < S.h; r++){
     const row = S.rows[r];
     for(let i = 0; i < S.w; i++){
@@ -2774,13 +2786,27 @@ function drawEagleTop(g, x, y, lift, uzak){
          geçiş TEK KAREDE oluyordu — sahibi bunu çizim hatası olarak okudu:
          "tek renk şeklinde silüet gibi geliyor sonra üstüne renkleri geliyor". */
       const pus = u > 0 && (BAYER4[r & 3][i & 3] + 0.5) / 16 < u;
-      px(g, x0 + i, y0 + r + dy, 1, 1, pus ? PAL.eagleLt : S.pal[ch]);
+      const par = f > 0 && (BAYER4[(r + 2) & 3][i & 3] + 0.5) / 16 < f;
+      px(g, x0 + i, y0 + r + dy, 1, 1,
+         par ? PAL.bone : pus ? PAL.eagleLt : S.pal[ch]);
     }
+  }
+  /* ZIRH: govdenin ortasinda plaka. OLCULDU — zirhli kartal ile normali
+     arasindaki fark TAM OLARAK 0 PIKSELDI. Oyuncu iki isabet isteyen
+     kusu ANCAK bir mermi harcadiktan sonra ogrenebiliyordu; sarjor uc
+     mermilik, yani gorunmeyen bir ceza. `type:'red'` zaten atanmis ama
+     hicbir yerde okunmuyordu. */
+  if(zirh){
+    const cx = x0 + (S.w >> 1), cy = y0 + (S.h >> 1);
+    px(g, cx - 3, cy - 2, 6, 5, ZIRH.govde);
+    px(g, cx - 3, cy - 2, 6, 1, ZIRH.ust);
+    px(g, cx - 1, cy,     2, 2, ZIRH.koyu);
   }
 }
 
-function drawEagle(g, x, y, dir, wing, diving){
+function drawEagle(g, x, y, dir, wing, diving, zirh, flash){
   const d = dir < 0 ? -1 : 1;
+  const f = flash || 0;
   const R = (vx, vy, w, h, c) => px(g, x + (d > 0 ? vx : -vx - w), y + vy, w, h, c);
   const T = (ax,ay,bx,by,cx,cy,c) => tri(g,
       x + (d>0?ax:-ax), y+ay, x + (d>0?bx:-bx), y+by, x + (d>0?cx:-cx), y+cy, c);
@@ -2803,6 +2829,15 @@ function drawEagle(g, x, y, dir, wing, diving){
     ell(g, x - d, y + 1, 5, 2.5, PAL.eagleLt);
   }
 
+  /* ZIRH — govdenin uzerinde, kuyruktan ve bastan ONCE ki siluetin
+     okunur parcalari (gaga, kuyruk) plakanin altinda kalmasin.
+     Dalista da olmak ZORUNDA: son sans anida "bu iki isabet ister"
+     bilgisi kaybolursa oyuncu mermiyi bosa harciyor. */
+  if(zirh){
+    R(-4, -2, 8, 5, ZIRH.govde);
+    R(-4, -2, 8, 1, ZIRH.ust);
+    R(-1,  0, 2, 2, ZIRH.koyu);
+  }
   // kuyruk yelpazesi
   T(-7,-2,  -14,-1,  -7,3, PAL.eagleDk);
   // baş: altın ense, çengelli sarı gaga
@@ -2810,6 +2845,14 @@ function drawEagle(g, x, y, dir, wing, diving){
   R(9, -2, 3, 2, PAL.talon);
   R(11, -1, 2, 2, PAL.talon);
   px(g, x + (d>0 ? 7 : -8), y - 3, 1, 1, PAL.ink);   // göz
+  /* ISABET FLASI en ustte: govde de zirh de bas da beyazliyor.
+     Ustteki gorunumde tarama kullaniliyor (piksel piksel donuluyor);
+     burada siluet ucgenlerden olustugu icin govdeyi saran tek bir
+     acik yikama kullaniliyor — ayni bilgi, o cizimin kendi diliyle. */
+  if(f > 0){
+    const a = (0.72 * f).toFixed(2);
+    R(-8, -4, 17, 9, 'rgba(252,252,252,' + a + ')');
+  }
 }
 
 /* --- koyun (Akkaraman) ---------------------------------------------------
@@ -2886,7 +2929,7 @@ const SHEEP = {
   ],
 };
 
-function drawSheep(g, x, y, dir, state, f, relief, startle){
+function drawSheep(g, x, y, dir, state, f, relief, startle, acil){
   const S = SHEEP, alert = state === 'alert';
   /* POZ SEÇİMİ (BULGU 6, 2026-08-14). Eskiden tek kare vardı ve tek
      "hareket" `graze` durumundaki 1 pikselik zıplamaydı — bir ÖTELEME,
@@ -2949,9 +2992,22 @@ function drawSheep(g, x, y, dir, state, f, relief, startle){
 
   if(alert){
     /* Alarm işareti tehdit ALTINDAKİ hayvanı vurgulamak zorunda: "hangisi
-       tehlikede" sorusu ekranda cevapsız kalırsa koruma oyunu çöker. */
-    px(g, x - 1, y0 - 9, 2, 5, PAL.red);
-    px(g, x - 1, y0 - 2, 2, 2, PAL.red);
+       tehlikede" sorusu ekranda cevapsız kalırsa koruma oyunu çöker.
+
+       DALIS AYRI BIR CUMLE (2026-08-21). Eskiden cember ve dalis AYNI
+       sabit unlemi cikariyordu: suru "biri beni kolluyor" ile "SIMDI
+       ustume geliyor"u ayni sekilde soyluyordu. Dalista unlem BUYUYOR
+       ve nabiz atiyor — ayni isaret, YUKSELTILMIS hali; yeni bir sembol
+       ogretmeye gerek yok. */
+    if(acil){
+      const nb = (f >> 2) & 1;                     // hizli nabiz
+      const c = nb ? '#ff7a56' : PAL.red;
+      px(g, x - 2, y0 - 12 - (nb ? 1 : 0), 4, 8, c);
+      px(g, x - 2, y0 - 3,  4, 3, c);
+    } else {
+      px(g, x - 1, y0 - 9, 2, 5, PAL.red);
+      px(g, x - 1, y0 - 2, 2, 2, PAL.red);
+    }
   } else if(rp > 0){
     /* ...ve KALKARKEN de görünmek zorunda (BULGU 5). Eskiden tek karede
        yok oluyordu. Şimdi kısalarak, yükselerek ve solarak sönüyor. */
@@ -6431,7 +6487,13 @@ function drawFlock(g){
        bu oyunun kuralı, kimlik onu ezemez. */
     if(G.yaylaAktif && a.state !== 'alert' && !(a.startle > 0)
        && Yayla.cizBirey(g, a.id, a.x, a.y, a.dir)) continue;
-    drawSheep(g, a.x, a.y, a.dir, a.state, G.t + a.phase, a.relief, a.startle);
+    /* Bu hayvana DALAN bir kartal var mi? Saf okuma, durum tutulmuyor. */
+    let acil = 0;
+    if(a.state === 'alert'){
+      for(const d of G.ducks)
+        if(d.threat && !d.done && d.tState === 'dive' && d.tgt === a.id){ acil = 1; break; }
+    }
+    drawSheep(g, a.x, a.y, a.dir, a.state, G.t + a.phase, a.relief, a.startle, acil);
   }
 }
 
@@ -9532,8 +9594,14 @@ function paintBird(g, d){
        table records (`wing`) was not the field the draw call read — so the
        ruler was grading an animation nobody saw, which is exactly the trap
        references/rulers.md names. Three phases: level, up, down. */
-    if(d.tState === 'dive') drawEagle(g, d.x, d.y, d.dir, d.wing, true);
-    else drawEagleTop(g, d.x, d.y, [0, -2, 2][d.wing % 3], threatHaze(d));
+    /* Zirh YAKLASIRKEN gizli: o evrede kus zaten menzil disi ve tam
+       pus icinde (bkz. threatHaze) — plakayi orada gostermek "menzil
+       disi" okumasini bozardi. Daire baslar baslamaz, yani oyuncunun
+       karar verdigi ilk anda, gorunur oluyor. */
+    const zirh = !!d.armored && d.hp > 1 && d.tState !== 'approach';
+    const fl = Math.max(0, Math.min(1, (d.flash || 0) / 14));
+    if(d.tState === 'dive') drawEagle(g, d.x, d.y, d.dir, d.wing, true, zirh, fl);
+    else drawEagleTop(g, d.x, d.y, [0, -2, 2][d.wing % 3], threatHaze(d), zirh, fl);
     return;
   }
   if(Assets.ready){
