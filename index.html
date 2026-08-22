@@ -1060,7 +1060,7 @@ const STR = {
          Sahibinin kendi örneği rakamları YAZIYLA vermişti ("üç güğüm",
          "dört kuzu"); burada RAKAMLA yazıldı (oyunun geri kalanının
          kuralı — HUD/bilanço hep rakam kullanıyor, bkz. teslim raporu). */
-      mDawn:'Şafak söktü', mEmpty:'Sürü kalmadı',
+      mDawn:'Şafak söktü', mEmpty:'Sürü kalmadı', mVardi:'Ağıla vardın',
       mKept:'Kalan', mLost:'Kayıp', mSaved:'Kurtarılan', mScars:'Yeni yara',
       mBorn:'Doğan', mMornings:'Sabah', mBest:'En büyük sürü',
       dogFine:'Köpeğin sağlam.', dogScars:n => 'Köpeğinde ' + n + ' yara izi var.',
@@ -1254,7 +1254,7 @@ const STR = {
       // Wolf vignette caption (Görev Z, "night shift" 2026-08-14) — plain
       // translation call, not a KARAR GEREKİR (design brief's own words).
       // Milk flow: NOT IN THE GLOSSARY, written directly — see delivery report.
-      mDawn:'Dawn broke', mEmpty:'The flock is gone',
+      mDawn:'Dawn broke', mEmpty:'The flock is gone', mVardi:'You reached the fold',
       mKept:'Kept', mLost:'Lost', mSaved:'Saved', mScars:'New scars',
       mBorn:'Born', mMornings:'Mornings', mBest:'Largest flock',
       dogFine:'Your dog is unhurt.', dogScars:n => 'Your dog carries ' + n + ' scars.',
@@ -1517,6 +1517,14 @@ if(typeof window !== 'undefined'){
    sessizce ve zararsızca düşüyorlar (bkz. npm test "eski kayit — günlük
    mod kalıntısı"). `yaban.daily.<gün>` localStorage anahtarları da aynı
    şekilde artık hiçbir yerden okunmuyor/silinmiyor, kendi başlarına durur. */
+/* Kampanyanin uzunlugu. 28 bolum x ~6.3 dk = ~3 saat -- sahibinin
+   begendigi olcu. Tek yerde duruyor cunku bolum tablosu, kayit siniri
+   ve bitis hepsi buna bakiyor. */
+const BOLUM_SAY = 28;
+/* SAVE'DEN ONCE tanimli olmak ZORUNDA: Save.load() bunu okuyor ve
+   `const` hoist edilmiyor. Asagida tanimlanmisti ve oyun
+   "Cannot access 'BOLUM_SAY' before initialization" ile HIC ACILMADI. */
+
 const SAVE_V = 5;   // v2: sürü/köpek alanları  (v3 yer alanı denendi, geri alındı)
 const FLOCK_START = 8, FLOCK_MIN = 3, FLOCK_MAX = 24, FLOCK_BIRTH_EVERY = 3;
 const num = (v, d) => (typeof v === 'number' && isFinite(v) && v >= 0) ? v : d;
@@ -1532,6 +1540,11 @@ const SCAR_LOG_MAX = 6;
 const Save = {
   d:{ v:SAVE_V, runs:0, wins:0, bestRound:0, birds:0, seen:{}, medals:[],
       flock:FLOCK_START, mornings:0, scars:0, bestFlock:FLOCK_START, sore:0, lastLost:0,
+      /* KAMPANYA: kacinci bolumdeyiz (1..28). Yolculugun kendisi bu.
+         AGIL N, BOLUM N'in BASLADIGI yerdir -- bolum N'de agil N'den
+         cikilir ve agil N+1'e varilir. Boylece her agil bir kez cikis
+         bir kez varis olarak goruluyor ve ikisi ayni yer oluyor. */
+      bolum:1,
       wolfLimping:false,
       /* YARALARIN YAŞI. Her giriş {m}: yaranın olduğu sabahın numarası.
          GÖÇ KENDİLİĞİNDEN: eski kayıtta bu alan yok, dizi boş kalıyor.
@@ -1554,6 +1567,7 @@ const Save = {
       // Sürü ve köpeğin izleri kalıcı — oyunun sahiplik ekseni bu.
       flock: Math.max(FLOCK_MIN, Math.min(FLOCK_MAX, num(raw.flock, FLOCK_START))),
       mornings: num(raw.mornings, 0),
+      bolum: Math.max(1, Math.min(BOLUM_SAY, num(raw.bolum, 1))),
       scars: num(raw.scars, 0),
       // Kaç sabah daha yorgun kalacak. Yara kalıcı, yorgunluk geçici.
       sore: Math.min(9, num(raw.sore, 0)),
@@ -1762,7 +1776,25 @@ function hint(key){
    tarayıcısız araçlar (render.js, icon.js) bloğu izole çalıştıramaz.
    Oyun bu bayrakları syncUI() içinde günceller. */
 const ART = { marks:false, env:null, sunUp:1, gok:null, ayGor:0, gunTepe:0, bulut:true, gokKapali:false,
-              trBuyuk:false };   // TR buyuk harf esleme — bkz. text()   // env: yüklenmiş arka plan görüntüsü (yoksa prosedürel)
+              trBuyuk:false, yol:0 };   // TR buyuk harf esleme — bkz. text()   // env: yüklenmiş arka plan görüntüsü (yoksa prosedürel)
+
+/* ART.yol — YOLCULUGUN TEK SAYISI (2026-08-22).
+   Suru yerinde yuruyor, dunya arkasindan geciyor. Kamera HIC hareket
+   etmiyor; catisma cercevesi boylece bugunkuyle birebir ayni kaliyor.
+   Uc ayri sanat yonetmeni bagimsiz olarak ayni cozume vardi: "surunun
+   yolculuk ettigi HISSEDILMELI, kameranin yolculuk etmesi gerekmiyor."
+   ART blogu kendi kendine yeter: disaridan TEK sayi giriyor, katman
+   hizlarini blok kendi biliyor. */
+const YOL_HIZ = { uzak:0.15, orta:0.45, yakin:0.70, yer:1.00, on:1.40 };
+
+/* Bir katmani sonsuz tekrarli cizer. `span` o katmanin tekrar araligi;
+   ayni cizimi -span / 0 / +span uc konumda cagirir, ekran disindakiler
+   zaten cizilmez. Tek kopya yerine UC konum: span < W oldugunda tek
+   kopya sag kenarda bosluk birakiyordu. */
+function yolTekrar(hiz, span, ciz){
+  const o = ((ART.yol * hiz) % span + span) % span;
+  for(let k = -1; k <= 1; k++) ciz(-o + k * span);
+}
 /* ART.sunUp (0..1): güneşin ne kadarının ufkun üstüne çıktığı. Sabahın
    ağarmasıyla oyun tarafı sürer (bkz. GOK_ENV/drawGokcisim/render). ART
    bloğu kendi kendine yeter — dışarıdaki dawnP()'ye bakamaz, bayrak buradan
@@ -2496,6 +2528,105 @@ function drawKapiAgzi(g, t, opt) {
    hicbiri artik tam ekran yikama kullanmiyor. Parametreyi okuyan hicbir
    cagri kalmadi -- fazladan argument gonderen eski cagrilar (ve
    tools/render.js) zararsizca yok sayiliyor, JS fazlasini yutuyor. */
+/* --- YOLUN ON PLANI ---------------------------------------------------
+   ILK DENEME BASARISIZDI VE SEBEBI OGRETICI: butun kaydirma kodu
+   drawScene'in PROSEDUREL YEDEK yoluna yazilmisti, ama oyun uretilmis bir
+   arka plan (ART.env) kullaniyor ve o yol daha ustte `return` ediyor.
+   Kare basildi, hicbir sey kaymiyordu. Kod dogruydu, HIC KOSMUYORDU.
+
+   Ve mesele sadece "yanlis dala yazdim" degil: pisirilmis 320x180 bir
+   arka plan zaten KAYDIRILAMAZ. Iki kez yan yana cizilse dikisi gorunur.
+
+   Cozum parallax'in kendi mantigi: UZAK KATMAN ZATEN NEREDEYSE DURUR.
+   Uretilen manzara uzak katmandir — sabit kalir, guzelligini korur.
+   Hareket, gozun hareketi zaten okudugu yerden gelir: AYAK ALTI.
+
+   Burada cizilen her sey uretilen manzaninin USTUNE biner ve kayar. */
+/* --- GECICI AGIL ---------------------------------------------------
+   Yan oturum `drawAgil()` ailesini yaziyor. O gelene kadar yolculugun
+   ucu acik kalmasin diye BURADA en yalin siluet duruyor: alcak duvar,
+   ust cizgiyi kiran iki direk, aralarinda karanlik agiz.
+
+   Uc sanat yonetmeninin cakistigi tarif bu ucu: duz duvar uzaktan KAYA
+   sanilir, direkler onu insan yapisi yapar, ve ikon bina degil DELIKTIR.
+
+   `drawAgil` tanimlanir tanimlanmaz bu devreden cikiyor -- asagidaki
+   cagri yerine bak. Burasi bir YEDEK, kalici cozum degil. */
+function agilGecici(g, x, taban, olcek){
+  const duvarY = Math.max(5, Math.round(15 * olcek));
+  const duvarG = Math.max(16, Math.round(112 * olcek));
+  const direkG = Math.max(1, Math.round(5 * olcek));
+  const direkY = Math.round(duvarY * 1.55);
+  const agizG  = Math.max(3, Math.round(20 * olcek));
+  const ax = Math.round(x), ty = Math.round(taban);
+  const kapiX = ax + Math.round(duvarG * 0.52);
+
+  // duvar -- ust kenar tirtikli, karma ile: duz cizgi tugla duvar okunur
+  for(let i = 0; i < duvarG; i++){
+    if(i >= kapiX - ax && i < kapiX - ax + agizG) continue;   // agiz bosluğu
+    const j = ((ax + i) * 2654435761) >>> 0;
+    const h = duvarY - (olcek > 0.4 ? (j >> 5) % 2 : 0);
+    px(g, ax + i, ty - h, 1, h, PAL.hillNear);
+    if(olcek > 0.45) px(g, ax + i, ty - h, 1, 1, PAL.scrub);  // ust kenar isigi
+  }
+  // dip golgesi -- nesneyi zemine cakiyor
+  px(g, ax, ty, duvarG, Math.max(1, Math.round(2 * olcek)), PAL.grassDk);
+  // karanlik agiz -- ekrandaki en koyu sey
+  px(g, kapiX, ty - Math.round(duvarY * 1.05), agizG, Math.round(duvarY * 1.05), PAL.ink);
+  // iki direk -- ust cizgiyi KIRIYOR
+  px(g, kapiX - direkG, ty - direkY, direkG, direkY, PAL.treeDk);
+  px(g, kapiX + agizG,  ty - direkY, direkG, direkY, PAL.treeDk);
+}
+
+function yolOnPlan(g){
+  if(!ART.yol) return;                       // yolculuk yoksa hic dokunma
+
+  /* IKINCI DUZELTME — BANT YANLISTI. Ilk yazimda her sey `GROUND`
+     (y=132) hizasina cizildi. Ama GROUND prosedurel ufuk cizgisi;
+     SURU orada YURUMUYOR. Olculdu: koyunlar y 144..161, kopek y 165.
+     Yani otlar tepelerin ICINE dusuyordu ve karede ufka asilmis
+     acik renkli noktali bir cizgi gibi okundu -- ot degil, DIKIS.
+     Referans nokta manzara degil, SURUNUN AYAGI. */
+  const UST = 140, ALT = 176;                // surunun yurudugu bant
+
+  /* 1) YER DOKUSU — bandin her yerine dagilmis kucuk koyu lekeler:
+        cakil, kuru toprak, golge. En hizli katman.
+        Karma DUNYA koordinatindan aliniyor: sonsuz ve tekrarsiz,
+        goz basa sardigi bir yer bulamiyor. */
+  const oy = Math.floor(ART.yol * YOL_HIZ.on);
+  for(let i = -8; i < W + 8; i += 5){
+    const j = ((i + oy - (oy % 5)) * 2654435761) >>> 0;
+    if((j >> 7) % 3 === 0) continue;
+    const yy = UST + 6 + (j % (ALT - UST - 6));
+    px(g, i - (oy % 5) + (j >> 4) % 4, yy, 1 + (j % 2), 1, PAL.grassDk);
+  }
+
+  /* 2) KURU OT DEMETLERI — zemin hizinda, surunun ayaklarinin arasinda
+        ve arkasinda. Yuruyusun asil okundugu katman bu: surekli, seyrek,
+        hep ayni yonde geciyor. */
+  const oz = Math.floor(ART.yol * YOL_HIZ.yer);
+  for(let i = -6; i < W + 6; i += 7){
+    const j = ((i + oz - (oz % 7)) * 40503) >>> 0;
+    if((j >> 9) % 3 === 0) continue;
+    const hgt = 2 + (j % 3);
+    const yy = UST + 2 + (j >> 3) % (ALT - UST - 8);
+    px(g, i - (oz % 7) + (j >> 5) % 3, yy - hgt, 1, hgt, PAL.grassLt);
+  }
+
+  /* 3) GECEN TASLAR — seyrek ve IRI. Otlar surekliligi verir; bunlar
+        "bir sey gecti" der. Ikisi ayri is, ikisi de lazim.
+        Elips DEGIL duz piksel: ilk denemede elips kullanildi ve
+        uretilen manzaranin uzerinde koyu bir DELIK gibi okundu. */
+  yolTekrar(YOL_HIZ.yer, 263, dx => {
+    px(g, dx + 96, ALT - 7, 7, 3, PAL.scrubDk);
+    px(g, dx + 97, ALT - 9, 5, 2, PAL.scrub);
+  });
+  yolTekrar(YOL_HIZ.yer, 431, dx => {
+    px(g, dx + 210, ALT - 5, 5, 2, PAL.scrubDk);
+    px(g, dx + 211, ALT - 6, 3, 1, PAL.scrub);
+  });
+}
+
 function drawScene(g, t){
   if(ART.env){
     g.drawImage(ART.env, 0, 0, W, H, 0, 0, W, H);
@@ -2508,6 +2639,7 @@ function drawScene(g, t){
     // ağıl/vinyet/kart gibi diğer drawScene çağrılarında KENDİLİĞİNDEN kapalı.
     const p = dawnP();
     if(p < 0.15) drawDistantBirds(g, p);
+    yolOnPlan(g);        // yolculugun hareketi: uretilen manzaranin USTUNDE
     return;
   }
   // --- yedek: prosedürel şafak ---
@@ -2522,40 +2654,59 @@ function drawScene(g, t){
 
   drawClouds(g, t);
 
-  // katmanlı bozkır tepeleri — silüet
-  ell(g, 60,GROUND+2,80,26,PAL.hillFar);
-  ell(g,256,GROUND+4,92,30,PAL.hillFar);
-  ell(g,160,GROUND+6,70,22,PAL.hillMid);
-  ell(g, 20,GROUND+8,60,20,PAL.hillNear);
-  ell(g,300,GROUND+8,64,22,PAL.hillNear);
+  /* KATMANLI BOZKIR TEPELERI — artik KAYIYOR.
+     Tekrar araliklari BILEREK farkli (430/370/290): hepsi ayni olsaydi
+     manzara her ekranda ayni anda basa sarar ve tekrar gozle yakalanirdi. */
+  yolTekrar(YOL_HIZ.uzak, 430, dx => {
+    ell(g, dx+ 60,GROUND+2,80,26,PAL.hillFar);
+    ell(g, dx+256,GROUND+4,92,30,PAL.hillFar);
+  });
+  yolTekrar(YOL_HIZ.orta, 370, dx => {
+    ell(g, dx+160,GROUND+6,70,22,PAL.hillMid);
+  });
+  yolTekrar(YOL_HIZ.yakin, 290, dx => {
+    ell(g, dx+ 20,GROUND+8,60,20,PAL.hillNear);
+    ell(g, dx+300,GROUND+8,64,22,PAL.hillNear);
+  });
 
-  // kuru bozkır zemini
+  // kuru bozkır zemini — dolgu sabit, USTUNDEKI otlar kayiyor
   px(g,0,GROUND,W,H-GROUND,PAL.grass);
   px(g,0,GROUND,W,3,PAL.grassLt);
   px(g,0,H-14,W,14,PAL.grassDk);
-  for(let i=0;i<W;i+=6){                       // seyrek, düzensiz kuru ot
-    const j = (i*2654435761) >>> 0;
-    if((j >> 9) % 3 === 0) continue;           // boşluklar
-    const hgt = 1 + (j % 3);
-    px(g, i + (j>>4)%4, GROUND-hgt, 1 + (j%2), hgt, PAL.grassLt);
+  /* OTLAR SONSUZ VE TEKRARSIZ. Karma DUNYA koordinatindan aliniyor,
+     ekran koordinatindan degil — boylece ot demetleri hicbir aralikta
+     basa sarmiyor. Tekrar arayan goz burada tutunacak bir sey bulamiyor. */
+  {
+    const yerO = Math.floor(ART.yol * YOL_HIZ.yer);
+    const kayma = yerO % 6;
+    for(let i = -6; i < W + 6; i += 6){
+      const j = ((i + yerO - kayma) * 2654435761) >>> 0;
+      if((j >> 9) % 3 === 0) continue;           // boşluklar
+      const hgt = 1 + (j % 3);
+      px(g, i - kayma + (j>>4)%4, GROUND-hgt, 1 + (j%2), hgt, PAL.grassLt);
+    }
   }
 
-  // bozkır ağacı — cılız, dağınık
-  px(g,36,GROUND-30,7,30,PAL.tree);
-  px(g,36,GROUND-30,3,30,PAL.treeDk);
-  px(g,30,GROUND-24,7,3,PAL.tree);
-  px(g,42,GROUND-28,8,3,PAL.tree);
-  ell(g,28,GROUND-27, 8,5,PAL.leafDk);
-  ell(g,51,GROUND-31, 9,6,PAL.leafDk);
-  ell(g,38,GROUND-37,11,6,PAL.leaf);
-  ell(g,45,GROUND-24, 7,4,PAL.leaf);
+  // bozkır ağacı — cılız, dağınık. Uzun aralikta tekrar ediyor ki ayni
+  // agac her bes saniyede bir gecmesin.
+  yolTekrar(YOL_HIZ.yer, 720, dx => {
+    px(g,dx+36,GROUND-30,7,30,PAL.tree);
+    px(g,dx+36,GROUND-30,3,30,PAL.treeDk);
+    px(g,dx+30,GROUND-24,7,3,PAL.tree);
+    px(g,dx+42,GROUND-28,8,3,PAL.tree);
+    ell(g,dx+28,GROUND-27, 8,5,PAL.leafDk);
+    ell(g,dx+51,GROUND-31, 9,6,PAL.leafDk);
+    ell(g,dx+38,GROUND-37,11,6,PAL.leaf);
+    ell(g,dx+45,GROUND-24, 7,4,PAL.leaf);
+  });
 
   // kuru çalı öbekleri
-  const scrub = [[112,17,8],[176,13,6],[292,15,7]];
-  for(const [bx,bw,bhh] of scrub){
-    ell(g,bx,GROUND+2,bw,bhh,PAL.scrubDk);
-    ell(g,bx-2,GROUND,bw-5,bhh-2,PAL.scrub);
-  }
+  yolTekrar(YOL_HIZ.yer, 340, dx => {
+    for(const [bx,bw,bhh] of [[112,17,8],[176,13,6],[292,15,7]]){
+      ell(g,dx+bx,GROUND+2,bw,bhh,PAL.scrubDk);
+      ell(g,dx+bx-2,GROUND,bw-5,bhh-2,PAL.scrub);
+    }
+  });
 }
 
 /* --- ördek --- */
@@ -2782,7 +2933,12 @@ function drawEagleTop(g, x, y, lift, uzak, zirh, flash){
      ediliyordu ama tehdit dali onu hic okumuyordu. Oyuncunun tek
      geri bildirimi ses ve bir yaziydi. Pus ile AYNI tarama tekniği:
      yeni renk icat edilmiyor, piksel esige gore aciliyor. */
-  const f = flash || 0;
+  /* flash 0..1 BEKLENIYOR ve artik zorlaniyor. Oyun onu normalize ederek
+     geciriyor (paintBird: d.flash/14) ama fonksiyon bunu varsayiyordu:
+     ham kare sayisi gecen bir cagri (olcum araci, yeni bir cagri yeri)
+     alfayi 1'in cok ustune cikariyor ve kus BEYAZ BIR KUTUYA donuyor.
+     Siluet kayboluyor, yani en cok isabet aninda. Iki satirlik koruma. */
+  const f = Math.max(0, Math.min(1, flash || 0));
   for(let r = 0; r < S.h; r++){
     const row = S.rows[r];
     for(let i = 0; i < S.w; i++){
@@ -2814,7 +2970,12 @@ function drawEagleTop(g, x, y, lift, uzak, zirh, flash){
 
 function drawEagle(g, x, y, dir, wing, diving, zirh, flash){
   const d = dir < 0 ? -1 : 1;
-  const f = flash || 0;
+  /* flash 0..1 BEKLENIYOR ve artik zorlaniyor. Oyun onu normalize ederek
+     geciriyor (paintBird: d.flash/14) ama fonksiyon bunu varsayiyordu:
+     ham kare sayisi gecen bir cagri (olcum araci, yeni bir cagri yeri)
+     alfayi 1'in cok ustune cikariyor ve kus BEYAZ BIR KUTUYA donuyor.
+     Siluet kayboluyor, yani en cok isabet aninda. Iki satirlik koruma. */
+  const f = Math.max(0, Math.min(1, flash || 0));
   const R = (vx, vy, w, h, c) => px(g, x + (d > 0 ? vx : -vx - w), y + vy, w, h, c);
   const T = (ax,ay,bx,by,cx,cy,c) => tri(g,
       x + (d>0?ax:-ax), y+ay, x + (d>0?bx:-bx), y+by, x + (d>0?cx:-cx), y+cy, c);
@@ -2935,9 +3096,105 @@ const SHEEP = {
     '.f.j......kf.....',
     '.g.d......dg.....',
   ],
+  /* --- YÜRÜYÜŞ ÇEVRİMİ, dört vuruş -------------------------------------
+     ÜRETİLEN REFERANS KULLANILMADI, VE BU BİR ÖLÇÜMÜN SONUCU.
+
+     Akkaraman yürüyüş referansı üretildi (art/ref/koyun/, 6 kare) ve
+     Kangal'la aynı hattan geçirildi. İki şey çıktı:
+
+       kare arası değişim   Kangal 26x18 -> %55.4   koyun 17x11 -> %18.4
+       bacak bandında       Kangal          85 px   koyun            11 px
+       duruş silueti        Kangal eşleşti          koyun 14x11 (mevcut 17x11)
+
+     Yani indirgeme koyunun YÜRÜYÜŞÜNÜ taşımıyor (bacaklar 3 satır, 0.42
+     eşiği yarısını yiyor) ve üstelik BAŞKA BİR KOYUN veriyor: daha kısa,
+     daha yüksek. Ekranda on bir tane var; sürünün tamamını değiştirirdi.
+
+     art-pipeline'ın kendi kuralı bunu zaten söylüyor: değer hedef piksel
+     sayısıyla orantılı, ve 17x11 = 187 piksel. O yüzden referanstan
+     PİKSEL değil YÜRÜYÜŞ DÜZENİ alındı (hangi bacak ne zaman önde) ve
+     kareler kurulu siluetin üstüne elle yazıldı.
+
+     İKİ ŞEY BASILARAK ÖĞRENİLDİ:
+
+     1. MUTLAK SÜTUN, göreli kaydırma DEĞİL. Arka bacaklar yalnız 2 px
+        aralı (sütun 1 ve 3); ikisine de simetrik ±1 verince AYNI SÜTUNDA
+        çarpışıyorlar ve koyun bir bacağını kaybediyor.
+     2. YALNIZ BACAK YETMİYOR. Bacak oynatınca kare arası değişim %10.3
+        çıktı — 11 koyunluk bir sürü o kadar hareketle hâlâ KAYIYOR
+        okunur. Sprite'ın zaten iki gövdesi var (`rows` baş yukarıda,
+        `otla` baş aşağıda); yürüyen koyun her adımda başını sallar.
+        İkisini çevrime almak %24.1'e çıkardı — Kangal'la orantılı yoğunluk.
+        Bu bir BİÇİM değişimi, 1 px'lik zıplama değil: zıplama bu depoda
+        bilerek kaldırılmıştı (öteleme, hareket cetvelinin tanımı gereği
+        düştüğü şey). */
+  yuru: [
+    // vurus 0
+    [
+      '....aaaaa........',
+      '..aaaaaaaaaaa....',
+      'abaaaaaaaaaaaa...',
+      'bcaaaaaaaaaaacc..',
+      '.baaaaaaaaaaabdec',
+      '..aabbaaabaabbdfg',
+      '..bachccchaaccdfd',
+      '.fdd.ihhhiee...ff',
+      '.ffj......jf.....',
+      'f...j.....kf.....',
+      'g...d.....dg.....',
+    ],
+    // vurus 1
+    [
+      '....aaaaa........',
+      '..aaaaaaaaaaa....',
+      'abaaaaaaaaaaaa...',
+      'acaaaaaaaaaaaa...',
+      '.baaaaaaaaaaacc..',
+      '..aabbaaabaabbdec',
+      '..bachccchaabbdfg',
+      '.fdd.ihhhieeccdfd',
+      '.ffj......jf.....',
+      '.f.j.....k..f....',
+      '.g.d.....d..g....',
+    ],
+    // vurus 2
+    [
+      '....aaaaa........',
+      '..aaaaaaaaaaa....',
+      'abaaaaaaaaaaaa...',
+      'bcaaaaaaaaaaacc..',
+      '.baaaaaaaaaaabdec',
+      '..aabbaaabaabbdfg',
+      '..bachccchaaccdfd',
+      '.fdd.ihhhiee...ff',
+      '.ffj......jf.....',
+      '.fj.......kf.....',
+      '.gd.......dg.....',
+    ],
+    // vurus 3
+    [
+      '....aaaaa........',
+      '..aaaaaaaaaaa....',
+      'abaaaaaaaaaaaa...',
+      'acaaaaaaaaaaaa...',
+      '.baaaaaaaaaaacc..',
+      '..aabbaaabaabbdec',
+      '..bachccchaabbdfg',
+      '.fdd.ihhhieeccdfd',
+      '.ffj......jf.....',
+      '.f.j......k.f....',
+      '.g.d......d.g....',
+    ],
+  ],
 };
 
-function drawSheep(g, x, y, dir, state, f, relief, startle, acil){
+/* yuru: yuruyus cevriminin vurus numarasi (0..3) ya da null/undefined.
+   Sayi verilirse govde SHEEP.yuru'dan cizilir ve otlama/alarm poz secimi
+   DEVRE DISI kalir — yolda hayvan otlamiyor, yuruyor. Alarm ISARETI
+   (unlem) yururken de cizilir: "hangisi tehlikede" sorusu yolda da
+   cevapsiz kalamaz.
+   Eski cagrilar yuru gondermiyor, davranislari birebir ayni. */
+function drawSheep(g, x, y, dir, state, f, relief, startle, acil, yuru){
   const S = SHEEP, alert = state === 'alert';
   /* POZ SEÇİMİ (BULGU 6, 2026-08-14). Eskiden tek kare vardı ve tek
      "hareket" `graze` durumundaki 1 pikselik zıplamaydı — bir ÖTELEME,
@@ -2963,7 +3220,10 @@ function drawSheep(g, x, y, dir, state, f, relief, startle, acil){
   /* Ürkme: gecikmesi dolmuş ve süresi bitmemişse baş yukarı. Ünlem YOK —
      o işaret hedefteki hayvanın işareti (BULGU A/B). */
   const urk = startle > 0 && startle <= FLOCK_STARTLE;
-  const rows = (alert || rp > 0.6 || urk) ? S.tetik      // hâlâ gergin, baş yukarı
+  const ny = S.yuru ? S.yuru.length : 0;
+  const rows = (yuru != null && ny && !(alert || urk))
+      ? S.yuru[(((yuru | 0) % ny) + ny) % ny]           // YOLDA: yürüyüş vuruşu
+    : (alert || rp > 0.6 || urk) ? S.tetik              // hâlâ gergin, baş yukarı
     : rp > 0.25 ? S.rows                                // baş iniyor
       : rp > 0 ? S.otla                                 // otlamaya geri dönüyor
         : (((f >> 5) & 1) ? S.otla : S.rows);
@@ -3060,6 +3320,196 @@ const KANGAL = {
   ],
 };
 
+
+/* --- KANGAL YÜRÜYÜŞ ÇEVRİMİ -----------------------------------------------
+   Altı kare, doğuya bakan. Kaynak: pixellab karakter sistemiyle üretilmiş
+   TEK Kangal'ın altı yürüyüş karesi (art/ref/kangal/yuru-e0..e5.png, 68x68),
+   tools/pixelize.js ile 26x18'e indirildi.
+
+   art-pipeline skill'i "çok pozlu karakteri ürettirmek" için "yapma" diyor
+   ve o ders KENDİ ARACIYLA doğruydu: eski hat her pozu ayrı üretiyor ve
+   yedi farklı köpek veriyordu. pixellab tek karakter üretip aynı
+   karakterin karelerini türetiyor — tutarlılık kurgu gereği geliyor.
+   Ölçülen sonuç: 68 -> 26 px indirgemede detay öldü, SİLUET VE BACAK
+   HAREKETİ YAŞADI. Skill'in kendi kuralı zaten bunu söylüyordu.
+
+   İNDİRGEMEDE İKİ ŞEY ELLE DÜZELTİLDİ, ikisi de oyun bilgisi:
+
+   1. GÖVDE RENGİ. Üretilen referans krem-beyaz ve kuantalama gövdenin
+      tamamını '#dfd6c7'ye yolluyordu — KOYUNUN YAPAĞISIYLA AYNI DEĞER.
+      Oyuncunun bir karede ayırması gereken iki şey bunlar: köpek koruyan,
+      koyun korunan. O renk pixelize'ın paletinden ÇIKARILDI (sebep orada
+      yazılı) ve gövde Kangal'ın kurulu sıcak tonuna düştü.
+   2. TABAN HİZASI. Kareler tek tek ortalanırsa her karenin sınır kutusu
+      farklı olduğu için köpek yürümez TİTRER. Altısı da ORTAK kutuya göre
+      indirildi ve tabana hizalandı.
+
+   3. DURUŞ POZU DA AYNI KARAKTERDEN GELDİ (KANGAL_YURU.dur). İlk denemede
+      duruş için eski const KANGAL bırakılmıştı ve film basılınca sorun
+      görüldü: iki AYRI köpek. Eskisi daha yassı, kuyruğu kıvrık değil,
+      kafası başka. Yolda yürüyüp ağıla varınca köpek POZ değil KİMLİK
+      değiştiriyordu. Yedi karenin yedisi de TEK --seri çağrısında,
+      ORTAK sınır kutusuyla indirildi: aynı ölçek, aynı taban, aynı köpek.
+      Duruş pozu yürüyüşten bir tık daha uzun boylu — o doğru, ayakta
+      duran bir hayvan yürüyenden diktir.
+
+   const KANGAL yerinde duruyor ama artık ÇİZİLMİYOR; yara izlerinin
+   koordinatları (KANGAL_SCARS) ona göre kurulmuştu ve yeni gövdede
+   sınandı — hepsi postun üstüne düşüyor. */
+const KANGAL_YURU = {
+  w: 26, h: 18,
+  pal: { a:'#100e1e', b:'#2e2028', c:'#38282e', d:'#483436', e:'#89615a',
+         f:'#c99474', g:'#ddab91', h:'#d39273', i:'#e7be95' },
+  dur: [
+    '..................a.a.....',
+    '.....aa..........abaa.....',
+    '....giig.........bbee.....',
+    '...eigeie.......eiiiia....',
+    '..aiia.da......aiiibda....',
+    '..aiia.aaaaa..eiiiifddda..',
+    '...eiegiiiiiegiiiigfbda...',
+    '....egiiiiiiiiiiiiifaa....',
+    '....diiiiiiiiiiiiiie......',
+    '....eiiiiiiiiiiiiiie......',
+    '....eiiiffiiiiiiiiia......',
+    '....eiiieefiiiiiiie.......',
+    '....aiiid.adeeefif........',
+    '....eiid.......eie........',
+    '...eig.........eia........',
+    '...dide........ega........',
+    '...aiea........did........',
+    '....aa..........eda.......',
+  ],
+  kare: [
+    // yuru-e0
+    [
+      '..........................',
+      '.....a....................',
+      '....eige..........a.a.....',
+      '...eieeia........abaa.....',
+      '..aie..e........egeiie....',
+      '..aie..aaaa...aeiiieed....',
+      '...eibeiiiieeeiiiiieddda..',
+      '....eiiiiiiiiiiiiiifddba..',
+      '....aiiiiiiiiiiiiigfdbb...',
+      '....eiiiiiiiiiiiiiif......',
+      '....diiiieiiiiiiiiie......',
+      '.....eiiiefgiiiiiig.......',
+      '.....afiieadfffgiia.......',
+      '.....aiie.afdaaagii.......',
+      '.....eid..afd....fie......',
+      '.....eid..aee.....did.....',
+      '......aa...aa......eea....',
+      '..........................',
+    ],
+    // yuru-e1
+    [
+      '..........................',
+      '....aa....................',
+      '...eiig...........a.a.....',
+      '..aigege.........abaa.....',
+      '..eie.ed........dieig.....',
+      '..did..aaaa...aeiiidea....',
+      '...ggagiiiieeegiiiiedcb...',
+      '....eiiiiiiiiiiiiiifddba..',
+      '....eiiiiiiiiiiiiiffabb...',
+      '....eiiiiiiiiiiiiiid......',
+      '....eiiigfiiiiiiiiia......',
+      '....diiiecegiiiiiie.......',
+      '....aiiidfacefgiib........',
+      '....giieee...feiid........',
+      '...eida.de...edeig........',
+      '...eid..ddc.....eie.......',
+      '....aa...........eea......',
+      '..........................',
+    ],
+    // yuru-e2
+    [
+      '..........................',
+      '....aa....................',
+      '...iiie...........a.a.....',
+      '.agieeia.........aaea.....',
+      '.aie..d.........fgiig.....',
+      '.agg...aaa....agiiideb....',
+      '..eigdiiiigeegiiiiieddb...',
+      '...afiiiiiiiiiiiiiifddba..',
+      '....fiiiiiiiiiiiiifeaa....',
+      '...aiiiiiiiiiiiiiif.......',
+      '...aiiigfiiiiiiiiie.......',
+      '....giiecgiiiiiged........',
+      '....giiefaedfieeefg.......',
+      '..eiiiede...eieaaaia......',
+      '..egaa.de...eie...a.......',
+      '..ee...deb...fie..........',
+      '...a..........aa..........',
+      '..........................',
+    ],
+    // yuru-e3
+    [
+      '..........................',
+      '....aaa...................',
+      '...eiiie..........a.a.....',
+      '...iieeia........acaa.....',
+      '..aie..e........dieii.....',
+      '..aie..aaaa...adiiidfa....',
+      '...eidgiiiieeeiiiiieddb...',
+      '....egiiiiiiiiiiiiifddba..',
+      '....aiiiiiiiiiiiiiffaba...',
+      '....aiiiiiiiiiiiiiid......',
+      '....aiiiigiiiiiiiii.......',
+      '.....diiiieiiiiiife.......',
+      '.....agiiiaeefgigd........',
+      '....efiiieafdaadeif.......',
+      '....aieaa.afa....dii......',
+      '....aie....ef.....eig.....',
+      '.....aa....aa......aa.....',
+      '..........................',
+    ],
+    // yuru-e4
+    [
+      '..........................',
+      '..........................',
+      '....eee...........a.a.....',
+      '...giiie.........aaaa.....',
+      '..eigade........efdig.....',
+      '..eia..aaaa...aeiiidfa....',
+      '..eigegiiiigegiiiiiddcb...',
+      '...eeiiiiiiiiiiiiiifddba..',
+      '....eiiiiiiiiiiiiiffbba...',
+      '....eiiiiiiiiiiiiiid......',
+      '....diiiieiiiiiiiie.......',
+      '....agiiiidffifiif........',
+      '....egeiiiaadiedd.........',
+      '...fgf.dig...egde.........',
+      '..aie..aib...aeaff........',
+      '...ed..aie......eie.......',
+      '........aa.......aa.......',
+      '..........................',
+    ],
+    // yuru-e5
+    [
+      '..........................',
+      '..........................',
+      '....fee...........aaa.....',
+      '...eiiig.........aada.....',
+      '..aiiedga.......eieig.....',
+      '..aie..aaaa...aeiiidea....',
+      '...gieeiiiieeeiiiiiedcb...',
+      '....egiiiiiiiiiiiiifddaa..',
+      '....aiiiiiiiiiiiiifeaaa...',
+      '....diiiiiiiiiiiiiid......',
+      '....egiiiiiiiiiiiig.......',
+      '....afiiiieiigiiiid.......',
+      '...dffeiiieeddiiiee.......',
+      '..dgfeaaiie.dedeeeia......',
+      '..ega..aie..efa..aea......',
+      '..dd...agg..dfe...........',
+      '........aa...aa...........',
+      '..........................',
+    ],
+  ],
+};
+
 /* step: yürüyüş/koşu kare numarası — bacaklar iki piksel kayarak adım atar.
    Tek kareden canlı bir yürüyüş çıkarmanın en ucuz yolu bu. */
 /* Yara izlerinin SABİT yerleri. Rastgele olsaydı köpek her karede başka
@@ -3072,8 +3522,18 @@ const KANGAL_SCARS = [
 /* scars: KALICI yara sayısı — köpeğin bedeninde iz olarak durur.
    sore:  bu sabah yorgun mu (geçici). Yorgunluk GÖRÜNÜR olmalı; görünmeyen
           ceza şanssızlık gibi hissettiriyor (yayla denemesinin dersi).    */
-function drawKangal(g, x, y, dir, step, scars, sore){
-  const S = KANGAL, x0 = x - (S.w >> 1), y0 = y - S.h + 3;
+/* yuru: yürüyüş çevriminin kare numarası (0..5) ya da null/undefined.
+   Sayı verilirse gövde KANGAL_YURU'dan çizilir ve eski bacak kaydırması
+   DEVRE DIŞI kalır — ikisi üst üste binince adım iki kere atılıyor.
+
+   Neden ayrı parametre: step bugün 0/1 alan bir bacak ötelemesi ve onu
+   çağıran her yer var. Anlamını değiştirmek sessizce yanlış poz çizerdi.
+   Eski çağrılar yuru göndermiyor, davranışları birebir aynı kalıyor. */
+function drawKangal(g, x, y, dir, step, scars, sore, yuru){
+  const n6 = KANGAL_YURU.kare.length;
+  const yr = (yuru == null) ? KANGAL_YURU.dur
+           : KANGAL_YURU.kare[(((yuru | 0) % n6) + n6) % n6];
+  const S = KANGAL_YURU, x0 = x - (S.w >> 1), y0 = y - S.h + 3;
   // Zemin gölgesi (drawSheep'teki teknikle aynı ilke — Görev 1, tasarım
   // turu 2026-08-13): ayakta duran Kangal AYAKTA pozda zeminden ayrık,
   // yüzen bir leke gibi duruyordu (yatmış poz zaten kendi gölgesini
@@ -3083,12 +3543,16 @@ function drawKangal(g, x, y, dir, step, scars, sore){
   // Yorgunken gövde bir piksel çöker — siluetten okunur.
   const sag = sore ? 1 : 0;
   for(let r = 0; r < S.h; r++){
-    const row = S.rows[r];
+    const row = (yr || S.rows)[r];
     for(let i = 0; i < S.w; i++){
       const ch = row[i];
       if(ch === '.') continue;
       const sx = dir < 0 ? (S.w - 1 - i) : i;   // aynalama
-      const dx = (r >= legRow && step) ? (i % 2 ? step : -step) : 0;
+      /* Eski bacak ötelemesi ARTIK YOK: gövde altı gerçek yürüyüş
+         karesinden geliyor, üstüne bir de piksel kaydırmak adımı iki kere
+         atmak olurdu. step imzada duruyor çünkü onu geçiren çağrılar
+         var; sessizce yok sayılıyor. */
+      const dx = 0;
       const dy = r < legRow ? sag : 0;          // bacaklar yerde kalır
       px(g, x0 + sx + dx, y0 + r + dy, 1, 1, S.pal[ch]);
     }
@@ -3105,8 +3569,17 @@ function drawKangal(g, x, y, dir, step, scars, sore){
     const sx = dir < 0 ? (S.w - 1 - mx - 2) : mx;
     px(g, x0 + sx, y0 + my + sag, 3, 1, S.pal.b);
   }
+  /* POSTUN KARARMASI 12 YARADA DOYUYORDU — ve kampanya 57'ye çıkıyor.
+     Ölçüldü: 12 yaralı köpek ile 57 yaralı köpek arasındaki fark TAM
+     OLARAK 0 PİKSEL. Yani "köpeğin bedeni onun geçmişidir" cümlesi
+     kampanyanın ilk üçte birinde doğru, kalan üçte ikisinde yanlıştı.
+     Rampa yavaşladı (0.05 -> 0.012) ve tavan biraz açıldı: erken yaralar
+     eskisinden daha SESSİZ, ama post 43. yaraya kadar kararmaya devam
+     ediyor. Tavan hâlâ var, çünkü sınırsız kararma köpeği siluete
+     çeviriyor ve o zaman kremi kaybediyoruz — kremi kaybetmek koyunla
+     ayrımı kaybetmek demek. */
   if((scars | 0) > KANGAL_SCARS.length){
-    const wear = Math.min(0.30, ((scars | 0) - KANGAL_SCARS.length) * 0.05);
+    const wear = Math.min(0.42, ((scars | 0) - KANGAL_SCARS.length) * 0.012);
     px(g, x0 + 3, y0 + 4 + sag, S.w - 8, 7, 'rgba(74,53,36,' + wear.toFixed(2) + ')');
   }
 }
@@ -4357,6 +4830,818 @@ function drawFoldNisan(g, bx, by, aday, uyari, t){
    yatmis poz) ve drawFoldKangal. Ikisini de HICBIR YER cagirmiyordu:
    agildaki kopegi drawKangal ciziyor. */
 
+
+/* ===== BARINAK — YOLUN UCUNDAKİ AĞIL ====================================
+
+   Bölüm bir günün yol ayağı: sürü yürür, dünya arkalarından kayar, ve
+   varış ağılı sağdan siluet olarak girip büyür. Bu blok o ağılın ÇİZİMİ.
+   Konumu, ölçeği ve kayması dışarıdan gelir (bkz. drawAgil imzası).
+
+   ÜÇ KATMAN, VE SIRA ŞART:
+
+       drawAgilArka(...)      patika, uzak duvar, karanlık ağız, kapı
+       <SÜRÜ BURADA ÇİZİLİR>
+       drawAgilOn(...)        yakın duvar, ön direk, dip gölgesi, prop
+
+   Neden ikiye bölündü: bu tasarımın EN GÜÇLÜ derinlik ipucu "koyunlar
+   duvarın ARKASINA girip kaybolur". Küçültüp soldurmak değil — önce koyun
+   tam görünür, sonra yarısı duvarla kesilir, sonra sadece kafası, sonra
+   yok. Bunun olabilmesi için duvarın bir parçasının koyundan SONRA
+   çizilmesi gerekiyor. Tek bir drawAgil() çağrısı bunu yapamaz.
+
+   Kolaylık olsun diye drawAgil() ikisini arka arkaya çağırıyor; arada
+   koyun olmayan yerlerde (uzaktaki siluet) o yeterli.
+
+   ÖN DUVARIN ÜST ÇİZGİSİ AĞIZDAN SAĞA DOĞRU YÜKSELİR. Bu bir süs değil,
+   yutulma eğrisinin kendisi: ağzın dibinde duvar 4-7 px (koyun tam
+   görünür), sağa doğru 14-16 px'e çıkar (koyun yok). Aradaki 20-25 px
+   koyunun bacak -> gövde -> kafa -> yok sırasıyla kaybolduğu yer.
+
+   BOYUT DİLİ (olcek 0..1):
+
+       uzak  (0.00-0.20)  siluet: 16-24 px genişlik, 8-9 px duvar
+       orta  (0.50)       ~64 px genişlik, 12 px duvar
+       yakın (1.00)       ~112 px genişlik, 16 px duvar
+
+   Yükseklik genişlik kadar büyümüyor, bilerek: 16 px'lik bir duvarı 2
+   px'e indirmek onu okunmaz yapar. Yaklaşmayı anlatan şey yükseklik
+   değil, ağılın çerçeveyi NE KADAR DOLDURDUĞU.
+
+   Duvar ayakta duran bir koyundan (11 px) çok yüksek değil: en yakında
+   16 px. Ölçü buradan geliyor, uydurulmadı.                             */
+
+/* Palet: 18 renk, hepsi dünyanın kendi paletinden — ağıl ile mera arasında
+   renk sıçraması olmasın. Malzeme başına ÜÇ değer, fazlası değil.
+   Tek yabancı renk nazar boncuğunun mavisi: paletin hiçbir yerinde mavi
+   yok ve boncuğun mavi okunması gerekiyor (4 piksel, kültürel işaret). */
+const BARINAK_PAL = {
+  // tarla taşı — kuru duvarın gövdesi
+  /* TAŞ SICAK. İlk palet soğuk mordu ('#2a1e3b/#54304a') ve şafağın
+     kızıl-kahve zemininin yanında ağıl gri-mor, YAPIŞTIRILMIŞ duruyordu:
+     bölge farkını taşıyan renk, dünyaya ait olmayı bozamaz. Üçü de
+     dünyanın kendi sıcak ailesinden, parlaklık 38 / 76 / 118. */
+  tasDk:'#2e2028', tasMd:'#604342', tasLt:'#937575',
+  // işlenmemiş kaba kereste — direk ve kapı
+  agacDk:'#100e1e', agacMd:'#38282e', agacLt:'#483436',
+  // patika: ekranın EN PARLAK zemini, ağza doğru daralır
+  yolLt:'#e0aa8a', yolMd:'#c99474', yolDk:'#b3897d',
+  // ağız: ekranın EN KOYU yeri. Kontrast 189 -> 20, yani göz oraya gider.
+  agiz:'#100e1e', agizRim:'#2a1e3b',
+  // kanyon kayası (hava perspektifi: taştan daha soğuk ve daha açık)
+  kayaDk:'#2a1e3b', kayaMd:'#413764', kayaLt:'#695684',
+  // çalı / ot
+  caliDk:'#604342', caliLt:'#89615a',
+  // koç boynuzu (yapağı tonları) ve nazar boncuğu
+  boynuz:'#ddab91', boncuk:'#4a6ea0',
+};
+
+/* Dört barınak tipi. 28 ağıl tek tek çizilmiyor; ~20 parçadan kuruluyor. */
+const BARINAK_TIP = ['ova', 'kanyon', 'yayla', 'gecit'];
+
+function barinakTip(bolum){
+  const b = Math.max(1, bolum | 0);
+  return BARINAK_TIP[Math.min(3, Math.floor((b - 1) / 7))];
+}
+
+/* Konumdan türeyen gürültü. gokHash saf: aynı x aynı taşı verir, yani
+   ağıl kayarken taşlar oynamaz. Rastgelelik burada YASAK. */
+function bHash(a, b){ return gokHash(((a | 0) * 2246822519 ^ (b | 0) * 3266489917) >>> 0); }
+
+/* --- KİT SEÇİMİ ---------------------------------------------------------
+   TEKRAR ÖNLEME (şartname): ardışık iki ağılda duvar + kapı + zemin
+   üçlüsünden ikisi aynı olamaz. Kit bölüm numarasının SAF fonksiyonu
+   olduğu için kural inşa sırasında uygulanabiliyor: bir önceki bölümün
+   kitiyle karşılaştır, iki alan çakışıyorsa birini döndür.              */
+function barinakKit(bolum){
+  const b = Math.max(1, bolum | 0);
+  const ham = {
+    tip:   barinakTip(b),
+    duvar: bHash(b, 11) % 4,
+    direk: bHash(b, 22) % 3,
+    kapi:  bHash(b, 33) % 3,
+    uc:    bHash(b, 44) % 2,
+    zemin: bHash(b, 55) % 3,
+    prop:  [bHash(b, 66) % 4, bHash(b, 77) % 4],
+  };
+  if(b > 1){
+    const o = barinakKitHam(b - 1);
+    let ayni = (o.duvar === ham.duvar ? 1 : 0) + (o.kapi === ham.kapi ? 1 : 0)
+             + (o.zemin === ham.zemin ? 1 : 0);
+    if(ayni >= 2){
+      ham.duvar = (ham.duvar + 1) % 4;
+      if(o.kapi === ham.kapi) ham.kapi = (ham.kapi + 1) % 3;
+    }
+  }
+  return ham;
+}
+/* Bir kademe geriye bakarken ZİNCİR OLMASIN diye ham hâli ayrı: yoksa
+   barinakKit(28) yirmi sekiz kere kendini çağırırdı. */
+function barinakKitHam(b){
+  return { duvar: bHash(b, 11) % 4, kapi: bHash(b, 33) % 3, zemin: bHash(b, 55) % 3 };
+}
+
+/* --- ÖLÇÜ ---------------------------------------------------------------
+   TEK KAYNAK. Hem çizim hem agilKapiKutusu buradan okuyor; iki yerde iki
+   sayı tutulursa er geç ayrışırlar ve dokunma alanı çizimden kayar.     */
+function barinakOlcu(x, yerZemin, olcek, kit){
+  /* TAM SAYIYA YUVARLA. Kayarken x kesirli geliyor (yaklaşma eğrisi) ve
+     kesirli genişlik `new Array(gen)` için geçerli bir uzunluk değil:
+     oyun "Invalid array length" ile TARAYICIDA patlıyordu, Node'da değil.
+     Yuvarlama burada, tek ölçü kaynağında: her çizim buradan okuyor. */
+  x = Math.round(x || 0);
+  yerZemin = Math.round(yerZemin || 0);
+  const s = Math.max(0, Math.min(1, olcek == null ? 1 : olcek));
+  const k = kit || barinakKit(1);
+  const gen   = Math.round(16 + s * 96);          // 16 .. 112
+  const hUzak = Math.round(6 + s * 5);            //  6 .. 11   arka duvar
+  const hYakin= Math.round(8 + s * 8);            //  8 .. 16   ön duvar (sağ uç)
+  const hDip  = Math.round(1 + s * 2);            //  1 ..  3   ön duvarın ağız dibi
+  const agizW = Math.max(3, Math.round(5 + s * 17));   // 5 .. 22
+  const direkW= Math.max(1, Math.round(1 + s * 4));    // 1 ..  5
+  const direkH= Math.round(2 + s * 6);            // duvarı aşma payı
+  const agizX = x + Math.round(gen * 0.26);
+  /* GEÇİT ağzı daha YÜKSEK: sürü bir kapıdan değil bir mağaraya giriyor.
+     Aynı ölçüde çizilince dört tipin dördü de "duvarda delik" oluyordu. */
+  const onX   = agizX + agizW;                    // ön duvar burada başlar
+  /* Arka duvarın taban kayması. 1..4 iken uzak duvarın yakın duvarın
+     ÜSTÜNDE kalan payı 1-2 px'ti ve basılan karede duvar değil GERGİN BİR
+     TEL okunuyordu — derinlik ipucu #1 ("yakın parça uzak parçanın önüne")
+     ancak görülebilecek kadar pay bırakınca iş yapıyor. */
+  const dz    = Math.max(1, Math.round(2 + s * 5));    // arka duvarın taban kayması
+  const yakinD= Math.round(s * 4);                // ön duvarın sağa doğru inişi
+  /* HAVA PERSPEKTİFİ PAYI (1 = çok uzak, 0 = yakın).
+     Ölçüldü: uzaktaki ağılın çevresindeki zemin parlaklığı 46.2. Taşın
+     orta tonu 76 (kontrast 30), açık tonu 126 (kontrast 80). Yani uzakta
+     ağılı ortaya çıkaran şey KOYULUK değil AÇIKLIK ve bu bir hile değil,
+     hava perspektifinin kendisi.
+     Neden BANT, neden eşik değil: silüet yolu (gen<30) gövdeyi açık,
+     ayrıntılı yol orta tonla çiziyordu ve eşikte ağıl BİR KAREDE 50
+     parlaklık koyulaşıyordu — yaklaşan bir yapı değil, yanıp sönen bir
+     şey. Şimdi iki yol da bu payı okuyor: 0.15'te ikisi de tamamen açık
+     (yani eşikte sıçrama YOK), 0.40'a kadar taş taş orta tona dönüyor. */
+  const hava = Math.max(0, Math.min(1, (0.40 - s) / 0.25));
+  const magara = (k.tip === 'gecit') ? Math.round(3 + s * 7) : 0;
+  return { s, k, gen, hUzak, hYakin, hDip, agizW, direkW, direkH, hava,
+           x0:x, x1:x + gen, agizX, onX, dz, yakinD, yer:yerZemin,
+           agizH: Math.round(hUzak + direkH * 0.4) + magara };
+}
+
+/* Kapının ekrandaki kutusu — dokunma alanı ve koyunların gireceği nokta.
+   Çizimle aynı ölçüden türüyor. */
+function agilKapiKutusu(x, yerZemin, olcek, kit){
+  const m = barinakOlcu(x, yerZemin, olcek, kit);
+  const h = Math.max(3, m.agizH + m.dz);
+  return { x: m.agizX, y: m.yer - h, w: m.agizW, h: h };
+}
+
+/* --- DUVAR --------------------------------------------------------------
+   Kuru taş duvar. Şartname dört kural sayıyor; referans (art/ref/agil-duvar.png)
+   beşincisini gösterdi ve o beşincisi hepsinden önemli:
+
+     DUVAR RASTGELE TAŞ YIĞINI DEĞİL, YATAY SIRALARDIR.
+
+   İlk yazımda taşlar gövdeye serpiştirilmişti. Referansa bakınca görülen
+   şey üç ayrı SIRA: her sıra bir dizi yuvarlak taş, aralarında 1 px koyu
+   boşluk, ve bir sonraki sıra ŞAŞIRTMALI başlıyor (tuğla örgüsü gibi ama
+   taşlar eşit değil). Serpiştirme "duvar" değil "moloz" okunuyor.
+
+   Kalan dört kural:
+     - üst kenar ASLA düz değil (taşların tepesi 0-2 px inip çıkar)
+     - duvar yukarı doğru İÇERİ daralır (~80°) — dik duvar tuğla ev olur
+     - her taş ayrı konturlanmaz; ayıran şey aradaki koyu boşluk
+     - parlak harç çizgisi yok                                            */
+function barinakDuvar(g, x0, x1, yTaban, h0, h1, cesit, P, tohum, uc, kademe, hava){
+  x0 = Math.round(x0); x1 = Math.round(x1); yTaban = Math.round(yTaban);
+  if(!(x1 > x0)) return;                      // NaN de buradan dönüyor
+  const gen = x1 - x0;
+  /* SERBEST UÇ ÇÖKER. Kuru taş duvar dik bir kesitle bitmez; kesik biten
+     duvar basılan karede "kutu" okunuyordu. uc = [sol, sağ]: hangi ucun
+     serbest olduğu (direğe dayanan uç çökmez). */
+  const cs = (uc && uc[0]) ? Math.min(5, gen >> 1) : 0;
+  const cg = (uc && uc[1]) ? Math.min(5, gen >> 1) : 0;
+  const yuk = (i) => {
+    let h = h0 + (h1 - h0) * (i / Math.max(1, gen - 1));
+    if(cs && i < cs) h *= 0.45 + 0.55 * (i / cs);
+    if(cg && i > gen - 1 - cg) h *= 0.45 + 0.55 * ((gen - 1 - i) / cg);
+    /* KADEME: boyu boyunca yükselen duvar düz bir eğim olarak çizilince
+       basılan karede taş duvar değil RAMPA okunuyordu — tek çizgi, kusursuz
+       diyagonal. Kuru taş duvar yükselirken basamak basamak yükselir.
+       Ayrıca koyunun yutulması da basamaklanıyor: her basamak ayrı bir an
+       (bacak gitti / gövde gitti / kafa gitti), düzgün bir kayma değil. */
+    if(kademe) h = Math.round(h / kademe) * kademe;
+    return h;
+  };
+  /* Taş genişliği çeşidi ayırt eden ana şey: 0 iri seyrek, 1 ufak sık,
+     2 karışık, 3 yıpranmış (üst sırada gedikler). */
+  const tabanW = cesit === 0 ? 7 : cesit === 1 ? 4 : 5;
+  const oynak  = cesit === 2 ? 4 : 3;
+
+  /* ALÇAK DUVARDA TEK TEK TAŞ ÇİZİLMEZ. Ölçüldü değil, BASILDI ve
+     görüldü: 8-11 px'lik bir duvara 4-6 px'lik taşlar konunca duvar
+     "örgü" değil YAN YANA DİZİLMİŞ TOPAKLAR okunuyor — iki sıra, her sıra
+     üç dört yumru. Piksel sanatının kuralı: küçülen şeyden DETAY ÇIKAR,
+     detayı küçültme. Bu yüzden alçak duvar dolu bir kütle + sürekli ışık
+     sırası + seyrek dikey derz olarak çiziliyor; taş bilgisi derzde
+     yaşıyor, yumruda değil. */
+  const hOrt = (h0 + h1) / 2;
+  if(hOrt < 12){
+    const ustY = new Array(gen);
+    for(let i = 0; i < gen; i++){
+      const h = yuk(i);
+      const tas = Math.floor(i / 4);
+      const tirt = bHash(tohum + tas, cesit) % 2;
+      const y = Math.round(yTaban - h) + tirt;
+      ustY[i] = y;
+      if(yTaban - y <= 0) continue;
+      /* Uzakta gövde AÇIK tona kayıyor, taş taş. Karışım rastgele değil
+         taşa bağlı: aynı taş her karede aynı tonda kalıyor, yoksa duvar
+         kaynıyor. */
+      const uz = hava != null && (bHash(tohum + tas, 91) % 100) < hava * 100;
+      px(g, x0 + i, y, 1, yTaban - y, uz ? P.tasLt : P.tasMd);
+      px(g, x0 + i, y, 1, 1, P.tasLt);            // sürekli ışık sırası
+    }
+    /* DERZ KISA OLACAK. İlk yazımda dikey derzler duvarı boydan boya
+       kesiyordu ve basılan karede taş duvar değil PARMAKLIK okunuyordu:
+       düz açık bir gövde, üstünde eşit aralıklı dikey çubuklar. Taşı
+       gösteren şey derzin uzunluğu değil, üst sıradaki kısa çentik. */
+    for(let i = 3; i < gen - 1; i += 4 + (bHash(tohum + i, 3) % 3)){
+      const y = ustY[i] + 1;
+      const boy = Math.min(2, yTaban - y - 2);
+      if(boy > 0) px(g, x0 + i, y, 1, boy, P.tasDk);
+    }
+    /* Bir tane YATAK DERZİ: iki sıra taş olduğunu söyleyen tek çizgi.
+       Yatay olduğu için siluete dokunmuyor, ama duvarı levha olmaktan
+       çıkarıyor. */
+    for(let i = 0; i < gen; i++){
+      const y = Math.round(ustY[i] + (yTaban - ustY[i]) * 0.52);
+      if(y < yTaban - 2) px(g, x0 + i, y, 1, 1, P.tasDk);
+    }
+    px(g, x0, yTaban - 2, gen, 2, P.tasDk);
+    return;
+  }
+
+  /* GÖVDE ORTA TONLA DOLAR, KOYUYLA DEĞİL.
+     İlk yazımda gövde tasDk ile doluyordu ve taşlar onun üstüne
+     konuyordu; sonuç, taşların arasında TAM BOY koyu sütunlar oldu ve
+     duvar birbirine değmeyen yumrular hâlinde okundu. Kuru taş duvarda
+     taşlar BİRBİRİNE DEĞER; ayıran şey tam boy bir boşluk değil, 1 px'lik
+     derz. Gövde orta ton olunca derz ince kalıyor ve duvar sürekli
+     okunuyor. */
+  for(let i = 0; i < gen; i++){
+    const h = Math.round(yuk(i));
+    if(h <= 0) continue;
+    const uz = hava != null && (bHash(tohum + Math.floor(i / 5), 91) % 100) < hava * 100;
+    px(g, x0 + i, yTaban - h, 1, h, uz ? P.tasLt : P.tasMd);
+  }
+
+  const enBuyukSira = 4;
+  for(let c = 0; c < enBuyukSira; c++){
+    let i = -(bHash(tohum + c * 31, 5) % Math.max(2, tabanW));   // şaşırtmalı örgü
+    while(i < gen){
+      const n = bHash(tohum + c * 977 + (i < 0 ? 0 : i), cesit);
+      const w = Math.max(2, tabanW + (n % oynak) - 1);
+      const i0 = Math.max(0, i), i1 = Math.min(gen, i + w);
+      i += w + 1;                                  // +1 = taşlar arası koyu boşluk
+      if(i1 <= i0) continue;
+      const orta = (i0 + i1) >> 1;
+      const h = yuk(orta);
+      /* Sıra kalınlığı ~5 px: daha kalın olunca taşlar boyundan uzun
+         DİKEY çubuklara dönüşüyor ve duvar örgü değil parmaklık okunuyor. */
+      const sira = Math.max(1, Math.min(4, Math.round(h / 5)));
+      if(c >= sira) continue;                      // bu duvar o kadar yüksek değil
+      const kal = h / sira;                        // sıra kalınlığı
+      /* DARALMA: yukarıdaki sıra uçlardan içeri çekilir. Uzun bir duvarda
+         eğim yalnız uçlarda okunur; orta bölümde zaten görünmez. */
+      const ucMes = Math.min(i0, gen - i1);
+      const ic = ucMes < 6 ? Math.round(c * (1 - ucMes / 6)) : 0;
+      /* MUTLAK x. İlk yazımda buraya YEREL indis konmuştu ve taşlar duvarın
+         56 piksel SOLUNA basılıyordu: duvarın kendisi düz koyu bir levha,
+         yanında ise havada duran bir taş yığını. Basılmadan görülmezdi. */
+      const a = x0 + i0 + ic, b = x0 + i1 - ic;
+      if(b <= a) continue;
+      /* Taşın tepesi: en üst sıra 0-2 px oynar, alt sıralar hizalı.
+         Yıpranmış duvarda (3) en üst sırada bazı taşlar hiç yok. */
+      const kabar = c === 0 ? ((n >> 4) % 3) : 0;
+      if(cesit === 3 && c === 0 && ((n >> 7) % 4) === 0) continue;   // gedik
+      const yUst = Math.round(yTaban - h + c * kal) - kabar;
+      const yAlt = Math.round(yTaban - h + (c + 1) * kal);
+      const hh = Math.max(1, yAlt - yUst);
+      /* Taşın kendisi: gövdeyle aynı ton — her üçüncü taş bir kademe
+         koyu, ki duvar tek renkli bir levha olmasın. Kontur YOK; taşı
+         gösteren şey yalnız derz. */
+      const uzT = hava != null && (bHash(tohum + c * 977 + i0, 91) % 100) < hava * 100;
+      if(((n >> 9) % 3) === 0) px(g, a, yUst, b - a, hh, uzT ? P.tasMd : P.tasDk);
+      // DERZ: taşın sağ kenarına 1 px, ve sıranın altına yatak derzi
+      px(g, b, yUst, 1, hh, P.tasDk);
+      if(c > 0) px(g, a, yUst, b - a + 1, 1, P.tasDk);
+      /* Taşın SIRTI ışık alır — ama YALNIZ ÜST SIRA. İlk yazımda her
+         taş ışık alıyordu ve basılan karede duvar "örgü" değil "yığın"
+         okunuyordu: dört sıra da aynı parlaklıkta çığırıyor, göz duvarın
+         BİÇİMİNİ göremiyordu. Işık günün geldiği yere: tepeye. */
+      if(c === 0)
+        px(g, a + (b - a >= 3 ? 1 : 0), yUst, Math.max(1, b - a - (b - a >= 3 ? 2 : 0)), 1, P.tasLt);
+      else if(c === 1 && (n & 1))
+        px(g, a + 1, yUst, Math.max(1, b - a - 2), 1, P.tasMd);
+    }
+  }
+  /* Dip: 2 px, bir ton koyu. Duvarı zemine oturtan tek şey bu — olmadan
+     duvar zeminin üstünde YÜZER. */
+  px(g, x0, yTaban - 2, gen, 2, P.tasDk);
+}
+
+/* Duvar dibindeki ot tutamları. Referansta duvarın tabanı boydan boya
+   otla kırılmış; taş ile toprağın ARASINDA sert bir çizgi yok. Seyrek
+   ve kısa: burada iş yapan şey siluetin dişlenmesi, bitki değil. */
+function barinakDip(g, x0, x1, yTaban, P, tohum, sik, t){
+  for(let X = x0; X < x1; X++){
+    if((bHash(X, tohum) % (sik ? 3 : 5)) !== 0) continue;
+    const h = 1 + (bHash(X, tohum + 1) % 3);
+    const c = (bHash(X, tohum + 2) & 1) ? P.caliDk : P.caliLt;
+    /* SALINIM: yalnız otun UCU, ve yalnız 1 px. Dibi yerinde kalıyor —
+       bütün tutamı kaydırmak öteleme olurdu, bu biçim değişimi.
+       Faz X'ten geliyor: bütün otlar aynı anda yatarsa bu rüzgâr değil
+       DALGA olur ve gözü ağıldan alır. Ağılın ikinci (ve son) sürekli
+       hareketi bu; duman yukarıda, ot aşağıda. Üçüncüsünü eklemeyin. */
+    if(t != null && h > 1){
+      px(g, X, yTaban - h + 1, 1, h - 1, c);
+      px(g, X + (Math.sin(t * 0.037 + X * 0.6) > 0.35 ? 1 : 0), yTaban - h, 1, 1, c);
+    } else {
+      px(g, X, yTaban - h, 1, h, c);
+    }
+  }
+}
+
+/* --- DİREK --------------------------------------------------------------
+   ÜST ÇİZGİYİ KIRAN İKİ DİKEY. Kritik: düz duvar uzaktan kaya sanılır;
+   direkler onu insan yapısı yapar. Bu yüzden en küçük ölçekte bile
+   çiziliyorlar (siluet yolunda da var).                                  */
+function barinakDirek(g, dx, yTaban, h, w, cesit, P, saga){
+  if(h <= 0 || w <= 0) return;
+  const yUst = yTaban - h;
+  px(g, dx, yUst, w, h, P.agacMd);
+  px(g, dx, yUst, 1, h, P.agacLt);                 // ışık alan kenar
+  px(g, dx + w - 1, yUst, 1, h, P.agacDk);         // gölgeli kenar
+  if(cesit === 1 && w >= 3 && h >= 8){
+    // çatallı direk — üstü Y
+    px(g, dx - 1, yUst - 2, 1, 3, P.agacMd);
+    px(g, dx + w, yUst - 2, 1, 3, P.agacMd);
+  } else if(cesit === 2 && w >= 3){
+    // taş yığını direk: ahşap yerine üst üste taş
+    for(let yy = yUst; yy < yTaban; yy += 3){
+      px(g, dx, yy, w, 2, ((yy >> 1) & 1) ? P.tasLt : P.tasMd);
+      px(g, dx, yy + 2, w, 1, P.tasDk);
+    }
+  } else {
+    // düz kaba kereste: yıllanmış çentikler
+    for(let yy = yUst + 2; yy < yTaban - 1; yy += 4){
+      if(bHash(dx, yy) & 1) px(g, dx + (w > 2 ? 1 : 0), yy, 1, 1, P.agacDk);
+    }
+  }
+  /* KÜLTÜREL DETAY — yalnız yakında, yoksa gürültü olur.
+     Koç boynuzu 4x3, kapı direğine çakılı. Nazar boncuğu 2x2, kapı bağında. */
+  if(w >= 4 && h >= 12){
+    /* Boynuz AĞZA BAKAN yüze çakılır (kapının süsü, direğin değil) ve
+       kıvrılır. İlk yazımda düz bir çubuk + iki pikseldi ve basılan
+       karede ters bir 'F' harfi okunuyordu — kemik beyazı da fazla
+       bağırıyordu; yapağı tonu yeter. */
+    const bx = saga ? dx - 2 : dx + w - 1;               // direğin ağza bakan yüzü
+    const yb = yUst + 3;
+    px(g, bx,     yb,     3, 1, P.boynuz);               // dış yay
+    px(g, bx + (saga ? 0 : 2), yb + 1, 1, 1, P.boynuz);  // kıvrım
+    px(g, bx + (saga ? 0 : 1), yb + 2, 2, 1, P.boynuz);  // uç içeri döner
+  }
+}
+
+/* --- ARKA KATMAN --------------------------------------------------------
+   Patika, uzak duvar, karanlık ağız, kapı kanadı, ağzın SOL direği.
+   Sürü bunun ÜSTÜNE çizilir.                                            */
+function drawAgilArka(g, x, yerZemin, olcek, kit, faz, t){
+  const m = barinakOlcu(x, yerZemin, olcek, kit);
+  const k = m.k, P = BARINAK_PAL, s = m.s;
+  const tip = k.tip || 'ova';
+  const kayalik = tip === 'kanyon' || tip === 'gecit';
+  /* Kanyon ve geçit taşı daha soğuk: hava perspektifi, ve iki bölge
+     birbirinden ayrılsın. */
+  const T = kayalik
+    ? { tasDk:P.kayaDk, tasMd:P.kayaMd, tasLt:P.kayaLt,
+        agacDk:P.agacDk, agacMd:P.agacMd, agacLt:P.agacLt, boynuz:P.boynuz }
+    : P;
+
+  /* --- PATİKA. Ekranın en parlak zemini, ve ağza doğru DARALIR. En
+     parlak yer en karanlık deliğe giriyor: göz oraya gitsin diye ok ya da
+     parıltı gerekmiyor, kontrast yeter. */
+  /* PATİKANIN İŞİ AĞZI GÖSTERMEK, YERİ DÖŞEMEK DEĞİL.
+     İlk yazımda ağzın 30 px soluna kadar tam parlaklıkta uzanıyordu ve
+     dört ağıl yan yana basılınca görülen şey şuydu: ekranın en parlak
+     nesnesi bir YOL ÇUBUĞU, ağıl onun arkasında kalıyor. Şimdi parlaklık
+     ağızdan uzaklaştıkça düşüyor — ışık ağzın dibinde. */
+  const yolL = Math.round(3 + s * 20);           // ağzın SOLUNA uzanan boy
+  const yolK = Math.max(1, Math.round(1 + s * 1.4)); // yerdeki kalınlık
+  for(let j = 0; j < yolK; j++){
+    /* Öne doğru (aşağı) açılır: yer düzlemini kenardan görüyoruz. */
+    const ac = Math.round(j * (1 + s * 1.2));
+    const xa = m.agizX - yolL - ac, xb = m.agizX + m.agizW + Math.round(ac * 0.3);
+    for(let X = xa; X < xb; X++){
+      const uz = Math.max(0, (m.agizX - X) / Math.max(1, yolL));   // 0 = ağız
+      /* Üst kenar da kırık: dümdüz bir üst kenar patikayı yola değil
+         DÖŞEME TAŞINA çeviriyordu. */
+      if(j === 0 && (bHash(X, 47) % 5) === 0) continue;
+      px(g, X, m.yer - 1 + j, 1, 1,
+         (j === 0 && uz < 0.34) ? P.yolLt : (uz < 0.7 ? P.yolMd : P.yolDk));
+    }
+  }
+  /* Sol uç DAĞILARAK biter. Dik kesikle biten patika basılan karede
+     yere serilmiş bir kilim gibi duruyordu; toprak öyle bitmez. */
+  for(let j = 0; j < yolK; j++){
+    const ac = Math.round(j * (1 + s * 1.6));
+    const xa = m.agizX - yolL - ac;
+    for(let i = 0; i < 6; i++)
+      if((bHash(xa + i, j + 3) % 3) !== 0) px(g, xa + i, m.yer - 1 + j, 1, 1, P.yolDk);
+  }
+  /* Ağzın DİBİ en parlak yer: karanlık deliğe giren şey burada başlıyor.
+     Ok, parıltı, nabız yok — işi kontrast yapıyor (189'a karşı 20). */
+  px(g, m.agizX, m.yer - 1, m.agizW, 1, P.yolLt);
+  for(let i = 0; i < yolL + m.agizW; i++){
+    const X = m.agizX - yolL + i;
+    if(k.zemin === 1 && (bHash(X, 3) % 6) === 0)
+      px(g, X, m.yer - 1 + (bHash(X, 9) % yolK), 1, 1, T.tasLt);
+    if(k.zemin === 2 && (i % 7) === 0 && yolK >= 3)
+      px(g, X, m.yer + yolK - 3, 2, 1, P.yolDk);    // tekerlek izi
+  }
+
+  /* --- AVLU. Uzak duvarın tabanı ile sürünün ayağı arasındaki zemin.
+     BU EKSİKTİ ve karede görüldü: uzak duvar zeminin 7 px üstünde
+     başlıyor, altında hiçbir şey yok, ve ağılın sol yarısı HAVADA DURAN
+     KOYU BİR BLOK olarak okunuyordu. Bir ağılın uzak duvarı havada
+     durmaz — arada avlu vardır, ve o avlu duvarların gölgesinde olduğu
+     için dışarıdaki topraktan koyudur. Ağılın yere basmasını sağlayan
+     tek şey bu bant. */
+  const yUzak = m.yer - m.dz;
+  if(m.dz >= 2){
+    px(g, m.x0, yUzak, m.gen, m.dz + m.yakinD, 'rgba(24,16,26,0.55)');
+    // avlunun ön kenarı: ışık oradan sızıyor, yoksa bant bir leke olur
+    px(g, m.x0, yUzak, m.gen, 1, T.tasDk);
+  }
+  /* Yayla HARABE: duvar çeşidi zorla 3 (yıpranmış, üst sırada gedikler).
+     Dört tip yan yana basıldığında yayla ovadan ayırt edilemiyordu —
+     tek fark ağzın üstündeki ince kemerdi ve o kadar küçük bir işaret
+     bölge anlatmıyor. Bölgeyi anlatan şey DUVARIN HÂLİ. */
+  const dc = tip === 'yayla' ? 3 : k.duvar;
+  barinakDuvar(g, m.x0, m.agizX, yUzak, m.hUzak + Math.round(3 + s * 2), m.hUzak,
+               dc, T, 101, [true, false], 0, m.hava);
+  barinakDuvar(g, m.onX, m.x1, yUzak, m.hUzak, m.hUzak - Math.round(1 + s * 2),
+               dc, T, 211, [false, true], 0, m.hava);
+  if(s > 0.28){
+    barinakDip(g, m.x0, m.agizX, yUzak, P, 401, false, t);
+    barinakDip(g, m.onX, m.x1, yUzak, P, 409, false, t);
+  }
+
+  /* --- KARANLIK AĞIZ. İkon bina değil, delik. */
+  const ah = m.agizH;
+  px(g, m.agizX, m.yer - ah, m.agizW, ah, P.agiz);
+  px(g, m.agizX, m.yer - ah, m.agizW, 1, P.agizRim);
+  if(tip === 'yayla' && m.agizW >= 10){
+    /* HARABE: eski taş kemer ağıla dönüşmüş. Kemer ağzın üstünü örter,
+       iki ucu kırık. */
+    /* Kemer KALIN olacak. İnce bir yay ağzın üstünde tel gibi duruyordu.
+       Bir taş kemer taşın kendisi kadar kalındır; onu kemer yapan şey
+       eğrisi değil KÜTLESİ. Uçları kırık: harabe. */
+    const c = m.agizX + m.agizW / 2, r = m.agizW / 2;
+    const kal = Math.max(2, Math.round(2 + s * 3));
+    for(let i = 0; i < m.agizW; i++){
+      const dxk = (m.agizX + i - c) / r;
+      const yay = Math.sqrt(Math.max(0, 1 - dxk * dxk)) * (3 + s * 6);
+      const yy = Math.round(m.yer - ah - yay);
+      if(i < 1 || i > m.agizW - 2) continue;
+      const kirik = (bHash(i, 41) % 7) === 0 ? 1 : 0;   // taş düşmüş
+      if(kirik) continue;
+      px(g, m.agizX + i, yy, 1, kal, T.tasMd);
+      px(g, m.agizX + i, yy, 1, 1, T.tasLt);
+      px(g, m.agizX + i, m.yer - ah - 1, 1, 1, T.tasDk);
+    }
+  }
+  if(tip === 'kanyon' && s > 0.2){
+    /* KAYA ÇIKINTISI ALTI. Bölge farkını yalnız palet taşıyordu ve dört
+       tip yan yana basılınca AYIRT EDİLEMİYORDU. Kanyonu kanyon yapan
+       şey duvar değil, duvarın ÜSTÜNDEKİ kütle: ağzın üstünden öne
+       doğru sarkan bir kaya rafı. Barınak burada yapılmamış, BULUNMUŞ. */
+    const rw = Math.round(m.gen * 0.55), rx = m.agizX - Math.round(rw * 0.28);
+    const ry = m.yer - m.agizH - m.direkH - Math.round(2 + s * 5);
+    /* RAF BİR YERE DAYANMAK ZORUNDA. İlk yazımda ağzın üstünde havada
+       duruyordu ve basılan karede kaya değil UÇAN BİR KÜTLE okunuyordu.
+       Sağ ucundan yere inen kaya bacağı onu kanyon duvarına bağlıyor. */
+    /* AYAK: dibi geniş, kenarı düzensiz. Dikdörtgen bir sütun kaya değil
+       BACA okunuyordu. */
+    const bw = Math.round(4 + s * 6);
+    const bx = rx + rw - bw;
+    for(let y = ry; y < m.yer; y++){
+      const u = (y - ry) / Math.max(1, m.yer - ry);
+      const gen2 = bw + Math.round(u * (2 + s * 4));
+      const sol = bx - Math.round(u * (1 + s * 2)) + (bHash(y, 53) % 2);
+      px(g, sol, y, gen2, 1, T.tasMd);
+      px(g, sol, y, 1, 1, T.tasLt);
+    }
+    /* RAF ÇIKMA YAPIYOR: kütle DAYANDIĞI uçta kalın, serbest uçta ince.
+       İlk yazımda kalınlık sin(t*PI) ile ORTADA en fazlaydı, yani iki ucu
+       da inceydi — kaya rafı değil MANTAR ŞAPKASI. Bir çıkmayı çıkma
+       yapan şey ağırlığın nerede olduğu: taşıyan uçta. */
+    for(let i = 0; i < rw; i++){
+      const t = i / rw;                                  // 0 = serbest uç (sol)
+      const kal = Math.round((3 + s * 8) * (0.28 + t * 1.0))
+                + (bHash(rx + i * 3, 29) % 3) - 1;
+      if(kal <= 0) continue;
+      px(g, rx + i, ry - kal, 1, kal, T.tasMd);
+      px(g, rx + i, ry - kal, 1, 1, T.tasLt);
+      /* Alt kenar kırık VE serbest uca doğru yükseliyor: rafın altı düz
+         olsaydı asma tavan olurdu. */
+      const alt = Math.round((1 - t) * (1 + s * 3));
+      if(alt > 0) px(g, rx + i, ry - alt, 1, alt, T.tasDk);
+      if((bHash(rx + i, 21) % 3) === 0) px(g, rx + i, ry - alt, 1, 1, T.tasDk);
+    }
+  }
+  if(tip === 'gecit'){
+    /* MAĞARA AĞZI: sürü karanlık dağa giriyor. Ağzın ÜSTÜNDE kaya
+       kütlesi var — delik duvarda değil DAĞDA. Sarkma kütlenin alt
+       kenarını düzensiz yapıyor: kesilmiş değil çökmüş bir açıklık. */
+    const kh = Math.round(4 + s * 9);
+    for(let i = -2; i < m.agizW + 2; i++){
+      const X = m.agizX + i;
+      const sark = (bHash(X, 5) % Math.max(2, Math.round(2 + s * 3)));
+      /* Üst kenar da düzensiz: düz tavanlı bir kütle basılan karede kaya
+         değil BETON BLOK okunuyordu. */
+      const cikinti = (bHash(X * 5, 37) % Math.max(2, Math.round(1 + s * 4)));
+      px(g, X, m.yer - ah - kh - cikinti, 1, kh + sark + cikinti, T.tasMd);
+      px(g, X, m.yer - ah - kh - cikinti, 1, 1, T.tasLt);
+      if(i >= 0 && i < m.agizW) px(g, X, m.yer - ah, 1, sark, P.agiz);
+    }
+  }
+
+  /* --- KAPI. Aralık durur: kapalı "dur" der, açık "zaten geçtin" der.
+     'faz' ya bir dize ya {ad, p} — 'aciliyor' ilerlemesi p ile gelir.   */
+  const fz = (faz && faz.ad) ? faz.ad : (faz || 'aralik');
+  const fp = (faz && faz.p != null) ? Math.max(0, Math.min(1, faz.p)) : 0;
+  let acik = fz === 'kapali' ? 0 : fz === 'acik' ? 1
+           : fz === 'aciliyor' ? (0.16 + fp * 0.84) : 0.16;
+  if(tip !== 'gecit' && m.agizW >= 4 && acik < 0.95){
+    const kw = Math.round(m.agizW * (1 - acik));
+    if(kw >= 2){
+      /* Menteşe SAĞ direkte; kanat sola doğru açılıyor, yani ağzın sol
+         tarafında karanlık boşluk büyüyor. Geri bildirim hareketin
+         kendisi: parlama, ok, nabız YOK. */
+      const kx = m.agizX + m.agizW - kw;
+      const yat = Math.round(acik * (2 + s * 3));     // 10-15 derece aralık
+      const cesit = (tip === 'kanyon') ? 2 : k.kapi;
+      for(let i = 0; i < kw; i++){
+        const t = i / Math.max(1, kw - 1);
+        const yUst2 = m.yer - ah + 1 + Math.round(yat * (1 - t));
+        const hh = m.yer - yUst2;
+        if(hh <= 0) continue;
+        if(cesit === 2){
+          // dikenli çalı demeti — kanyonun kapısı
+          if((bHash(i, 13) % 3) !== 0) px(g, kx + i, yUst2 + (bHash(i, 17) % 2), 1, hh, P.caliDk);
+          if((bHash(i, 19) % 4) === 0) px(g, kx + i, yUst2 - 1, 1, 2, P.caliLt);
+        } else {
+          px(g, kx + i, yUst2, 1, hh, T.agacMd);
+          if(cesit === 1 && (i % 3) === 0) px(g, kx + i, yUst2, 1, hh, T.agacDk);
+        }
+      }
+      if(cesit === 0 && kw >= 5){
+        // yatay kalaslar
+        for(let yy = m.yer - ah + 3; yy < m.yer - 1; yy += 3)
+          px(g, kx, yy, kw, 1, T.agacDk);
+      }
+      px(g, kx, m.yer - ah + 1, kw, 1, T.agacLt);      // üst kenar ışık alır
+      /* Nazar boncuğu: kapı bağında, 2x2. Paletin tek mavisi. */
+      if(m.agizW >= 14 && cesit !== 2){
+        px(g, kx + 1, m.yer - ah + 3, 2, 2, P.boncuk);
+        px(g, kx + 1, m.yer - ah + 3, 1, 1, P.boynuz);
+      }
+    }
+  }
+
+  /* --- SOL DİREK (arkada): sürü ona yaklaşırken ÖNÜNDEN geçer.
+     Yaylada direkler ahşap değil TAŞ AYAK (çeşit 2): harabede kereste
+     çürür, taş kalır. */
+  const dirCesit = tip === 'yayla' ? 2 : k.direk;
+  barinakDirek(g, m.agizX - m.direkW, m.yer, m.hUzak + m.direkH + m.dz,
+               m.direkW, dirCesit, T, false);
+
+  /* --- OCAK DUMANI ------------------------------------------------------
+     Ağılın TEK sürekli hareketi, ve tek bir şey söylüyor: BURADA BİRİ VAR.
+     Yolun ucundaki yapının barınak olduğunu anlatan şey duvar değil duman;
+     duvar taş yığını da olabilir.
+
+     Yavaş olması bir kusur değil ŞART: bu depoda kural "on saniye bakınca
+     en az bir hareket". Duman o testi tek başına geçiyor ve hiçbir şeyi
+     bastırmıyor. İki, üç şey aynı anda kıpırdarsa ağıl canlı değil
+     KALABALIK okunur.
+
+     RENGİ SABİT DEĞİL, KONTRASTA GÖRE. Bu deponun en pahalı dersi
+     "piksel değişti" ile "okundu"nun ayrı şeyler olması: aynı gün DÖRT
+     efekt koyunun üstüne koyu koyduğu için görünmemişti. Duman göğe
+     çıkıyor ve gök turun yarısında parlak, yarısında karanlık. Sabit bir
+     ton yarısında kaybolurdu. ART.sunUp zaten günün nerede olduğunu
+     taşıyor — duman aydınlıkta KOYU, karanlıkta AÇIK. Zıttına geç. */
+  if(t != null && s > 0.22){
+    const up = ART.sunUp == null ? 1 : ART.sunUp;
+    const koyu = up > 0.4;
+    const dRenk = koyu ? '38,40,46' : '223,214,199';
+    const ox = m.onX + Math.round((m.x1 - m.onX) * 0.55);   // ocak avlunun içinde
+    const oy = yUzak - m.hUzak + 1;
+    const boy = Math.round(6 + s * 20);
+    for(let i = 0; i < boy; i++){
+      const u = i / boy;                                   // 0 = ocak, 1 = tepe
+      /* Rüzgâr sola: dünya sağdan sola kayıyor, duman da öyle savrulur.
+         Yukarı çıktıkça hem sapma hem dağılma artıyor. */
+      const sap = Math.sin(i * 0.42 + t * 0.031) * (1 + u * 4) - u * u * (2 + s * 5);
+      const a = (0.5 - u * 0.46) * Math.min(1, s * 1.6);
+      if(a < 0.02) continue;
+      /* Dip KALIN, uç ince. İlk basımda duman baştan sona 1 px'ti ve
+         kaynağı duvara değmiyordu: gökte yüzen bir iplik okunuyordu.
+         Dumanı ocağa bağlayan şey tepesi değil DİBİ. */
+      const w = i < 3 ? 2 : (u > 0.45 ? 2 : 1);
+      px(g, ox + Math.round(sap), oy - i, w, 1, 'rgba(' + dRenk + ',' + a.toFixed(3) + ')');
+    }
+  }
+
+  /* --- KOR. Yalnız karanlıkta, ve yalnız bu yüzden: gündüz zaten ocağın
+     dumanı görünüyor, gece duman görünmüyor (gökyüzü koyu, duman açık ama
+     ağzın içi kapkara). Karanlıkta ağzı canlandıran şey içerideki ateşin
+     ağza vuran kızıllığı. Nabız YAVAŞ — hızlı nabız bir düğme der. */
+  if(t != null && s > 0.35 && (ART.sunUp == null ? 1 : ART.sunUp) < 0.42 && m.agizW >= 8){
+    /* SAYDAM DEĞİL, DOLU RENK. İlk yazımda kor 0.10-0.26 alfayla
+       çiziliyordu ve basılan karede HİÇBİR ŞEY yoktu: ağzın içi zaten
+       kapkara ('#100e1e', parlaklık 20) ve o alfa onu 20'den 30'a
+       taşıyordu. Bu deponun en pahalı dersi tam bu — "piksel değişti" ile
+       "okundu" ayrı şeyler, ve aynı hata dört kez saydam koyu ile
+       yapılmıştı. Kor dünyanın kendi sıcak renkleriyle DOLU çiziliyor;
+       nabız alfa ile değil TONLA atıyor. */
+    /* ÜÇ TON, VE PERİYODU OLMAYAN BİR NABIZ. İlk yazımda tek bir
+       sinüsün işareti iki tonu seçiyordu: kor yanıp sönüyordu, yani ateş
+       değil FENER okunuyordu. Ateşin ritmi düzenli değildir. İki
+       ölçüşmez hızda sinüs toplanıp üç tona bölününce çevrim asla
+       tekrarlamıyor ve göz bir düzen aramıyor. */
+    const nb = Math.sin(t * 0.031) * 0.6 + Math.sin(t * 0.0117 + 1.3) * 0.4;
+    const kat = nb > 0.34 ? 2 : (nb > -0.28 ? 1 : 0);
+    const TON = ['#883e3e', '#bc6557', '#C05800'];
+    const kw = Math.max(3, Math.round(m.agizW * 0.42));
+    const kx = m.agizX + ((m.agizW - kw) >> 1);
+    px(g, kx, m.yer - 2, kw, 2, TON[kat]);
+    px(g, kx + 1, m.yer - 3, Math.max(1, kw - 2), 1, TON[Math.max(0, kat - 1)]);
+    // ateşin ağzın ÖNÜNE vuran payı: eşikteki toprak ısınıyor
+    px(g, kx - 1, m.yer - 1, kw + 2, 1, TON[Math.max(0, kat - 1)]);
+  }
+
+  /* YAYLANIN İMZASI: KIRIK LENTO. Dört tip yan yana basılınca yayla
+     ovadan ayırt edilemiyordu — kemer ince kalıyor, gedikli duvar da
+     uzaktan normal duvar gibi okunuyordu. Bir harabeyi harabe yapan
+     silüet iki ayak ve üstlerinde AĞZI KIRILMIŞ bir taş kiriş. */
+  if(tip === 'yayla' && m.agizW >= 8){
+    const ly = m.yer - m.hUzak - m.direkH - m.dz - Math.round(1 + s * 2);
+    const lk = Math.max(2, Math.round(2 + s * 3));
+    const lx0 = m.agizX - m.direkW - 1, lx1 = m.onX + m.direkW + 1;
+    const kopuk = lx0 + Math.round((lx1 - lx0) * 0.55);   // kırılan parça
+    for(let X = lx0; X < lx1; X++){
+      const gedik = X >= kopuk && X < kopuk + Math.round(2 + s * 4);
+      if(gedik) continue;
+      const dus = X > kopuk ? Math.round(1 + s * 2) : 0;  // kalan uç çökmüş
+      px(g, X, ly + dus, 1, lk, T.tasMd);
+      px(g, X, ly + dus, 1, 1, T.tasLt);
+    }
+  }
+}
+
+/* --- ÖN KATMAN ----------------------------------------------------------
+   Yakın duvar, sağ direk, dip gölgesi, ön plan tutamı. Sürünün ÜSTÜNE.  */
+function drawAgilOn(g, x, yerZemin, olcek, kit, faz, t){
+  const m = barinakOlcu(x, yerZemin, olcek, kit);
+  const k = m.k, P = BARINAK_PAL, s = m.s;
+  const tip = k.tip || 'ova';
+  const kayalik = tip === 'kanyon' || tip === 'gecit';
+  const T = kayalik
+    ? { tasDk:P.kayaDk, tasMd:P.kayaMd, tasLt:P.kayaLt,
+        agacDk:P.agacDk, agacMd:P.agacMd, agacLt:P.agacLt, boynuz:P.boynuz }
+    : P;
+
+  /* SAĞ DİREK. Ağzın sağ yanı — koyun ağza girerken ONUN ARKASINDAN
+     geçer: yutulmanın ilk işareti. */
+  barinakDirek(g, m.onX, m.yer, m.hUzak + m.direkH + m.dz, m.direkW,
+               k.direk, T, true);
+
+  /* YAKIN DUVAR. Ağız dibinde alçak (koyun tam görünür), sağa doğru
+     yükselir (koyun yok). Tabanı da sağa doğru İNİYOR: aşağı = yakın. */
+  const x0 = m.onX + m.direkW;
+  if(m.x1 > x0){
+    const yTab = m.yer + m.yakinD;
+    barinakDuvar(g, x0, m.x1, yTab, m.hDip + m.yakinD, m.hYakin + m.yakinD,
+                 tip === 'yayla' ? 3 : (k.duvar + 1) % 4, T, 307,
+                 [false, true], Math.max(2, Math.round(1 + s * 2)), m.hava);
+    /* Dip gölgesi: duvarın önünde 2 px, saydam. Zemin ne renk olursa
+       olsun duvar zemine OTURUR. */
+    px(g, x0, yTab, m.x1 - x0, Math.max(1, Math.round(1 + s)), 'rgba(20,18,28,0.38)');
+    if(s > 0.28) barinakDip(g, x0, m.x1, yTab, P, 417, true, t);
+  }
+
+  /* ÖN PLAN TUTAMI. Ağılın dibini KISMEN örter — beşinci derinlik ipucu.
+     Yalnız yakında: uzakta tek piksellik bir leke olur, gürültü. */
+  if(s > 0.45){
+    const px0 = m.onX + Math.round((m.x1 - m.onX) * 0.34);
+    const py0 = m.yer + m.yakinD + Math.round(s * 2);
+    const prop = k.prop ? k.prop[0] : 0;
+    const bw = Math.round(6 + s * 6);
+    if(prop === 0){
+      // yalak — oyuk kütük
+      px(g, px0, py0 - 4, bw, 3, T.agacMd);
+      px(g, px0, py0 - 4, bw, 1, T.agacLt);            // ışık alan kenar
+      px(g, px0 + 1, py0 - 3, bw - 2, 1, P.agiz);      // oyuk
+      px(g, px0, py0 - 1, bw, 1, T.agacDk);
+    } else if(prop === 1){
+      // kırık tekerlek — yatık, üst yayı kırık
+      const r = Math.round(3 + s * 3);
+      for(let a = 0; a < 14; a++){
+        const th = (a / 14) * Math.PI * 1.5 + 0.4;
+        px(g, px0 + Math.round(Math.cos(th) * r), py0 - 1 - Math.round(Math.sin(th) * r * 0.55),
+           1, 1, T.agacMd);
+      }
+      px(g, px0 - r, py0 - 1, r * 2, 1, T.agacDk);
+    } else if(prop === 2){
+      /* Tek direk — eğik, yıllanmış. IŞIK ALAN KENARI ŞART: ilk yazımda
+         koyu duvarın önünde koyu bir çizgiydi ve basılan karede kazara
+         çizilmiş bir tire gibi duruyordu. Ön plandaki her şey arkasındaki
+         duvardan AYRILMAK zorunda. */
+      const bh = Math.round(6 + s * 5);
+      for(let i = 0; i < bh; i++){
+        px(g, px0 + (i >> 2), py0 - 1 - i, 2, 1, T.agacMd);
+        px(g, px0 + (i >> 2), py0 - 1 - i, 1, 1, T.agacLt);
+      }
+      px(g, px0, py0 - 1, 3, 1, T.agacDk);
+    } else {
+      // çalı tutamı — saplar, ARALARINDA boşluk (dolu kütle taş okunur)
+      const n = 5 + Math.round(s * 4);
+      for(let i = 0; i < n; i++){
+        const dxc = (i - (n >> 1)) * 2;
+        const hh = Math.max(2, Math.round((4 + s * 4) * (1 - Math.abs(dxc) / (n + 2))) + (bHash(px0, i) % 3) - 1);
+        px(g, px0 + dxc + Math.round(dxc * 0.2), py0 - hh, 1, hh, P.caliDk);
+        px(g, px0 + dxc, py0 - 1, 1, 1, P.caliLt);
+      }
+    }
+  }
+}
+
+/* --- UZAK SİLUET --------------------------------------------------------
+   16-24 px genişlikte. Taş kümesi, harç, boncuk yok: o boyutta hepsi kir.
+   Kalan üç şey siluetin TAMAMI ve üçü de şart: alçak yatay duvar, üst
+   çizgiyi kıran iki dikey, aralarında karanlık ağız.                     */
+function drawAgilSiluet(g, x, yerZemin, olcek, kit){
+  const m = barinakOlcu(x, yerZemin, olcek, kit);
+  const P = BARINAK_PAL;
+  const kayalik = (m.k.tip === 'kanyon' || m.k.tip === 'gecit');
+  const tasMd = kayalik ? P.kayaMd : P.tasMd;
+  const tasLt = kayalik ? P.kayaLt : P.tasLt;
+  const tasDk = kayalik ? P.kayaDk : P.tasDk;
+  const h = Math.max(4, m.hUzak);
+  const y = m.yer - h;
+  /* GÖVDE AÇIK TON. Uzaktaki ağıl oyunun karanlık ön planında duruyor;
+     onu ortaya çıkaran şey koyuluk değil AÇIKLIK. Yakın ağılda gövde
+     tasMd, burada tasLt — aynı taş, farklı mesafe. */
+  for(let i = 0; i < m.gen; i++){
+    const tirt = (bHash(i >> 1, 3) % 3) - 1;      // üst kenar düz değil
+    px(g, m.x0 + i, y + tirt, 1, h - tirt, tasLt);
+    px(g, m.x0 + i, m.yer - Math.max(1, h >> 1), 1, Math.max(1, h >> 1), tasMd);
+  }
+  px(g, m.x0, m.yer - 1, m.gen, 1, tasDk);
+  const aw = Math.max(1, Math.min(m.agizW, m.gen - 4));
+  const ax = m.agizX;
+  px(g, ax, m.yer - h + 1, aw, h - 1, P.agiz);
+  /* DİREKLER — bu siluetin en kritik iki çizgisi. Onlar olmadan alçak bir
+     duvar uzaktan KAYA sanılıyor; onları insan yapısı yapan şey üst
+     çizgiyi kıran iki dikey. Duvarın üstünde kalan parçaları koyu zeminde
+     kayboluyordu, o yüzden her birinin yanına 1 px açık kenar. */
+  const dw = Math.max(1, m.direkW);
+  const dh = h + Math.max(3, m.direkH);
+  for(const [dx, yon] of [[ax - dw, -1], [ax + aw, 1]]){
+    px(g, dx, m.yer - dh, dw, dh, P.agacDk);
+    px(g, dx + (yon > 0 ? dw : -1), m.yer - dh, 1, dh - h, tasLt);
+  }
+}
+
+/* Kolaylık sarmalayıcısı: arasına koyun girmeyen yerlerde (uzak siluet,
+   önizleme, atlas) tek çağrı yeter. Sürü araya girecekse ARKA ve ÖN ayrı
+   çağrılmalı — yoksa duvar koyunu yutmaz. */
+function drawAgil(g, x, yerZemin, olcek, kit, faz, t){
+  const m = barinakOlcu(x, yerZemin, olcek, kit);
+  /* SİLÜET EŞİĞİ 30'DAN 24'E İNDİ. İki yol yan yana basıldı: ayrıntılı
+     yol gen=24'e kadar sağlam duruyor (direkler, ağız, kapı hepsi
+     okunuyor) ve ancak gen<22'de kopuk lekelere dağılıyor. 30 fazla
+     ihtiyatlıydı — silüet yolu gen 16..29 arası neredeyse hiç değişmiyor,
+     yani yaklaşmanın altı karesi BOŞA GİDİYORDU: ağıl büyümüyor, sonra
+     birden ayrıntılanıyordu.
+     Eşik ne kadar küçükse takasın taşıdığı piksel farkı da o kadar az. */
+  if(m.gen < 24){ drawAgilSiluet(g, x, yerZemin, olcek, kit); return; }
+  drawAgilArka(g, x, yerZemin, olcek, kit, faz, t);
+  drawAgilOn(g, x, yerZemin, olcek, kit, faz, t);
+}
+
 // ==ART-END==
 
 /* NOT — BU YARDIMCI ART BLOĞUNUN DIŞINDA, ve bilerek. İlk yazımda
@@ -5557,6 +6842,11 @@ const G = {
      lossT geriye sayar ve perde onun DEGERINDEN okunur; ayri bayrak yok
      (ayri bayrak tutulsaydi biri sifirlanip oteki kalabilirdi). */
   lossT:0, lossX:W/2,
+  /* YOLCULUK. G.yol bu bolumde katedilen mesafe (px, zemin katmani).
+     Tek sayi: bolumun neresinde oldugumuz, dunyanin ne kadar kaydigi ve
+     agilin ne zaman gorunecegi hepsi bundan turuyor. */
+  yol:0,
+  bolum:1,          // kayittan geliyor; kosu boyunca sabit
   /* TUFEGIN IKI SESSIZ ANI (2026-08-21). Ikisi de fire() icinde belli
      oluyor ve fire() disindan gorulemiyordu; sayaclar burada, cizimleri
      tufek isinde (bkz. TUFEK). */
@@ -6346,6 +7636,9 @@ function startRun(){
      kaybedip yeniden basladiginda yeni kosu karanlikta ve yari hizda
      aciliyordu. Ses kismasi da birakiliyor. */
   G.lossT = 0; G.shakeT = 0; G.shakeMag = 0; G.shakeDur = 0; G.stopT = 0;
+  G.yol = 0;
+  G.bolum = Save.d.bolum;
+  G.dog.icerde = 0;
   Snd.duckBirak();
   G.stats = { shots:0, hits:0, decoyHits:0, fled:0, perfects:0,
               reloads:0, steady:0, maxCombo:0, bestPouch:0, cleanClay:false };
@@ -6502,6 +7795,10 @@ const aliveFlock = () => G.flock.filter(a => a.state !== 'gone');
 function drawFlock(g){
   for(const a of G.flock){
     if(a.state === 'gone') continue;
+    /* AGILA GIRMIS hayvan cizilmiyor. 'gone' KULLANILAMAZ -- o KAYIP
+       demek ve sonuc ekraninda oyle sayilir. Iceri giren hayvan
+       kaybedilmedi, sadece artik ekranda degil. */
+    if(a.icerde) continue;
     /* SÜRÜ BİREYLERİ — bkz. ==YAYLA==. Kampanyada her hayvanın kimliği
        var ve kendi işaretiyle basılıyor; kimliği olmayan (ya da kampanya
        kapalı) hayvan eskisi gibi taban sprite'ıyla çiziliyor. Sonsuz mod
@@ -6517,7 +7814,21 @@ function drawFlock(g){
       for(const d of G.ducks)
         if(d.threat && !d.done && d.tState === 'dive' && d.tgt === a.id){ acil = 1; break; }
     }
-    drawSheep(g, a.x, a.y, a.dir, a.state, G.t + a.phase, a.relief, a.startle, acil);
+    /* YURUYUS VURUSU — mesafeden turuyor, zamandan degil (bkz.
+       YOL.adimPxKoyun). Zamana baglanirsa hiz degistiginde ayak patinaj
+       yapar: dunya bir hizda kayar, bacaklar baska ritimde doner.
+
+       HER HAYVANA AYRI FAZ. Bu sus degil, sart: surunun tamami ayni
+       vurusta olursa on bir hayvan tek nabiz gibi atar ve o kalabalik
+       degil MEKANIZMA okunur. a.phase zaten hayvan basina var (otlama
+       ritmi icin konmustu, ayni sebeple) -- ayni faz buraya da geciyor.
+
+       Alarmdaki hayvana yuru GECILMIYOR: orada kendi tetik pozu var ve
+       "hangisi tehlikede" sorusu kimlikten de ritimden de once gelir. */
+    const yuruK = (G.phase === 'play' && a.state !== 'alert' && !(a.startle > 0))
+      ? ((Math.floor(G.yol / YOL.adimPxKoyun) + (a.phase | 0)) % 4 + 4) % 4
+      : null;
+    drawSheep(g, a.x, a.y, a.dir, a.state, G.t + a.phase, a.relief, a.startle, acil, yuruK);
   }
 }
 
@@ -6908,6 +8219,193 @@ const KAYIP = {
 };
 KAYIP.top = KAYIP.don + KAYIP.yavas + KAYIP.toparla;   // 103 kare ~ 1.7 sn
 
+/* --- YOLCULUK ----------------------------------------------------------
+   Bir bolum bir gunun yol ayagi. Suru yerinde yuruyor, dunya kayiyor,
+   varis agili sagdan girip buyuyor. Bolum VARINCA bitiyor.
+
+   hiz: zemin katmaninin kare basina kaydigi piksel. 0.6 -> saniyede 36 px,
+   sakin bir yuruyus temposu. Daha hizlisi kosu gibi okunuyor.
+
+   uzunluk: bir ayagin toplam mesafesi. 6 dk x 3600 kare x 0.6 = 12960 px,
+   yani ~40 ekran genisligi. Bolum tablosu bunu bolumden bolume
+   degistirecek; bu taban deger. */
+const YOL = {
+  hiz: 0.6,
+  uzunluk: 12960,
+  agilGorunur: 0.88,   // yolun bu oraninda varis agili ufukta belirir
+  /* Agil ufukta 16 px genisliginde beliriyor, varista 110 px oluyor.
+     Bu iki sayi sanat sartnamesinden: siluet iki uctada okunmali. */
+  uzakOlcek: 0.15,
+  yakinOlcek: 1.00,
+  /* Varista agilin sol kenarinin durdugu yer. Sagda kaliyor ki sol
+     ucte iki KAT EDILEN YOL gorunur kalsin -- ucuncu AI'in notu:
+     "oyuncunun son goruntusu bina degil, bos yol olmali". */
+  varisX: W - 130,
+  /* YURUYUS KARESI BASINA KAT EDILEN ZEMIN (px).
+     Adim TEMPOYA degil MESAFEYE bagli: `G.t`den turetilseydi hiz
+     degistiginde ayak patinaj yapardi (dunya kayiyor, bacaklar baska
+     ritimde). Boyle bagladiginda bir adim her zaman ayni mesafeyi
+     goturuyor. 4.2 px -> alti karelik cevrim ~25 px, ~26 px'lik bir
+     kopek icin makul bir adim. Yan oturumun filmde olctugu tempoyla
+     (hiz 0.6'da her 7 karede bir) birebir ayni. */
+  adimPx: 4.2,
+  /* KOYUNUN ADIMI AYRI. Turetme: kopek 23 px uzun, alti karelik cevrim
+     6 x 4.2 = 25.2 px, yani kabaca kendi boyu. Koyun 17 px uzun ve
+     cevrimi dort vurus: 17/4 ~ 4.3-4.5. Ayak patinaj yaparsa oynatilacak
+     sayi BU, cevrim uzunlugu degil. */
+  adimPxKoyun: 4.5,
+  /* VARIS PAYI: yolun son 340 px'i (0.6 px/kare -> ~9.5 saniye) surunun
+     kapidan girmesine ayrildi. Uc sanat yonetmeni de ayni seyi soyledi:
+     VARIS ZATEN SONUC EKRANIDIR. Koyunlar tek tek giriyor, oyuncu onlari
+     izleyerek sayiyor, kopek EN SON giriyor. Yazi yok, puan yok. */
+  varisPay: 340,
+  /* AGILIN TABANI = SURUNUN AYAGI. Olculdu: koyunlar y 144..161,
+     kopek 165. GROUND (132) DEGIL -- 170 denendi ve agil alt kenardan
+     tasiyordu. Modul seviyesinde cunku hem render hem varisSurusu
+     okuyor; render'in icinde yerel dururken varisSurusu goremiyordu. */
+  taban: 166,
+  /* CIKIS AGILI: bolumun basinda ekranda duran, geride kalan agil.
+     Varis agilinin AYNASI DEGIL, cok daha basit: ona zaten varmisiz,
+     yani olcek 1 ve dunyanin kendi hizinda geride kaliyor. Perspektif
+     numarasi yalniz UZAKTAN YAKLASAN sey icin gerekiyor.
+     420 px ~ 12 saniye: yola cikisin nefes payi. */
+  cikisX: 34,
+  cikisMesafe: 420,
+};
+
+/* BU BOLUMUN YOL UZUNLUGU. Tablo bolumden bolume degistiriyor: ilk
+   bolumler kisa (ogrenme), sonrakiler uzun. Taban YOL.uzunluk.
+   Fonksiyon cunku G.bolum'a bagli, sabit olamaz. */
+function yolUzunlugu(){
+  return Math.round(YOL.uzunluk * bolumAyar(G.bolum).uzun);
+}
+
+/* VARISIN ILERLEMESI (0..1). Yolun son varisPay pikselinde 0'dan 1'e
+   gidiyor. Saf fonksiyon: durum tutulmuyor, duraklat/geri sar hepsinde
+   ayni yerde. */
+function varisP(){
+  const kalan = yolUzunlugu() - G.yol;
+  if(kalan > YOL.varisPay) return 0;
+  return Math.max(0, Math.min(1, 1 - kalan / YOL.varisPay));
+}
+
+/* SURUYU KAPIDAN ICERI ALIR. Hayvanlar SIRAYLA giriyor: kapiya en yakin
+   olan once. Girme ani hayvanin kendi payina denk geldiginde basliyor,
+   yani sira dogal bir kuyruk gibi akiyor -- hepsi birden hucum etmiyor.
+
+   Kopek EN SON. Uc sanat yonetmeni de bunu ayri ayri soyledi ve
+   sebebi tek: kopegin en son girmesi bir RITUEL, ve o ritüel yillar
+   boyunca kopegin yaslandigini anlatan sey olacak (erken bolumlerde
+   kosarak, gec bolumlerde topallayarak). */
+function varisSurusu(){
+  const p = varisP();
+  if(p <= 0) return false;
+  const a = agilYeri();
+  if(!a) return false;
+  const kutu = (typeof agilKapiKutusu === 'function')
+    ? agilKapiKutusu(a.x, YOL.taban, a.olcek, a.kit)
+    : { x: a.x + 30, w: 12 };
+  const kapiX = kutu.x + kutu.w / 2;
+  /* ICERI YURUYOR, KAPIDA KAYBOLMUYOR. Ilk yazimda hayvan kapi
+     merkezine varinca aninda cizilmez oluyordu ve karede YOK OLUYORDU.
+     Sartnamenin en guclu maddesi tam bunun tersi: hayvan duvarin
+     ARKASINA GECIP kaybolmali -- once tamami gorunur, sonra yarisi,
+     sonra kafasi, sonra yok. Kapinin karanlik agzinin icinde birkac
+     piksel daha yuruyor; on duvar ve direkler onu orada ortuyor. */
+  const icerdeX = kapiX + Math.max(4, kutu.w * 0.45);
+
+  /* Kapiya en yakin olan once giriyor. Sira HER KARE yeniden
+     hesaplaniyor: bir kez verilseydi girenler listeden dustukce sira
+     kayardi. */
+  const canli = G.flock.filter(s => s.state !== 'gone' && !s.icerde)
+                       .sort((s1, s2) => s2.x - s1.x);
+  const kalanSayi = canli.length;
+
+  /* SABIT YURUYUS HIZI, lerp DEGIL. Ilk yazimda hedefe oranli
+     yaklasiyordu (`(kapiX - s.x) * 0.06`) ve kapiya yakin hayvan
+     ANINDA iceri giriyordu: sekiz koyunun ucu ilk yarim saniyede
+     yutuldu. Sabit hizda hepsi AYNI TEMPODA yuruyor, yani kuyruk
+     gercek bir kuyruk gibi akiyor.
+     1.1 px/kare: dunyanin kaymasindan (0.6) biraz hizli, yani hayvan
+     kapiya dogru gercekten YURUYOR gibi okunuyor. */
+  const HIZ = 1.1;
+  for(let i = 0; i < kalanSayi; i++){
+    const s = canli[i];
+    /* Sirasi: her hayvan bir oncekinden 0.055 sonra basliyor.
+       Hepsi birden hucum etmesin diye. */
+    if(p < i * 0.055) continue;
+    s.dir = 1;
+    s.x += HIZ;
+    if(s.x >= icerdeX) s.icerde = 1;
+  }
+
+  const suruBitti = G.flock.every(s => s.state === 'gone' || s.icerde);
+
+  /* KOPEK EN SON, ve suru bitene KADAR beklemiyor -- suru bitince
+     yuruyor. Uc sanat yonetmeni de bunu ayri ayri soyledi ve sebebi
+     tek: kopegin en son girmesi bir RITUEL, ve o ritüel bolumler
+     boyunca kopegin yaslandigini anlatan sey olacak (erken bolumlerde
+     kosarak, gec bolumlerde topallayarak). */
+  if(suruBitti && G.dog && !G.dog.icerde){
+    G.dog.dir = 1;
+    G.dog.x += HIZ * 1.25;                 // kopek biraz daha hizli
+    if(G.dog.x >= icerdeX) G.dog.icerde = 1;
+  }
+
+  return suruBitti && (!G.dog || !!G.dog.icerde);
+}
+
+/* CIKIS AGILI — geride kalan. Dunya nesnesi gibi davraniyor: zemin
+   katmaninin hizinda sola kayiyor, olcegi degismiyor.
+   Ucuncu AI'in notu buraya da uyuyor: "oyuncunun son goruntusu bina
+   degil BOS YOL olmali" — cikista da agil cabuk geride kalmali ki
+   ekran yola acilsin. */
+function cikisAgilYeri(){
+  if(G.yol >= YOL.cikisMesafe) return null;
+  /* CIKIS AGILININ KAPISI ACIK. Oradan yeni ciktik; kapali cizmek
+     "hic cikmamisiz" demek olurdu. Yan oturumun notu dogru: cikis ile
+     varisin farkini KAPI tasiyor, ayri animasyon gerekmiyor. */
+  return { x: Math.round(YOL.cikisX - G.yol), olcek: 1,
+           kit: barinakKit(G.bolum), faz: 'acik' };
+}
+
+/* AGILIN EKRANDAKI YERI VE OLCEGI -- yalnizca G.yol'un fonksiyonu.
+   Durum tutulmuyor: duraklat / yeniden yukle / geri sar, hepsinde ayni
+   yerde cikiyor. (Isik turundaki donum anlarinda ogrenilen ders.)
+   yol < agilGorunur ise null doner: agil daha ufukta bile degil. */
+function agilYeri(){
+  const p = G.yol / yolUzunlugu();
+  if(p < YOL.agilGorunur) return null;
+  const k = Math.min(1, (p - YOL.agilGorunur) / (1 - YOL.agilGorunur));
+  /* k^1.7: uzakta yavas buyuyor, yaklasinca hizlaniyor. Dogrusal olsaydi
+     agil ufukta cabuk buyuyup sonra surunuyordu -- yaklasma hissi
+     mesafenin karesiyle gelir, dogrusal degil. */
+  const e = Math.pow(k, 1.7);
+  /* x TAM SAYI OLMAK ZORUNDA. Ilk yazimda kesirli birakildi ve oyun
+     yolun sonunda "Invalid array length" ile COKTU: agili cizen kod
+     `new Array(x1 - x0)` yapiyor, kesirli genislik gecerli bir dizi
+     uzunlugu degil. Ustelik piksel sanatinda kesirli konum zaten
+     yanlis -- kenarlar iki piksele bulasir.
+     npm test bunu GORMEDI: uzun kosu denetimi yalniz update() cagiriyor,
+     render() cagirmiyordu. Tarayicida kirmizi hata ekrani cikti. */
+  return {
+    k,
+    olcek: YOL.uzakOlcek + (YOL.yakinOlcek - YOL.uzakOlcek) * e,
+    x: Math.round(W + 14 - (W + 14 - YOL.varisX) * e),
+    kit: barinakKit(G.bolum + 1),     // VARILAN agil bir sonraki
+    /* KAPI SURUNUN ONUNDE ACILIYOR. Varis payinin ilk %20'sinde tam
+       aciliyor, yani ilk hayvan kapiya vardiginda kanat coktan acik.
+       Kapali bir kapiya yuruyen suru "varis" degil "duvara toslama"
+       okunur. */
+    faz: (function(){
+      const vp = varisP();
+      if(vp <= 0) return 'kapali';
+      const ap = Math.min(1, vp / 0.20);
+      return ap >= 1 ? 'acik' : { ad:'aciliyor', p: ap };
+    })(),
+  };
+}
+
 
 /* Sarsinti artik SONUYOR. Eskiden 9 kare boyunca sabit genlikte titreyip
    birden kesiliyordu — bu "titresim" degil "gurultudur"; darbe hissi
@@ -7138,8 +8636,13 @@ function showMorningEnd(){
   hud.classList.remove('on');
   Snd.stopWind();
 
+  /* 'vardi' KENDI CUMLESINI ALIYOR. DEVIR'deki tuzak notu tam buydu:
+     mDawn bir ELSE daliydi ve karsiligi yazilmayan her yeni bitis sebebi
+     sessizce "SAFAK SOKTU" diye okunuyordu. Yeni sebep eklerken cumlesi
+     de ayni anda eklenir. */
   $('overWhy').textContent = m.why === 'empty' ? u.mEmpty
-                           : m.why === 'quit'  ? u.mQuit : u.mDawn;
+                           : m.why === 'quit'  ? u.mQuit
+                           : m.why === 'vardi' ? u.mVardi : u.mDawn;
   /* Kırmızı YALNIZ sürü tükendiğinde. Önceden tek hayvan kaybetmek bile
      "ŞAFAK SÖKTÜ"yü kırmızıya çeviriyordu — oysa şafağın sökmesi sabahı
      tamamlamak demek, kötü haber değil. Kayıp zaten sol sütunda yazıyor. */
@@ -7575,14 +9078,33 @@ function threatGap(){
   /* gapStretch: Seçenek 2'nin ikinci yarısı — bkz. MORNING.emptyCap notu.
      Boşluk sınırı sabah başına birkaç tehdit ekliyor, bu çarpan onu geri
      alıyor; ikisi birlikte toplamı kalibre edildiği yerde tutuyor. */
-  return Math.max(70, Math.round(base * kosuSekli(kosuDak()) * MORNING.gapStretch));
+  /* BOLUM BASKISI. Tabloda `bask` kucukse tehditler sik geliyor.
+     Rampanin ICINDE degil USTUNDE carpiyor: rampa bolumun KENDI icindeki
+     tirmanisi, bask ise bolumler ARASINDAKI fark. Ikisi ayri eksen;
+     karistirilirsa ilk bolum de tavanda baslar. */
+  const bs = bolumAyar(G.bolum).bask;
+  return Math.max(70, Math.round(base * kosuSekli(kosuDak()) * MORNING.gapStretch * bs));
 }
 
 function updateMorning(){
   G.morningT++;
   const live = aliveFlock();
 
-  // Sürü tükendiyse sabah erken biter — devam edecek bir şey kalmadı
+  /* BOLUM VARISLA BITER. Bu, olculmus bir sorunun cozumu: eski akista
+     bolum SURU BITINCE bitiyordu ve son on dakika bombos bir ekranda
+     geciyordu (olculdu: %70 isabette suru 19.3 dakikada 1'e iniyor,
+     kosu 29.4'te bitiyordu). Artik bolum SURU HAYATTAYKEN bitiyor. */
+  /* BOLUM HERKES ICERI GIRINCE BITIYOR, mesafe dolunca degil.
+     Ilk yazimda `yol >= uzunluk` yetiyordu ve KOPEK DISARIDA KALIYORDU:
+     olculdu, suru 12787'de tamamlaniyor ama kopek 12875'te yurumeye
+     basliyor ve bolum 12960'ta kesiliyordu. Varis anlatinin kapanisi;
+     yarim kesilirse hicbir sey anlatmiyor.
+     Ust sinir bir EMNIYET KILIDI: bir hayvan bir sebeple kapiya
+     varamazsa bolum sonsuza kadar surmesin. */
+  const varisTamam = varisSurusu();
+  if(varisTamam || G.yol >= yolUzunlugu() + 260){ finishMorning('vardi'); return; }
+
+  // Sürü tükendiyse bolum erken biter — devam edecek bir şey kalmadı
   if(!live.length){ finishMorning('empty'); return; }
   /* Kalan tehditler toparlansın diye kısa bir kuyruk payı; ama süresiz değil.
      G.strikes de bekleniyor: kurt boğuşması G.ducks'taki taşıyıcıyı hemen
@@ -7715,6 +9237,11 @@ function finishMorning(why){
 
   Save.d.flock = Math.max(FLOCK_MIN, kept);
   if(!quit) Save.d.mornings++;
+  /* VARISLA BIR SONRAKI BOLUME GECILIYOR. Kaybedilen bolum ilerletmiyor:
+     ayni bolum tekrar oynanir (her bolum bir KAYIT NOKTASI, en fazla bir
+     bolumluk ilerleme kaybedilir). Son bolumde sayac duruyor -- epilog
+     henuz yok, oraya varildiginda ne olacagi 5. maddeye bagli. */
+  if(why === 'vardi') Save.d.bolum = Math.min(BOLUM_SAY, Save.d.bolum + 1);
   Save.d.scars += (G.scarsThisMorning || 0);
   /* Her yeni yara için bir damga. Sabah numarası BU sabahı da sayacak şekilde
      alınıyor (mornings yukarıda arttı), yani "bu sabah olan yaranın yaşı 0".
@@ -8005,12 +9532,70 @@ function wolfVisitCount(){
 
    WOLF.enabled artik yok: bayragin tek isi "takvim sorulmadi" halini
    yakalamakti, takvim de yok. */
-const CAKAL_DAK = 2;             // ilk cakal
-const KURT_DAK  = 6;             // ilk kurt
+const CAKAL_DAK = 2;             // ilk cakal (bolum ICINDE, dakika)
+const KURT_DAK  = 6;             // ilk kurt  (bolum ICINDE, dakika)
+
+/* --- BOLUM TABLOSU -----------------------------------------------------
+   OLCULEN SORUN: "28 bolumun hepsi birbirinin ayni." Cunku cakal her
+   bolumun 2. dakikasinda, kurt her bolumun 6. dakikasinda geliyordu --
+   yani bolum 1 ile bolum 20 ayni sirayla ayni seyleri gosteriyordu.
+
+   Iki bagimsiz level-design plani ayni seyi soyledi: ILK ON BOLUMUN HER
+   BIRI BIR ILK TASIMALI, ve yeni kurallar ~18. bolumde bitmeli; gerisini
+   BILESIM tasimali.
+
+   Bu tablo o iskeletin ELIMIZDEKI ICERIKLE kurulabilen kismi. Yeni
+   davranislar (sahte dalis, rüzgar, sis, gece feneri, tasiyici...) henuz
+   YOK; onlar geldikce buraya satir eklenecek. Bugun yaptigi is:
+   cakal ve kurdun bolume gore ACILMASI, ve baskinin bolumle artmasi.
+
+   ⚠ Bu bir KILITLI KARAR DEGIL. Sayilar olculerek degisecek; tablo
+   tek yerde durdugu icin degistirmek ucuz.
+
+   yeni : o bolumde ILK KEZ ne oluyor (yalniz okunurluk icin, kod okumaz)
+   cakal: bolum icinde cakalin ciktigi dakika, null ise HIC yok
+   kurt : ayni, kurt icin
+   bask : tehdit sikligi carpani (kucuk = sik). 1.00 taban.
+   zirh : zirhli kus orani carpani. 0 ise zirhli HIC yok.
+   uzun : yol uzunlugu carpani (bolum suresi)                            */
+const BOLUMLER = [
+  null, // 0 kullanilmiyor -- bolumler 1'den basliyor
+  { yeni:'tek kartal',        cakal:null, kurt:null, bask:1.55, zirh:0,    uzun:0.80 },
+  { yeni:'iki kartal birden', cakal:null, kurt:null, bask:1.30, zirh:0,    uzun:0.85 },
+  { yeni:'ZIRHLI kartal',     cakal:null, kurt:null, bask:1.20, zirh:0.60, uzun:0.90 },
+  { yeni:'CAKAL — kopek kosuyor', cakal:2, kurt:null, bask:1.15, zirh:0.70, uzun:0.95 },
+  { yeni:'KURT — ilk bogusma',    cakal:2, kurt:5,   bask:1.10, zirh:0.80, uzun:1.00 },
+  { yeni:'nefes',             cakal:4, kurt:null, bask:1.35, zirh:0.50, uzun:0.90 },
+  { yeni:'DURAK I — yogun gok',   cakal:2, kurt:4,  bask:0.85, zirh:1.00, uzun:1.05 },
+  { yeni:'nefes',             cakal:3, kurt:null, bask:1.30, zirh:0.60, uzun:0.90 },
+];
+
+/* Bolumun ayarlari. Tablonun disina tasan bolumler SON SATIRI kullanip
+   baskiyi kademeli artiriyor -- tablo doldukca bu dal kuculecek.
+   Saf fonksiyon: ayni bolum her zaman ayni ayar. */
+function bolumAyar(b){
+  b = Math.max(1, Math.min(BOLUM_SAY, b | 0));
+  if(BOLUMLER[b]) return BOLUMLER[b];
+  const son = BOLUMLER[BOLUMLER.length - 1];
+  const fazla = b - (BOLUMLER.length - 1);
+  return {
+    yeni: '(tablo disi — bileşim)',
+    cakal: 2, kurt: 4,
+    bask: Math.max(0.55, son.bask - fazla * 0.03),
+    zirh: Math.min(1.6, son.zirh + fazla * 0.04),
+    uzun: Math.min(1.25, son.uzun + fazla * 0.01),
+  };
+}
+/* YER TEHDIDI ARTIK BOLUME BAGLI. Eskiden her bolumun 2. dakikasinda
+   cakal, 6. dakikasinda kurt cikiyordu -- yani bolum 1 ile bolum 20
+   birebir ayniydi. Simdi tablo aciyor: ilk uc bolumde yerden hicbir sey
+   gelmiyor, cakal 4'te, kurt 5'te ILK KEZ geliyor.
+   Bir seyi ILK KEZ gormek, onu yirminci kez gormekten baska bir sey. */
 function groundThreatKind(){
+  const a = bolumAyar(G.bolum);
   const dak = kosuDak();
-  if(dak >= KURT_DAK)  return 'wolf';
-  if(dak >= CAKAL_DAK) return 'jackal';
+  if(a.kurt  != null && dak >= a.kurt)  return 'wolf';
+  if(a.cakal != null && dak >= a.cakal) return 'jackal';
   return null;
 }
 
@@ -8030,7 +9615,10 @@ function makeWolf(jackal){
   const live = aliveFlock();
   if(!live.length) return null;
   const tgt = live[lri(live.length)];
-  const fromLeft = lrnd() < 0.5;
+  /* Yerdeki tehdit icin yon daha da anlamli: yolun uzerinde bekleyen
+     bir kurdun USTUNE yuruyorsun. Arkadan gelen kurt "pesimize dustu"
+     demek ve o daha nadir olmali. */
+  const fromLeft = lrnd() < THREAT.arkadanPay;
   const totalVisits = jackal ? 1 : wolfVisitCount();
   const limping = !jackal && !!Save.d.wolfLimping;
   if(limping) { Save.d.wolfLimping = false; Save.put(); }   // tüketildi — bir sonraki kaçırtılana kadar tekrar sette
@@ -8525,6 +10113,18 @@ function rookie(){
 }
 
 const THREAT = {
+  /* TEHDIT COGUNLUKLA ONDEN GELIYOR (2026-08-22, yolculuk modeli).
+     Suru saga yuruyor. Sabit bir arenada "soldan mi sagdan mi" 50/50
+     olmasi dogruydu -- iki yon de esitti. Yolda esit DEGIL: onunde olan
+     seyin USTUNE yuruyorsun, arkanda kalan seyin sana YETISMESI gerekiyor.
+
+     0.26 arkadan: arkadan gelen nadir kalsin ki oyuncu gozunu one
+     verebilsin, ama hic olmasin da -- her seferinde ayni yona bakmak
+     bir sure sonra tek tuslu oyun olur.
+
+     Bu bir DENGE degisikligi degil OKUNURLUK degisikligi: tehdit sayisi
+     ayni, geldigi yon anlamli oldu. */
+  arkadanPay: 0.26,
   approach: 70,      // yaklaşma süresi (frame)
   circleMin: 60,     // tepesinde en az bu kadar döner
   circleVar: 70,     // + rastgele
@@ -8632,7 +10232,12 @@ const threatHaze = d => {
 const ARMORED_BASE = 0.18;      // ilk dakikalar
 const ARMORED_TAVAN = 0.45;     // rampanin sonunda
 function armoredChance(){
-  return ARMORED_BASE + rampa() * (ARMORED_TAVAN - ARMORED_BASE);
+  /* ZIRHLI KUS BOLUMLE ACILIYOR. Tabloda `zirh` 0 ise HIC yok -- ilk iki
+     bolumde zirhli gormemek bir eksiklik degil, ucuncu bolumde onu ILK
+     KEZ gormenin sarti. */
+  const z = bolumAyar(G.bolum).zirh;
+  if(z <= 0) return 0;
+  return (ARMORED_BASE + rampa() * (ARMORED_TAVAN - ARMORED_BASE)) * z;
 }
 
 function makeThreat(){
@@ -8647,7 +10252,8 @@ function makeThreat(){
         Math.round(THREAT.approachY + (lrnd() * 2 - 1) * THREAT.laneSpread)));
   const egim = duz ? 0 : (lrnd() * 2 - 1) * THREAT.laneTilt;
   const tgt = live[lri(live.length)];
-  const fromLeft = lrnd() < 0.5;
+  /* Yolculukta yon anlamli: cogunluk ONDEN (sagdan) geliyor. */
+  const fromLeft = lrnd() < THREAT.arkadanPay;
   const kind = lrnd() < armoredChance() ? 'armored' : 'single';
   return {
     // paintBird'ün beklediği alanlar korunuyor — çizim yolu değişmedi
@@ -9086,6 +10692,9 @@ function update(){
     if(--q.t <= 0) G.parts.splice(i,1);
   }
   G.t++;
+  /* YOL ILERLIYOR. Yavas cekim kapisinin ALTINDA: kayip aninda dunya da
+     yavasliyor, yoksa suru dururken manzara tam hizda akip gecerdi. */
+  if(G.phase === 'play') G.yol += YOL.hiz;
   if(G.msgT > 0) G.msgT--;
   if(G.hint && --G.hint.t <= 0) G.hint = null;
 
@@ -9301,6 +10910,7 @@ function render(){
     g.translate(Math.round((Math.random()*2-1) * m),
                 Math.round((Math.random()*2-1) * m));
   }
+  ART.yol = G.yol;              // ART blogu disari bakamaz: yol buradan surulur
   ART.sunUp = sunUp(dawnP());   // ART bloğu dışarı bakamaz: güneş buradan sürülür
   // Öğle payı — güneş ufku geçtikten SONRA da yükselmeye devam eder.
   ART.gunTepe = dawnHigh(dawnP());
@@ -9388,7 +10998,27 @@ function render(){
        kaynağın bedeli üç kez ödendi. Ateşin yeri hâlâ G.yaylaGece'de
        (konum bir sahne verisi, durum değil). */
   }
+  /* VARIS AGILI -- IKI PARCA, ARASINA SURU GIRIYOR.
+     Tek cagri yetmiyor ve sebebi sartnamenin en guclu maddesi:
+     "koyunlar duvarin ARKASINA girip kaybolur". Bunun olabilmesi icin
+     duvarin bir parcasinin SURUDEN SONRA cizilmesi gerekiyor.
+     Kucultup soldurma degil ORTME -- uc sanat yonetmeni de bunu en
+     guclu derinlik ipucu diye isaretledi.
+
+       drawAgilArka  patika, uzak duvar, agiz, kapi
+       drawFlock     <- suru burada
+       drawAgilOn    yakin duvar, on direk, dip, prop            */
+  /* Iki agil ayni anda ekranda OLMAZ: cikis 420 px'de bitiyor, varis
+     %88'de basliyor. Yine de tek degiskende toplaniyorlar -- ikisi de
+     ayni iki parcali cizim yolundan geciyor. */
+  const _agil = G.phase === 'play' ? (agilYeri() || cikisAgilYeri()) : null;
+  const AGIL_TABAN = YOL.taban;
+  if(_agil){
+    if(typeof drawAgilArka === 'function') drawAgilArka(g, _agil.x, AGIL_TABAN, _agil.olcek, _agil.kit, _agil.faz, G.t);
+    else agilGecici(g, _agil.x, AGIL_TABAN, _agil.olcek);
+  }
   drawFlock(g);
+  if(_agil && typeof drawAgilOn === 'function') drawAgilOn(g, _agil.x, AGIL_TABAN, _agil.olcek, _agil.kit, _agil.faz, G.t);
   /* KAMPANYA TEHDİTLERİ (==TEHDIT==): dünya katmanı — sürünün üstüne,
      kuşların altına. Kampanya kapalıyken tek satır iş yapmıyor. */
 
@@ -9449,9 +11079,17 @@ function render(){
         // Sabahta yeni Kangal sprite'i; eski prosedurel drawDog alistirma ve
         // menu icin duruyor.
         // izler ve yorgunluk: köpeğin bedeni onun geçmişi
+        /* YOLDA YURUYOR. Isi olmayan kopek suruyle birlikte yol aliyor;
+           yuruyus karesi MESAFEDEN turuyor (bkz. YOL.adimPx), zamandan
+           degil. Isi varsa (kurda kosuyor, bogusuyor) yuru gecilmiyor:
+           orada kendi hareketi var. */
+        if(dog.icerde) { /* agila girdi -- cizilmiyor */ } else {
+        const yuruK = (!G.dogTask && G.phase === 'play')
+          ? (Math.floor(G.yol / YOL.adimPx) % 6 + 6) % 6 : null;
         drawKangal(g, dog.x, dog.y, G.dogTask ? Math.sign(G.dogTask.x - dog.x) || 1 : 1,
                    G.dogTask ? ((G.t >> 2) & 1) : 0,
-                   Save.d.scars, G.dogSore);
+                   Save.d.scars, G.dogSore, yuruK);
+        }
         if(wf && (wf.phase === 'chase' || wf.jackal)){
           const S = wf.jackal ? CAKAL : KURT;
           const kare = (G.t >> 2 & 1) ? 'kos0' : 'kos1';
