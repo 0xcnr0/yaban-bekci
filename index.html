@@ -1060,7 +1060,15 @@ const STR = {
          Sahibinin kendi örneği rakamları YAZIYLA vermişti ("üç güğüm",
          "dört kuzu"); burada RAKAMLA yazıldı (oyunun geri kalanının
          kuralı — HUD/bilanço hep rakam kullanıyor, bkz. teslim raporu). */
-      mDawn:'Şafak söktü', mEmpty:'Sürü kalmadı', mVardi:'Ağıla vardın',
+      mDawn:'Şafak söktü', mEmpty:'Sürü kalmadı - yolculuk bitti', mVardi:'Ağıla vardın',
+      /* Yolculugun iki bitisi. 'mEmpty' artik bir bolumun degil
+         YOLCULUGUN sonu -- alt satiri (sYol) nereye kadar gelindigini
+         soyluyor, cunku sahibinin karari tam buydu: "nereye kadar
+         gelebildigini gosteren bir ekran". */
+      mKislak:'Kışlağa vardın - yolun sonu',
+      sYol:(b, n) => b + '. bölüm / ' + n,
+      sYolTam:n => n + '. bölüm / ' + n,
+      bYeniYol:'Yeni yolculuk', bDevam:'Devam',
       mKept:'Kalan', mLost:'Kayıp', mSaved:'Kurtarılan', mScars:'Yeni yara',
       mBorn:'Doğan', mMornings:'Sabah', mBest:'En büyük sürü',
       dogFine:'Köpeğin sağlam.', dogScars:n => 'Köpeğinde ' + n + ' yara izi var.',
@@ -1072,10 +1080,9 @@ const STR = {
       sNoLoss:'kayıp yok', sBorn:n => '+' + n + ' kuzu',
       uHead:'hayvan', uScar:'yara izi',
       sMorningN:n => n + '. sabah',
-      tmwLamb:'Yarın kuzu doğuyor.',
       tmwSore:'Köpeğin yarın da yorgun olacak.',
       tmwRested:'Köpeğin dinlendi.',
-      tmwRecover:'Sürü toparlanıyor — kuzular daha sık doğuyor.',
+      tmwRecover:'Sürü küçük. Kayıpsız varırsan bir kuzu kazanırsın.',
       sNewScar:n => 'bu sabah +' + n, sNoNewScar:'bu sabah yara yok',
       sMeta:(mor, best) => 'Sabah ' + mor + ' · En büyük sürü ' + best,
       diagnose:{
@@ -1254,7 +1261,11 @@ const STR = {
       // Wolf vignette caption (Görev Z, "night shift" 2026-08-14) — plain
       // translation call, not a KARAR GEREKİR (design brief's own words).
       // Milk flow: NOT IN THE GLOSSARY, written directly — see delivery report.
-      mDawn:'Dawn broke', mEmpty:'The flock is gone', mVardi:'You reached the fold',
+      mDawn:'Dawn broke', mEmpty:'The flock is gone - the journey is over', mVardi:'You reached the fold',
+      mKislak:'You reached the winter fold - the end of the road',
+      sYol:(b, n) => 'Stage ' + b + ' / ' + n,
+      sYolTam:n => 'Stage ' + n + ' / ' + n,
+      bYeniYol:'New journey', bDevam:'Continue',
       mKept:'Kept', mLost:'Lost', mSaved:'Saved', mScars:'New scars',
       mBorn:'Born', mMornings:'Mornings', mBest:'Largest flock',
       dogFine:'Your dog is unhurt.', dogScars:n => 'Your dog carries ' + n + ' scars.',
@@ -1263,10 +1274,9 @@ const STR = {
       sNoLoss:'none lost', sBorn:n => '+' + n + ' lamb',
       uHead:'animals', uScar:'scars',
       sMorningN:n => 'Morning ' + n,
-      tmwLamb:'A lamb is born tomorrow.',
       tmwSore:'Your dog will still be tired tomorrow.',
       tmwRested:'Your dog has rested.',
-      tmwRecover:'The flock is recovering — lambs come more often.',
+      tmwRecover:'The flock is small. Arrive without a loss and you gain a lamb.',
       sNewScar:n => '+' + n + ' this morning', sNoNewScar:'no new scars',
       sMeta:(mor, best) => 'Mornings ' + mor + ' · Largest flock ' + best,
       diagnose:{
@@ -1526,7 +1536,25 @@ const BOLUM_SAY = 28;
    "Cannot access 'BOLUM_SAY' before initialization" ile HIC ACILMADI. */
 
 const SAVE_V = 5;   // v2: sürü/köpek alanları  (v3 yer alanı denendi, geri alındı)
-const FLOCK_START = 8, FLOCK_MIN = 3, FLOCK_MAX = 24, FLOCK_BIRTH_EVERY = 3;
+/* FLOCK_MIN VE FLOCK_BIRTH_EVERY SILINDI (2026-08-22, sahibinin karari:
+   "kaybetmek mumkun olacak").
+
+   FLOCK_MIN=3 bir TABANDI: `Save.d.flock = Math.max(FLOCK_MIN, kept)`.
+   Olculdu (28 bolumluk gercek kampanya, 57 oturus): suru 8-24. bolumlerde
+   3 ile 4 arasinda KILITLI kaldi, taban 6 bolumde devreye girdi ve uc kez
+   oyuncu bolumu 0-1 hayvanla bitirip DORT hayvanla uyandi. Ekranda bunu
+   soyleyen hicbir sey yoktu — "gorunmeyen ceza yasak" kuralinin aynadaki
+   hali, GORUNMEYEN ODUL, ve ayni derecede zararli. Asil sonucu: kaybin
+   bedeli olmadigi icin suruyu korumak bir SECIM olmaktan cikiyordu.
+
+   FLOCK_BIRTH_EVERY (ve onun yerini alan birthEvery merdiveni) ayni
+   sorunun ikinci yarisiydi: suru 8'in altindayken iki bolumde bir kuzu
+   SESSIZCE doguyordu. Ucu birlikte dibi 3-4'te tutan bir denge kuruyordu.
+
+   Yerine gelen tek kural: KAYIPSIZ VARIS BIR KUZU GETIRIR (kuzuHakki).
+   Gorunur (kuzu suruyle birlikte kapidan girer) ve bedelli (bir bolumu
+   hic hayvan kaybetmeden bitirmek gerekir).                              */
+const FLOCK_START = 8, FLOCK_MAX = 24;
 const num = (v, d) => (typeof v === 'number' && isFinite(v) && v >= 0) ? v : d;
 /* TAZE YARA KAÇ SABAH SONRA KAPANIR (öneri turu 04 §2, Seçenek D'nin sargılı
    biçimi — o zamanki tercih 2026-08-17). TEK YERDE duruyor çünkü sahibi miktarı
@@ -1564,10 +1592,22 @@ const Save = {
       bestRound: num(raw.bestRound, 0), birds: num(raw.birds, 0),
       seen: (raw.seen && typeof raw.seen === 'object' && !Array.isArray(raw.seen)) ? raw.seen : {},
       medals: Array.isArray(raw.medals) ? raw.medals.filter(x => typeof x === 'string') : [],
-      // Sürü ve köpeğin izleri kalıcı — oyunun sahiplik ekseni bu.
-      flock: Math.max(FLOCK_MIN, Math.min(FLOCK_MAX, num(raw.flock, FLOCK_START))),
+      /* Sürü ve köpeğin izleri kalıcı — oyunun sahiplik ekseni bu.
+         TABAN SIFIR, FLOCK_MIN DEGIL (2026-08-22). Burada `FLOCK_MIN`
+         vardi ve finishMorning'deki tabanla BIRLIKTE calisiyordu: oyuncu
+         suruyu tuketse bile uygulamayi kapatip acinca uc hayvanla
+         uyaniyordu. Iki yerde iki taban demek, kaybin GERI ALINMASININ
+         kaydin kendisine gomulmesi demekti.
+         0 gecerli bir durumdur ve tek anlami var: YOLCULUK BITTI.
+         startRun() bunu gorunce yeni yolculuk aciyor (bkz. yeniYolculuk). */
+      flock: Math.max(0, Math.min(FLOCK_MAX, num(raw.flock, FLOCK_START))),
       mornings: num(raw.mornings, 0),
-      bolum: Math.max(1, Math.min(BOLUM_SAY, num(raw.bolum, 1))),
+      /* BOLUM_SAY+1 = "kislaga varildi", yani YOLCULUK TAMAMLANDI.
+         Tavan 28'de kalsaydi son bolume varmakla son bolumu oynamak ayni
+         kayit degeri olurdu ve oyun 28'i sonsuza kadar tekrarlardi
+         (olculdu: kampanya 28'e variyor ve orada donuyordu).
+         startRun bu degeri gorunce yeni yolculuk aciyor. */
+      bolum: Math.max(1, Math.min(BOLUM_SAY + 1, num(raw.bolum, 1))),
       scars: num(raw.scars, 0),
       // Kaç sabah daha yorgun kalacak. Yara kalıcı, yorgunluk geçici.
       sore: Math.min(9, num(raw.sore, 0)),
@@ -3194,8 +3234,16 @@ const SHEEP = {
    (unlem) yururken de cizilir: "hangisi tehlikede" sorusu yolda da
    cevapsiz kalamaz.
    Eski cagrilar yuru gondermiyor, davranislari birebir ayni. */
-function drawSheep(g, x, y, dir, state, f, relief, startle, acil, yuru){
-  const S = SHEEP, alert = state === 'alert';
+/* `kuzu` AYRI BİR PARAMETRE, `yuru`nun özel bir değeri DEĞİL — ve bu,
+   köpekte verdiğim kararın TERSİ. Sebebi de tam olarak o karar:
+   `drawKangal`'da 'otur' bir POZDU (aynı hayvan, başka gövde), yani
+   `yuru` ekseninin üstündeydi. Kuzu bir poz değil BAŞKA BİR HAYVAN, ve
+   kanıtı şu: kuzunun da yürümesi gerekiyor, yani `yuru`ya kendi vuruş
+   numarası lazım. İkisini tek parametreye bindirmek çakışırdı — çakışma
+   iki ayrı eksen olduklarının ispatı.
+   Eski çağrılar `kuzu` göndermiyor, davranışları birebir aynı. */
+function drawSheep(g, x, y, dir, state, f, relief, startle, acil, yuru, kuzu){
+  const S = kuzu ? KUZU : SHEEP, alert = state === 'alert';
   /* POZ SEÇİMİ (BULGU 6, 2026-08-14). Eskiden tek kare vardı ve tek
      "hareket" `graze` durumundaki 1 pikselik zıplamaydı — bir ÖTELEME,
      yani hareket cetvelinin tanımı gereği düştüğü şey. Şimdi otlayan
@@ -3221,8 +3269,13 @@ function drawSheep(g, x, y, dir, state, f, relief, startle, acil, yuru){
      o işaret hedefteki hayvanın işareti (BULGU A/B). */
   const urk = startle > 0 && startle <= FLOCK_STARTLE;
   const ny = S.yuru ? S.yuru.length : 0;
-  const rows = (yuru != null && ny && !(alert || urk))
+  /* Kuzunun `tetik`/`otla` gövdesi YOK — 12x8'de ikinci bir otlama pozu
+     çizmek 54 pikselin içinde okunmayan bir fark üretirdi. Alarmda da
+     kendi gövdesiyle duruyor; "hangisi tehlikede" sorusunu ÜNLEM
+     cevaplıyor (aşağıda), poz değil. */
+  const rows = (yuru != null && ny && !(kuzu ? false : (alert || urk)))
       ? S.yuru[(((yuru | 0) % ny) + ny) % ny]           // YOLDA: yürüyüş vuruşu
+    : kuzu ? S.rows
     : (alert || rp > 0.6 || urk) ? S.tetik              // hâlâ gergin, baş yukarı
     : rp > 0.25 ? S.rows                                // baş iniyor
       : rp > 0 ? S.otla                                 // otlamaya geri dönüyor
@@ -3247,7 +3300,7 @@ function drawSheep(g, x, y, dir, state, f, relief, startle, acil, yuru){
      hâli) saydama geçti. Gölgeyi her zeminde koyu tutan şey sabit renk
      değil SAYDAMLIK. Değer projeye yabancı değil: drawKangal'ın gölgesi
      zaten tam olarak bu. Geometri değişmedi. */
-  ell(g, x, y + 3, 7, 2, 'rgba(20,18,28,0.35)');
+  ell(g, x, y + 3, kuzu ? 4 : 7, kuzu ? 1 : 2, 'rgba(20,18,28,0.35)');
 
   for(let r = 0; r < S.h; r++){
     const row = rows[r];
@@ -3286,6 +3339,91 @@ function drawSheep(g, x, y, dir, state, f, relief, startle, acil, yuru){
     if(rp > 0.35) px(g, x - 1, y0 - 2 - kalk, 2, 2, c);
   }
 }
+
+
+/* --- KUZU ---------------------------------------------------------------
+   Kaybetmek mümkün olunca kazanmak da görünür olmak zorunda. Bir bölümü
+   hiç hayvan kaybetmeden bitirmenin ödülü bu, ve ödül kaybettiğin
+   hayvanla AYNI görünürse ödül değildir. Bugüne kadar kuzu tam boy koyun
+   çiziliyordu.
+
+   ORANSAL KÜÇÜLTME YAPILMADI, ve bu ölçünün sonucu: koyun 17x11 = 187
+   piksel ve o boyutta bacaklar zaten üç satır. Onu küçültmek bacağı
+   yiyor — "küçülen şeyden DETAY çıkarılır, detay küçültülmez" (alçak
+   duvarda öğrenildi). Kuzunun KENDİ silueti yazıldı: 12x8, dört bacak
+   KORUNDU, gövde detayı atıldı, ve oranlar kuzu oranı — kafa gövdeye
+   göre büyük, bacaklar kısa, sırt yuvarlak.
+
+   YAPAĞI KEMİK BEYAZI ('#FCFCFC'), yetişkinin kremi değil. Palete renk
+   EKLENMEDİ: bu değer dünyada zaten var (PAL.bone). Sebep okunurluk —
+   ekranda üç şey var ve oyuncunun bir karede ayırması gerekiyor:
+   köpek koruyan (190), koyun korunan (213), kuzu YENİ (252). Üçü de
+   ayrı parlaklık basamağında ve kuzu en üstte, çünkü kazanılan şey o.  */
+const KUZU = {
+  w: 12, h: 8,
+  pal: { a:'#FCFCFC', b:'#dfd6c7', c:'#38282e', d:'#2e2028', e:'#89615a' },
+  rows: [
+    '....aaaa....',
+    '..aaaaaaac..',
+    '.aaaaaaaaccc',
+    '.aaaaaaaaccc',
+    '.baaaaaaacc.',
+    '.c..c..c.c..',
+    '.c..c..c.c..',
+    '.d..d..d.d..',
+  ],
+  /* Dört vuruş. Bacak sütunları MUTLAK — koyunda öğrenildi: iki bacağa
+     simetrik ±1 verince aynı sütunda çarpışıp hayvan bir bacağını
+     kaybediyor. Gövde de vuruşla değişiyor (baş yukarı / baş aşağı):
+     yalnız bacak oynatınca koyunda değişim %10'da kalmıştı ve sürü hâlâ
+     "kayıyor" okunuyordu. Burada kare arası değişim %35.2. */
+  yuru: [
+    // vurus 0
+    [
+      '....aaaa....',
+      '..aaaaaaac..',
+      '.aaaaaaaaccc',
+      '.aaaaaaaaccc',
+      '.baaaaaaacc.',
+      '.c..c..c.c..',
+      '.c..c..c.c..',
+      '.d..d..d.d..',
+    ],
+    // vurus 1
+    [
+      '....aaaa....',
+      '..aaaaaaac..',
+      '.aaaaaaaa...',
+      '.aaaaaaaaccc',
+      '.baaaaaaaccc',
+      '..c.c.c...c.',
+      '..c.c.c...c.',
+      '..d.d.d...d.',
+    ],
+    // vurus 2
+    [
+      '....aaaa....',
+      '..aaaaaaac..',
+      '.aaaaaaaaccc',
+      '.aaaaaaaaccc',
+      '.baaaaaaacc.',
+      '..cc...c.c..',
+      '..cc...c.c..',
+      '..dd...d.d..',
+    ],
+    // vurus 3
+    [
+      '....aaaa....',
+      '..aaaaaaac..',
+      '.aaaaaaaa...',
+      '.aaaaaaaaccc',
+      '.baaaaaaaccc',
+      '..c.c..c..c.',
+      '..c.c..c..c.',
+      '..d.d..d..d.',
+    ],
+  ],
+};
 
 /* --- Kangal ---------------------------------------------------------------
    Kartalla aynı hattan geldi: fal.ai'dan büyük ve düz renkli bir ŞEKİL
@@ -3379,6 +3517,50 @@ const KANGAL_YURU = {
     '...dide........ega........',
     '...aiea........did........',
     '....aa..........eda.......',
+  ],
+  /* --- OTURAN KANGAL, GERİYE BAKAN ------------------------------------
+     Sürü tükenince ekranda kalan tek şey bu: boş yolda tek başına oturan
+     köpek.
+
+     GERİYE BAKMAYI KAFAYI ÇEVİREREK ANLATMADIM, ve bu bir kolaycılık
+     değil ölçünün sonucu: 26x18'de döndürülmüş bir kafa okunmuyor —
+     ilk denemede kafa gövdeye karışıp foka benziyordu. Bu oyunda
+     yürüyen HER ŞEY sağa gidiyor; sola bakan bir köpek, hiçbir ek işaret
+     olmadan, geriye bakıyordur. Yön `dir = -1` ile veriliyor, poz
+     aynalanıyor.
+
+     Kafa duruş pozundan AYNEN alındı (maske, kulaklar, ense). Yeni bir
+     kafa çizmek yeni bir köpek demek olurdu; kimlik tutarlılığı bu
+     depoda görsel kaliteden önce geliyor.
+
+     Oturuşu okutan şey silüetteki İÇ KONTRAST: ilk iki denemede her şey
+     tek krem kütleydi ve "oturuyor" değil "yığın" okunuyordu. Şimdi
+     but ayrı tonda (f), ön bacak ayrı çizgide, göğüs dik.
+
+     VE DAR OLMAK ZORUNDA. İlk hâli 20 px genişti ve basılan karede
+     "oturan" değil YATAN köpek okunuyordu: oturan bir köpek ayaktakiyle
+     neredeyse AYNI YÜKSEKLİKTE ama yarı yarıya KISADIR. Genişlik 13'e
+     inince silüet yatay bir kütle olmaktan çıkıp üçgene döndü — but
+     yerde, göğüs dik, kafa yukarıda. */
+  otur: [
+    '..........a.a.............',
+    '.........abaa.............',
+    '.........bbee.............',
+    '........eiiiia............',
+    '.......aiiibda............',
+    '......eiiiifddda..........',
+    '.....giiiigfbda...........',
+    '....aaeiiiiifaa...........',
+    '...afiiiiiiiea............',
+    '..affiiiiiiiea............',
+    '..afffiiiiiiea............',
+    '.affffiiiiiiea............',
+    '.afffffiiiiiea............',
+    '.affffffiaiiea............',
+    '.afffffffiaiiea...........',
+    '.affffffffiaiea...........',
+    '..afffffffiaiea...........',
+    '...aaaaaaaaaaaa...........',
   ],
   kare: [
     // yuru-e0
@@ -3531,7 +3713,14 @@ const KANGAL_SCARS = [
    Eski çağrılar yuru göndermiyor, davranışları birebir aynı kalıyor. */
 function drawKangal(g, x, y, dir, step, scars, sore, yuru){
   const n6 = KANGAL_YURU.kare.length;
-  const yr = (yuru == null) ? KANGAL_YURU.dur
+  /* `yuru` GÖVDEYİ SEÇEN parametre: sayı -> yürüyüş vuruşu, yok ->
+     duruş, 'otur' -> oturan poz. Dokuzuncu bir argüman EKLENMEDİ,
+     bilerek: o zaman iki ayrı parametre aynı şeyi (hangi gövde) seçerdi
+     ve ikisi çeliştiğinde hangisinin kazandığı belirsiz kalırdı. Bir
+     dize hiçbir kare numarasıyla çakışamaz, ve mevcut çağrıların hepsi
+     sayı ya da hiçbir şey geçiyor. */
+  const yr = (yuru === 'otur') ? KANGAL_YURU.otur
+           : (yuru == null) ? KANGAL_YURU.dur
            : KANGAL_YURU.kare[(((yuru | 0) % n6) + n6) % n6];
   const S = KANGAL_YURU, x0 = x - (S.w >> 1), y0 = y - S.h + 3;
   // Zemin gölgesi (drawSheep'teki teknikle aynı ilke — Görev 1, tasarım
@@ -3563,11 +3752,23 @@ function drawKangal(g, x, y, dir, step, scars, sore, yuru){
 
      6'dan sonrası yeni iz eklemiyor; onun yerine post KARARIYOR. Çok
      yaralı köpek daha benekli değil, daha YIPRANMIŞ görünmeli. */
+  /* YARA VE YIPRANMA POSTUN ÜSTÜNE DÜŞMELİ, KUTUNUN İÇİNE DEĞİL.
+     Koordinatlar yürüyen gövdeye göre kurulmuştu; oturan poz daha DAR
+     ve basılan karede yıpranma lekesi köpeğin SOLUNDA havada duran bir
+     dikdörtgen oluyordu. Artık ikisi de sprite'ın dolu pikselleriyle
+     kırpılıyor — hangi poz gelirse gelsin iz postun üstünde kalıyor. */
+  const doluMu = (px_, py_) => {
+    const r = (yr || S.rows)[py_];
+    if(!r) return false;
+    const ii = dir < 0 ? (S.w - 1 - px_) : px_;
+    return ii >= 0 && ii < S.w && r[ii] !== '.';
+  };
   const n = Math.min(scars | 0, KANGAL_SCARS.length);
   for(let k = 0; k < n; k++){
     const [mx, my] = KANGAL_SCARS[k];
     const sx = dir < 0 ? (S.w - 1 - mx - 2) : mx;
-    px(g, x0 + sx, y0 + my + sag, 3, 1, S.pal.b);
+    for(let q = 0; q < 3; q++)
+      if(doluMu(sx + q, my)) px(g, x0 + sx + q, y0 + my + sag, 1, 1, S.pal.b);
   }
   /* POSTUN KARARMASI 12 YARADA DOYUYORDU — ve kampanya 57'ye çıkıyor.
      Ölçüldü: 12 yaralı köpek ile 57 yaralı köpek arasındaki fark TAM
@@ -3580,7 +3781,10 @@ function drawKangal(g, x, y, dir, step, scars, sore, yuru){
      ayrımı kaybetmek demek. */
   if((scars | 0) > KANGAL_SCARS.length){
     const wear = Math.min(0.42, ((scars | 0) - KANGAL_SCARS.length) * 0.012);
-    px(g, x0 + 3, y0 + 4 + sag, S.w - 8, 7, 'rgba(74,53,36,' + wear.toFixed(2) + ')');
+    const ton = 'rgba(74,53,36,' + wear.toFixed(2) + ')';
+    for(let ry = 4; ry < Math.min(S.h, 15); ry++)
+      for(let rx = 0; rx < S.w; rx++)
+        if(doluMu(rx, ry)) px(g, x0 + rx, y0 + ry + (ry < legRow ? sag : 0), 1, 1, ton);
   }
 }
 
@@ -4943,6 +5147,325 @@ function barinakKitHam(b){
 /* --- ÖLÇÜ ---------------------------------------------------------------
    TEK KAYNAK. Hem çizim hem agilKapiKutusu buradan okuyor; iki yerde iki
    sayı tutulursa er geç ayrışırlar ve dokunma alanı çizimden kayar.     */
+
+/* ===== YUVA — yolun üzerinde DURAN kayalık ==============================
+
+   Bugüne kadar her tehdit ekran dışından GELİYORDU. Bu gelmiyor: orada
+   duruyor ve sürü ona doğru yürüyor. Ufukta belirir, büyür, yaklaşır —
+   varış ağılıyla birebir aynı yaklaşma. Üstünde dört tüneğe kadar kartal
+   oturuyor; vurulamayanlar kayalık sürünün hizasına gelince aynı anda
+   havalanıyor.
+
+   Yani tek nesne iki şeyi birden taşıyor: HAZIRLIK (görüyorsun,
+   yaklaşıyor, ne yapacağını önceden biliyorsun) ve EŞZAMANLILIK
+   (ölçüldü: gökte aynı anda iki+ tehdit hiçbir bölümde %12'yi geçmiyordu).
+
+   Ölçü zinciri `barinakOlcu` ile aynı desende: TEK KAYNAK, çizim de
+   vuruş kutusu da oradan okuyor. İki yerde iki sayı tutulursa er geç
+   ayrışırlar ve dokunma alanı çizimden kayar.                            */
+
+/* KAYANIN ÜST PROFİLİ — TEK KAYNAK. Hem `yuvaOlcu` (tünekleri kayanın
+   içinde tutmak için) hem `drawYuva` buradan okuyor; iki yerde iki
+   profil tutulsaydı kartallar havada duran raflara konardı.
+
+   ÇOK TEPELİ, ve bu bir süs değil. İlk hâli tek sinüstü ve KONİ
+   okunuyordu; onu düzeltmek için zarf doyurulunca bu sefer LEVHA oldu —
+   dört köşe, düz kenarlı, üstü hafif çentikli bir dikdörtgen. Oyunun
+   içinden basılınca görülen buydu. Bir kayalığı kaya yapan şey ölçüsü
+   değil PROFİLİ: düzensiz omuzlar, kırık sırt, tabanda genişleme.
+   Şimdi iki-üç tepenin en büyüğü alınıyor; tepelerin yeri ve yüksekliği
+   x'ten türüyor, yani kayalık yaklaşırken biçim değiştirmiyor. */
+function yuvaProfil(x, w, i){
+  const u = i / Math.max(1, w - 1);
+  const n = w < 20 ? 2 : 3;
+  let en = 0.30;                                   // taban kütlesi
+  for(let k = 0; k < n; k++){
+    const h1 = bHash(x + k * 131, 3);
+    const uk = 0.16 + ((h1 % 68) / 100);           // tepe yeri 0.16..0.84
+    const hk = 0.62 + ((h1 >> 7) % 39) / 100;      // tepe yüksekligi 0.62..1.00
+    const wk = 0.26 + ((h1 >> 13) % 22) / 100;     // tepe genisligi
+    const d = Math.abs(u - uk) / wk;
+    if(d < 1) en = Math.max(en, hk * Math.pow(1 - d, 0.55));
+  }
+  return en;
+}
+
+/* Kayalığın ve tüneklerin ölçüsü. x YATAY MERKEZ. */
+function yuvaOlcu(x, yerZemin, olcek){
+  /* Kesirli x TARAYICIDA patlatıyor ("Invalid array length"), Node'da
+     değil — `barinakOlcu`da aynı koruma var, sebebi de aynı. */
+  x = Math.round(x || 0);
+  yerZemin = Math.round(yerZemin || 0);
+  const s = Math.max(0, Math.min(1, olcek == null ? 1 : olcek));
+  const w = Math.max(3, Math.round(0.12 + 45.9 * s));    // 0.15 -> 7,  1 -> 46
+  const h = Math.max(4, Math.round(0.47 + 63.5 * s));    // 0.15 -> 10, 1 -> 64
+  const x0 = x - (w >> 1), y0 = yerZemin - h;
+  /* HAVA PERSPEKTİFİ — `barinakOlcu` ile AYNI formül, bilerek. İki nesne
+     aynı yolda aynı eğriyle yaklaşıyor; farklı solma eğrileri kullanmak
+     ikisini farklı mesafelerde gösterirdi. */
+  const hava = Math.max(0, Math.min(1, (0.40 - s) / 0.25));
+  /* Kartalın tünekteki kutusu: ölçek 1'de 16x20. */
+  const kw = Math.max(2, Math.round(16 * s)), kh = Math.max(3, Math.round(20 * s));
+  /* DÖRT TÜNEK, İKİ YANDA DÖNÜŞÜMLÜ. Hepsi aynı yana konsaydı 20 px'lik
+     kartallar 64 px'lik kayaya sığmaz, üst üste binerdi — ve üst üste
+     binen iki kartal TEK kartal okunur. Bu deponun `pushPop` eşiği tam
+     bu yüzden var. Yan değiştirince aynı taraftakiler arasında ölçek
+     1'de 4 px boşluk kalıyor. */
+  const yanlar = [-1, 1, -1, 1];
+  const dikey  = [0.281, 0.406, 0.656, 0.8125];   // kayanın tepesinden pay
+  const tunek = [];
+  for(let i = 0; i < 4; i++){
+    /* Tünek merkezi kayanın İÇİNDE kalmalı: kartal 16 px geniş, yani
+       merkezden en fazla (w/2 - 8) kadar açılabilir, yoksa kuş kayanın
+       kenarından taşar ve üstünde değil ÖNÜNDE duruyor okunur. */
+    const acilim = Math.max(1, Math.min(Math.round(w * 0.26), (w >> 1) - Math.round(kw * 0.5)));
+    const cx = x + yanlar[i] * acilim;
+    let raf = y0 + Math.round(h * dikey[i]);      // ayakların bastığı satır
+    /* RAF KAYANIN İÇİNDE KALMALI. Profil çok tepeli olduğu için bir
+       tünek kayanın alçak yerine düşebiliyor; oraya konan kartal RAFTA
+       değil HAVADA durur. Raf, o sütundaki kaya tepesinin en az 1 px
+       ALTINA çekiliyor. */
+    const yerelUst = yerZemin - Math.round(h * yuvaProfil(x, w, Math.max(0, Math.min(w - 1, cx - x0))));
+    if(raf < yerelUst + 1) raf = yerelUst + 1;
+    if(raf > yerZemin - 2) raf = yerZemin - 2;
+    tunek.push({ x: cx - (kw >> 1), y: raf - kh, w: kw, h: kh, cx, raf, yan: yanlar[i] });
+  }
+  return { s, hava, x, x0, y0, w, h, kw, kh, yer: yerZemin, tunek };
+}
+
+/* --- KAYALIK -----------------------------------------------------------
+   Sütun sütun bir siluet. Yükseklik profili bHash'ten türüyor: aynı x
+   her karede aynı kayayı veriyor, yani kayalık yaklaşırken biçim
+   değiştirmiyor. Rastgelelik burada yasak.                              */
+function drawYuva(g, x, yerZemin, olcek, t, tunekDolu){
+  const m = yuvaOlcu(x, yerZemin, olcek);
+  const P = BARINAK_PAL;
+  /* KÜÇÜLEN ŞEYDEN DETAY ÇIKARILIR, DETAY KÜÇÜLTÜLMEZ. Alçak duvarda
+     tek tek taş çizmek "örgü" değil "topak sırası" veriyordu; burada da
+     14 px'in altında raf/çatlak çizmek kayayı kum yapıyor. */
+  const sade = m.h < 14;
+  /* Uzakta gövde AÇILIR, koyulaşmaz. Ölçüldü: uzak nesnenin çevresindeki
+     zemin parlaklık 46.2; kayanın orta tonu 63 (kontrast 17), açık tonu
+     97 (kontrast 51). Uzakta siluet AÇIKLIKLA çıkıyor. Bir ara uzaktaki
+     ağıl arkadaki tepelerle aynı parlaklıktaydı — 69'a karşı 70-90,
+     yani SIFIR siluet. */
+  /* PALET `kaya` DEĞİL `taş`. `kaya` (37/63/97, soğuk mor) kanyon ve
+     geçit AĞILLARININ taşı — bölge 8'den sonraki BÖLGESEL bir fark, ve
+     `yolculuk-sanati.md` onun soğuk kaldığını bilerek yazıyor. Yuva ise
+     HER bölgede çıkıyor, yani dünyaya ait olmak zorunda.
+
+     Ölçüldü (oyunun içinden basılan kare, bölüm 13 şafak):
+         kayalık ortalama parlaklık 48.5, çevresindeki zemin 39.1
+         -> fark 9.5   (bu deponun "görünmedi" tabanı 2-5)
+         kayalık R-B = -29.8 (soğuk),  zemin R-B = +2.1 (sıcak)
+     Yani kayalık hem dünyadan AYRILMIYOR hem de ona AİT DEĞİL: şafağın
+     kızıl-kahve zemininin ortasında mavi-mor bir levha.
+
+     `taş` (37/76/126) sıcak tarafta ve açık tonu zeminin 39'una karşı
+     87 kontrast veriyor. Uzakta ağılı ortaya çıkaran şeyin koyuluk değil
+     AÇIKLIK olması burada da geçerli — aynı ölçüm, aynı dünya. */
+  const govde = m.hava > 0.5 ? P.tasLt : P.tasMd;
+  const koyu  = m.hava > 0.5 ? P.tasMd : P.tasDk;
+
+  // --- siluet: her sütunun tepesi
+  /* TABANDA GENİŞLEME (moloz eteği). Kayalar dik kesitle yerden
+     çıkmaz; dibinde dökülmüş taş birikir. Levha okumasını bozan
+     ikinci şey buydu — kenarlar tepeden tabana dümdüzdü. */
+  /* YUKARI DOĞRU DARALMAK ZORUNDA, VE BU İKİNCİ DENEMENİN DERSİ.
+     İlk düzeltmede yalnız ÜST profili çok tepeli yaptım — ve oyunun
+     içinden basılınca hâlâ levha okundu, çünkü YANLAR hâlâ dikti: her
+     sütun tepeden tabana doluyordu, yani üstü oyulmuş bir DİKDÖRTGEN.
+     Tam ölçekte bu bir kayalık değil BACA ya da HEYKEL KAİDESİ oluyor,
+     üstündeki kartal da heykel.
+
+     Bir kayayı kaya yapan şey üst kenarı değil KESİTİ: tabanda geniş,
+     yukarı doğru daralan, ve kenarları düzensiz. Şimdi her sütunun
+     tepesi İKİ şeyin büyüğü: (a) çok tepeli üst profil, (b) o sütunun
+     merkezden uzaklığının izin verdiği en yüksek satır. İkincisi yanları
+     eğimlendiriyor; merkezden uzaklaştıkça sütun geç başlıyor. */
+  const etek = sade ? 0 : Math.max(1, Math.round(m.s * 3));
+  const yariW = m.w / 2 + etek;
+  const ust = new Array(m.w + etek * 2);
+  for(let i = 0; i < m.w + etek * 2; i++){
+    const ic = i - etek;
+    const X = m.x0 - etek + i;
+    const n = bHash(Math.round(x) + i, 7);
+    // (a) üst profil — kayanın gövdesi dışında geçersiz
+    const pTop = (ic < 0 || ic >= m.w) ? m.yer
+      : Math.round(m.yer - m.h * yuvaProfil(Math.round(x), m.w, ic));
+    /* (b) daralma: d = merkeze uzaklık. Sütun ancak kayanın o
+       yükseklikteki yarı genişliği d'ye ulaştığında başlıyor. */
+    const d = Math.abs(X - m.x) / Math.max(1, yariW);
+    const v = Math.pow(Math.max(0, (d - 0.18) / 0.82), 2);
+    const dTop = m.y0 + Math.round(m.h * Math.min(1, v));
+    const tirt = sade ? 0 : ((n % 5) - 2);
+    ust[i] = Math.max(pTop, dTop) + tirt;
+    if(ust[i] > m.yer - 1) ust[i] = m.yer;      // bu sütun hiç yok
+  }
+  for(let i = 0; i < ust.length; i++){
+    const boy = m.yer - ust[i];
+    if(boy <= 0) continue;
+    px(g, m.x0 - etek + i, ust[i], 1, boy, govde);
+    px(g, m.x0 - etek + i, ust[i], 1, 1, P.tasLt);        // güneş alan sırt
+  }
+  if(!sade){
+    /* ÇATLAKLAR: dikey, kısa, seyrek. Kayayı kaya yapan şey doku değil
+       KIRIK. Uzun çatlak çizince kaya değil ahşap okunuyor. */
+    for(let i = 3; i < m.w - 3; i += 4 + (bHash(Math.round(x) + i, 11) % 4)){
+      const y = ust[i + etek] + 2 + (bHash(i, 13) % Math.max(1, Math.round(m.h * 0.4)));
+      const boy = 2 + (bHash(i, 17) % 3);
+      if(y + boy < m.yer - 1) px(g, m.x0 + i, y, 1, boy, koyu);
+    }
+    /* DİP GÖLGESİ — kayayı zemine oturtan tek şey. Olmadan yüzüyor.
+       (Aynı eksiklik ağılda "havada duran koyu blok" olarak görülmüştü.) */
+    px(g, m.x0 - etek, m.yer - 2, m.w + etek * 2, 2, P.tasDk);
+    px(g, m.x0 - etek - 1, m.yer, m.w + etek * 2 + 2, Math.max(1, Math.round(m.s * 2)),
+       'rgba(20,18,28,0.38)');
+  }
+
+  /* --- RAFLAR. Tünekler BOŞKEN DE görünmeli: oyuncu kaç yer olduğunu
+     kartallar havalandıktan sonra da bilsin, ve dolu/boş farkı okunsun.
+     Raf, kayanın üstündeki ışık alan yatay bir çıkıntı. */
+  const dolu = tunekDolu || [true, true, true, true];
+  if(!sade){
+    for(let i = 0; i < 4; i++){
+      const tk = m.tunek[i];
+      const rw = Math.max(2, Math.round(m.kw * 0.85));
+      const rx = tk.cx - (rw >> 1);
+      px(g, rx, tk.raf - 1, rw, 1, P.tasLt);
+      px(g, rx, tk.raf, rw, 1, P.tasDk);
+    }
+  }
+  /* --- TÜNEYEN KARTALLAR. Kartallar RAFLARDAN SONRA: rafın üstünde
+     duruyorlar, içinde değil. */
+  for(let i = 0; i < 4; i++){
+    if(!dolu[i]) continue;
+    const f = (dolu[i] === true) ? 'tunek' : dolu[i];   // {ad:'kalkis',p} da geçebilir
+    drawTuneyenKartal(g, m.tunek[i].cx, m.tunek[i].raf, m.s, t, f, m.tunek[i].yan);
+  }
+  return m;
+}
+
+/* --- TÜNEYEN KARTAL ----------------------------------------------------
+   UÇAN KARTALDAN AYRI BİR SİLUET OLMAK ZORUNDA. Uçan kartal YATAY: kanat
+   açıklığı 33 px, gövde 10-14. Tüneyen DİKEY: omuzlar yukarıda, kanatlar
+   katlı, kafa gövdeye gömük, kuyruk aşağı sarkık. İkisi yan yana
+   basıldığında "aynı kuş başka poz" değil, "duran kuş / uçan kuş" diye
+   okunmalı — çünkü oyuncunun vermesi gereken karar farklı.
+
+   SARI GAGA VE PENÇE DOKUNULMAZ. Ölçüldü: gece göğü parlaklık 50.1,
+   kartalın gövdesi 37-58, yani gece okunurluğunun TAMAMI o iki sarı
+   aksan (183). Tüneyende de varlar ve burada bir işleri daha var:
+   pençe kartalı KAYAYA BAĞLIYOR — onsuz kuş kayanın önünde duruyor
+   gibi görünüyor, üstünde değil.                                        */
+/* 16x20, SAĞA bakan. Sola bakan aynalanarak çiziliyor.
+   İlk yazımda prosedüreldi (gövde + kanat dikdörtgeni + kafa elipsi) ve
+   basılan karede KUTU YIĞINI okunuyordu: katlı kanat bir dikdörtgen
+   olarak çizilince kanat değil SANDIK oluyor. Bu boyutta siluet elle
+   yazılmak zorunda; prosedürel şekiller 16x20'de birbirine yapışıyor. */
+const TUNEK_KUS = {
+  w: 16, h: 20,
+  pal: { a:'#100e1e', b:'#2e2028', c:'#483436', d:'#89615a',
+         e:'#d39273', f:'#E8B830', g:'#FCFCFC' },
+  rows: [
+    '.........bbbb...',
+    '........bbbbbb..',
+    '.......bbgeeeff.',
+    '.......bbbeeebf.',
+    '......bbbbbbbb..',
+    '.....bbbbbbbbb..',
+    '....bbcbbbbbbb..',
+    '...bbccbbbbbbb..',
+    '..bbcccbbbbbb...',
+    '..bccccbbbbbb...',
+    '.bcccccbbbbbb...',
+    '.bccccdcbbbbb...',
+    '.bbcccdccbbbb...',
+    '..bbccdcccbbb...',
+    '..bbbcdccbbbb...',
+    '.b.bbbdcbbbb....',
+    'bb..bbbbbbb.....',
+    'b....bb.bb......',
+    '.....ff.ff......',
+    '....ff...ff.....',
+  ],
+};
+
+/* --- TÜNEYEN KARTAL ----------------------------------------------------
+   UÇAN KARTALDAN AYRI BİR SİLUET OLMAK ZORUNDA. Uçan kartal YATAY: kanat
+   açıklığı 33 px, gövde 10-14. Tüneyen DİKEY ve KAMBUR: omuz en yüksek
+   yer, kafa gövdeye gömük, kuyruk aşağı sarkık. İkisi yan yana
+   basıldığında "aynı kuş başka poz" değil "duran kuş / uçan kuş" diye
+   okunmalı — çünkü oyuncunun vermesi gereken karar farklı.
+
+   SARI GAGA VE PENÇE DOKUNULMAZ. Ölçüldü: gece göğü parlaklık 50.1,
+   kartalın gövdesi 37-58, yani gece okunurluğunun TAMAMI o iki sarı
+   aksan (183). Burada bir işleri daha var: pençe kuşu RAFA BAĞLIYOR —
+   onsuz kuş kayanın önünde duruyor gibi görünüyor, üstünde değil.        */
+function drawTuneyenKartal(g, cx, tabanY, olcek, t, faz, yan){
+  const s = Math.max(0, Math.min(1, olcek == null ? 1 : olcek));
+  const S = TUNEK_KUS;
+  const ayna = (yan != null && yan > 0);          // sağ tünek içeri baksın
+  const kw = Math.max(2, Math.round(S.w * s)), kh = Math.max(3, Math.round(S.h * s));
+  const fz = (faz && faz.ad) ? faz.ad : (faz || 'tunek');
+  const p  = (faz && faz.p != null) ? Math.max(0, Math.min(1, faz.p)) : 0;
+  const kalk = fz === 'kalkis' ? p : 0;
+  const d = ayna ? -1 : 1;
+
+  if(kh < 8){
+    /* Uzakta DETAY ÇIKARILIR: tek koyu leke. Ama SARI KALIR — onu
+       atarsak kuş gece kayadan hiç ayrılmaz (ölçülmüş tek okunurluk
+       kaynağı o). */
+    const w2 = Math.max(1, kw - 1);
+    px(g, cx - (w2 >> 1), tabanY - kh, w2, kh - 1, S.pal.b);
+    px(g, cx - (w2 >> 1), tabanY - 1, w2, 1, S.pal.f);
+    px(g, cx + d * (w2 >> 1), tabanY - kh, 1, 1, S.pal.f);
+    return;
+  }
+
+  /* Kalkışta gövde rafın üstünden AZ kalkar; havalanmayı anlatan şey
+     yükselme değil kanadın açılması. */
+  const y0 = tabanY - kh - Math.round(kalk * s * 3);
+  const x0 = cx - (kw >> 1);
+  /* AÇILAN KANAT gövdeden ÖNCE: kanat omzun ardından çıkıyor. */
+  if(kalk > 0.02){
+    const ac = Math.round(kalk * s * 17);        // dışa açılma
+    const yuk = Math.round(kalk * s * 13);       // yukarı süpürme
+    const oy = y0 + Math.round(kh * 0.32);
+    const ox = cx - d * Math.round(kw * 0.18);
+    tri(g, ox, oy, ox - d * ac, oy - yuk, ox - d * Math.round(ac * 0.55), oy + Math.round(kh * 0.24), S.pal.c);
+    tri(g, ox, oy, ox - d * ac, oy - yuk, ox - d * Math.round(ac * 0.72), oy - Math.round(yuk * 0.34), S.pal.b);
+  }
+  for(let r = 0; r < kh; r++){
+    const sr = Math.min(S.h - 1, Math.floor(r * S.h / kh));
+    const row = S.rows[sr];
+    for(let i = 0; i < kw; i++){
+      const si = Math.min(S.w - 1, Math.floor(i * S.w / kw));
+      const ch = row[ayna ? (S.w - 1 - si) : si];
+      if(ch === '.') continue;
+      px(g, x0 + i, y0 + r, 1, 1, S.pal[ch]);
+    }
+  }
+  /* PENÇE RAFI EN SON BIRAKIR: kalkışta gövde kalkarken pençe yerinde
+     kalıyor, aradaki bacak uzuyor. Kuşun rafa bağlı olduğu bilgisi
+     kalkışın sonuna kadar duruyor. */
+  if(kalk > 0.02 && s > 0.4){
+    const bh = tabanY - (y0 + kh);
+    if(bh > 0){
+      px(g, cx - Math.max(1, Math.round(s * 3)), tabanY - bh, Math.max(1, Math.round(s * 2)), bh, S.pal.b);
+      px(g, cx + Math.round(s * 1), tabanY - bh, Math.max(1, Math.round(s * 2)), bh, S.pal.b);
+      px(g, cx - Math.max(1, Math.round(s * 3)), tabanY - 1, Math.max(1, Math.round(s * 2)), 1, S.pal.f);
+      px(g, cx + Math.round(s * 1), tabanY - 1, Math.max(1, Math.round(s * 2)), 1, S.pal.f);
+    }
+  }
+  /* SALINIM: yalnız yakında, yalnız BİR piksel, ve fazı cx'ten. Dördü
+     aynı anda kıpırdarsa bu "canlı" değil MEKANİZMA okunur — ağılın ot
+     salınımıyla aynı sebep. */
+  if(s > 0.6 && !kalk && t != null && Math.sin(t * 0.021 + cx * 0.7) > 0.86)
+    px(g, x0 + Math.round(kw * 0.3), y0 - 1, Math.max(1, Math.round(kw * 0.4)), 1, S.pal.b);
+}
+
+
 function barinakOlcu(x, yerZemin, olcek, kit){
   /* TAM SAYIYA YUVARLA. Kayarken x kesirli geliyor (yaklaşma eğrisi) ve
      kesirli genişlik `new Array(gen)` için geçerli bir uzunluk değil:
@@ -5380,8 +5903,14 @@ function drawAgilArka(g, x, yerZemin, olcek, kit, faz, t){
      'faz' ya bir dize ya {ad, p} — 'aciliyor' ilerlemesi p ile gelir.   */
   const fz = (faz && faz.ad) ? faz.ad : (faz || 'aralik');
   const fp = (faz && faz.p != null) ? Math.max(0, Math.min(1, faz.p)) : 0;
+  /* KAPANMA: p=0 açık, p=1 kapalı. Açılmanın aynası değil — açılma
+     0.16'dan (aralık) başlıyor çünkü kapı hiçbir zaman tam kapalı
+     durmuyor; kapanma ise TAM KAPALIYA gidiyor ve orada kalıyor.
+     28. bölümde sürü girer ve kapı bir daha açılmaz: o son kare, kapının
+     tam kapalı olabildiği tek yer. */
   let acik = fz === 'kapali' ? 0 : fz === 'acik' ? 1
-           : fz === 'aciliyor' ? (0.16 + fp * 0.84) : 0.16;
+           : fz === 'aciliyor' ? (0.16 + fp * 0.84)
+           : fz === 'kapaniyor' ? (1 - fp) : 0.16;
   if(tip !== 'gecit' && m.agizW >= 4 && acik < 0.95){
     const kw = Math.round(m.agizW * (1 - acik));
     if(kw >= 2){
@@ -6810,6 +7339,10 @@ const G = {
      (renderFold) arasında başka ortak durum yok. */
   sensorBad:false,
   morningT:0, nextThreat:0, nextWolf:0, morningEnd:null, born:0,
+  /* KUZU: bu bolumde kayipsiz varildi mi (kuzuKatil bir kez ates eder).
+     SONT: suru tukendikten sonraki KAPANIS sayaci -- 0 ise suru duruyor.
+     Ikisi de startRun'da sifirlanir; kosular arasi tasinmaz. */
+  kuzuGeldi:false, sonT:0, kislakT:0, yuvalar:[],
   threatNo:0,     // bu sabahın kaçıncı tehdidi (THREAT.flatFirst)
   /* Gökyüzünün kaç karedir boş olduğu (Seçenek 2, MORNING.emptyCap).
      Sabah boyunca taşınması gerekiyor, o yüzden G'de. */
@@ -7579,7 +8112,31 @@ const Attract = {
    "Herkes zaten bugünün kuralını oynuyor" — startRun() artık tek bir akış,
    ayrı bir "daily" dalı yok. Eski param'ı taşıyan sd/dailySeed de gitti;
    tohum her zaman gerçek zamandan türüyor. */
+/* --- YENI YOLCULUK -----------------------------------------------------
+   Yolculuk iki sekilde biter ve ikisinde de kayitta suru SIFIRLANIR:
+   suru tukendi ('empty') ya da kislaga varildi ('kislak'). Sifir suru
+   bir hata degil, bir DURUMDUR: "yolculuk bitti, yenisi baslayacak".
+
+   Sifirlama neden BURADA, finishMorning'de degil: bitis ekrani oyuncunun
+   nereye kadar geldigini gostermek zorunda, ve uygulama kapatilip
+   acilirsa AYNI seyi gostermeye devam etmeli. Kayit bitis aninda
+   silinseydi oyuncu telefonu kilitleyip actiginda yolculugunun nerede
+   bittigini bir daha ogrenemezdi.
+   Bu yuzden sifirlama, oyuncunun bir sonraki YOLA CIKMA hareketiyle
+   birlikte olur — tek kapi, ve o kapi burasi.                           */
+function yeniYolculuk(){
+  Save.d.bolum = 1;
+  Save.d.flock = FLOCK_START;
+  Save.d.lastLost = 0;
+  Save.put();
+}
+
 function startRun(){
+  /* SIFIR SURUYLE YOLA CIKILMAZ. Tek kapi: menuden, bitis ekranindan,
+     tazelenmis bir sekmeden — nereden gelinirse gelinsin bu satirdan
+     geciliyor. Bayragi ayri bir yerde tutup burada okumak, o bayragin
+     bir gun yazilmadigi bir yol acardi. */
+  if((Save.d.flock | 0) <= 0 || Save.d.bolum > BOLUM_SAY) yeniYolculuk();
   G.score = 0; G.combo = 0;
   const sd = (0x2A6C ^ ((Math.random()*0xFFFF)|0)) || 1;
   G.seed = sd; G.lvlSeed = sd;
@@ -7639,6 +8196,10 @@ function startRun(){
   G.yol = 0;
   G.bolum = Save.d.bolum;
   G.dog.icerde = 0;
+  G.kuzuGeldi = false; G.sonT = 0; G.kislakT = 0;
+  /* G.bolum SATIRINDAN SONRA: yuvalariKur() bolumun tablosunu ve
+     yolUzunlugu()'nu okuyor, ikisi de G.bolum'a bagli. */
+  yuvalariKur();
   Snd.duckBirak();
   G.stats = { shots:0, hits:0, decoyHits:0, fled:0, perfects:0,
               reloads:0, steady:0, maxCombo:0, bestPouch:0, cleanClay:false };
@@ -7682,11 +8243,12 @@ function showMsg(s, frames){ G.msg = s; G.msgT = frames; }
    zorluk eğrisi yazmıyoruz, kurgu dengeyi kendi taşıyor. "Ne kadar ileri
    gidebilirim" sorusunun cevabı da bu: ne kadar büyük bir sürüyü hayatta
    tutabilirsin.                                                            */
+/* Otlama seridi. Buradaki DORT SAYI (start/min/max/birthEvery) SILINDI:
+   ucu FLOCK_START/FLOCK_MAX'in kopyasiydi, dorduncusu (min=3) artik
+   olmayan tabanin degeriydi. Oyunun kendisi hicbirini okumuyordu — yalniz
+   testler okuyordu, ve tam da o testler tabani sinamak icin yaziliyordu.
+   Iki kaynak, ikisi de "suru kac" diyor: bir gun ayrisirlar. */
 const FLOCK = {
-  start: 8,          // ilk sabah
-  min: 3,            // buranın altına düşmez — ölüm sarmalını kesen taban
-  max: 24,           // korunabilir üst sınır
-  birthEvery: 3,     // kaç sabahta bir kuzu doğar
   y0: GROUND + 6,    // otlama şeridinin üstü
   y1: H - 16,        // altı
 };
@@ -7763,32 +8325,78 @@ function layFlock(n, spread){
   return out;
 }
 
-/* Doğum hızı sürü büyüklüğüne göre KADEMELİ. Sabit "3 sabahta bir"
-   iki ucundan da bozuktu:
+/* --- KUZU: TEK KAZANMA YOLU --------------------------------------------
+   Burada bir MERDIVEN vardi (birthEvery: 2/3/5/7 sabahta bir kuzu, suru
+   kucukken hizli). Silindi, cunku olculdugunde su cikti: suru 8'in
+   altindayken iki bolumde bir kuzu doguyor, taban da altta 3'te
+   tutuyordu — ikisi birlikte suruyu 3-4'te KILITLIYORDU. Ve ikisi de
+   ekranda hicbir sey soylemiyordu.
 
-     - Altta: kayıptan sonra toparlanma yavaş, oyuncu "bunu telafi ederim"
-       hissini hiç yaşamıyordu.
-     - Üstte: kaybetmeyen herkes aynı yere varıyordu. 25 sabahta tam 16,
-       çünkü 8 + 25/3. Yani sürü beceriyi değil GEÇEN ZAMANI ölçüyordu;
-       iyi oyuncuyla çok iyi oyuncu arasında 1.3 hayvan fark kalıyordu.
+   Sahibinin karari: "Kaybin geri alinmasi varsa GORUNUR VE BEDELLI
+   olacak." Tek kural kaldi:
 
-   Şimdi: dipte hızlı (toparlanma gerçek), tepede yavaş (orada durmak
-   doğuma değil KAYBETMEMEYE bağlı). Değerler tools/ilerleme.js ile
-   ölçülerek seçildi. */
-function birthEvery(n){
-  if(n < FLOCK_START) return 2;    // toparlanma
-  if(n < 16)          return 3;
-  if(n < 20)          return 5;
-  return 7;                        // tepede sürü artık saat değil
+       BIR BOLUMU HIC HAYVAN KAYBETMEDEN BITIRIRSEN BIR KUZU KAZANIRSIN.
+
+   Bedelli: kayipsiz varmak gerekiyor, zaman gecmesi degil.
+   Gorunur: kuzu varista SURUYLE BIRLIKTE kapidan giriyor (bkz.
+   kuzuKatil) — oyuncu onu SAYIYOR, bir satir yazi okumuyor.
+
+   OLUM SARMALI NEDEN GERI GELMIYOR: zorlugun kendisi suru buyuklugune
+   bagli. Suru kuculunce MORNING.maxLive dusuyor (ayni anda gokte daha az
+   tehdit), threatGap uzuyor (perHead), wolfGap uzuyor. Yani kucuk suruyle
+   KAYIPSIZ VARMAK DAHA KOLAY. Taban bir af, bu ise bir NEGATIF GERI
+   BESLEME — sarmali onleyen sey artik gorunmez bir dolgu degil, oyunun
+   kendi zorluk egrisi. Olculdu: tools/kampanya (bkz. DEVIR).             */
+function kuzuHakki(){
+  return (G.lost | 0) === 0 && Save.d.flock < FLOCK_MAX;
 }
 
-/* DOGUM HIZI: tek merdiven (2/3/5/7), suru buyudukce yavaslar.
-   Eskiden buraya iki ayri hizlandirici baglanmisti — mevsimin 12-14. gunu
-   ve yolculugun kuzu bolumu. Ikisi de silindi: mevsim gunu GERCEK TAKVIME
-   bakiyordu (surunun buyume hizi oyuncunun telefonundaki tarihe
-   bagliydi), yolculuk ise oyundan tamamen kalkti. */
-const BIRTH_TIERS = [2, 3, 5, 7];
-function seasonBirthEvery(n){ return birthEvery(n); }
+/* Kuzu VARIS BASLARKEN suruye katilir, bolum bitince degil. Sebep tek:
+   GORUNMESI gerekiyor. Bilancoya yazilan "+1 kuzu" bir sayidir; kapidan
+   giren dokuzuncu hayvan bir OLAYDIR, ve oyuncu koyunlari zaten teker
+   teker sayarak izliyor.
+
+   Suru sirasinin EN ARKASINA konuyor (en soldaki hayvanin da 14 px
+   solu): boylece kapidan EN SON o giriyor, kopekten hemen once. Varis
+   ritueli bozulmuyor, sonuna bir satir ekleniyor.
+
+   Bir kez ates eder (G.kuzuGeldi). Cagrildigi yer her karede calisiyor. */
+function kuzuKatil(){
+  if(G.kuzuGeldi) return;
+  if(varisP() <= 0) return;               // varis daha baslamadi
+  if(!kuzuHakki()) return;
+  /* GOK TEMIZ OLMADAN KUZU GELMEZ. Olculdu ve bir satir yakalandi:
+     `bol 9 · once 1 · kayip 1 · kuzu 1 · kalan 1` -- oyuncu varis
+     basladiginda kayipsizdi, kuzuyu aldi, sonra HAVADAKI bir kartal
+     varis boyunca son koyunu goturdu. Bilanco "1 kayip · +1 kuzu"
+     diyordu: hem hak edilmemis bir odul, hem birbirini yalanlayan iki
+     satir.
+     Varis payi YENI tehdit dogurmuyor ama havadaki isini bitiriyor;
+     kapi oradaydi. Simdi kuzu gogun temizlendigi karede geliyor --
+     kayip olursa kuzuHakki() zaten bir daha true donmuyor.
+     Yan etkisi tasarimin lehine: varista son bir is kaliyor, ve o isi
+     bitirmek kuzuyu GORUNUR bir sekilde getiriyor. */
+  if(G.ducks.some(d => d.threat && !d.done && d.state !== 'hit')) return;
+  if(G.strikes && G.strikes.length) return;
+  G.kuzuGeldi = true;
+  const canli = aliveFlock();
+  if(!canli.length) return;               // sifir suruye kuzu katilmaz
+  let enSol = canli[0].x, enId = 0;
+  for(const a of canli) if(a.x < enSol) enSol = a.x;
+  for(const a of G.flock) if(a.id > enId) enId = a.id;
+  G.flock.push({
+    id: enId + 1,
+    x: enSol - 14,
+    /* On sirada: FLOCK bandinin dibinde. G.flock cizim sirasi dizinin
+       kendi sirasi oldugu icin sona eklenen ONDE cizilir — ve bandin
+       dibindeki hayvan zaten one ait. Ikisi tutarli. */
+    y: FLOCK.y1,
+    dir: 1, state:'graze', alarm:0, relief:0, startle:0,
+    phase: (lrnd() * 64) | 0,
+    kuzu: 1,          // bugun cizimde karsiligi yok; kuzu pozu geldiginde okunacak
+  });
+  Snd.kuzu && Snd.kuzu();
+}
 
 const aliveFlock = () => G.flock.filter(a => a.state !== 'gone');
 
@@ -8219,6 +8827,43 @@ const KAYIP = {
 };
 KAYIP.top = KAYIP.don + KAYIP.yavas + KAYIP.toparla;   // 103 kare ~ 1.7 sn
 
+/* SON HAYVANDAN SONRA GECEN SURE. Kaybin kendi perdesi (103 kare) BITTIKTEN
+   sonra sayiliyor, yani toplam ~4.2 saniye.
+   Neden ayri bir sayi: bu bir kaybin degil BIR YOLCULUGUN sonu, ve ayni
+   perdeyle anlatilamaz. O 150 karede ekranda tek bir sey var — bos yol ve
+   uzerinde tek basina yuruyen kopek. Yazi yok; varis nasil kendi sonuc
+   ekraniysa bu da oyle.                                                  */
+const YOLCULUK_SON = 150;             // kare (~2.5 sn @60fps)
+/* O 150 karenin ICINDE iki perde var ve ikisi ayri sey soyluyor:
+     ilk 60 kare  -- kopek YURUMEYE DEVAM EDIYOR. Bos yolda, tek basina.
+                     Yurumesi onemli: yolculuk henuz durmadi, koruyacak
+                     bir sey kalmadi.
+     kalan 90     -- kopek DURUYOR, oturuyor ve GERIYE bakiyor. Dunya da
+                     duruyor: yol kaymayi birakiyor.
+   Yolculugun bittigini soyleyen sey bir yazi degil, DUNYANIN DURMASI.
+   Yan oturumun notu: 26x18'de dondurulmus bir kafa okunmuyor, o yuzden
+   geriye bakis dir=-1 ile anlatiliyor -- bu oyunda yuruyen her sey saga
+   gider, sola bakan bir kopek geriye bakiyordur.                       */
+const YOLCULUK_YURU = 60;
+
+/* KISLAK TORENI: son agila varildiktan sonra kapinin kapanmasi icin
+   gecen sure. 110 kare ~ 1.8 sn -- kapinin acilmasi (varis payinin ilk
+   %20'si, ~1.9 sn) ile ayni buyuklukte, bilerek: ayni kapi ayni
+   tempoda. */
+const KISLAK_TOREN = 110;
+
+/* Yolculugun son perdesi. Sahnede degilse null. SAF: G.sonT'nin
+   fonksiyonu, bayrak yok -- duraklat/yeniden yukle hepsinde ayni yerde.
+   render() ve update() AYNI kaynaktan okuyor; iki yerde iki ayri esik
+   olsaydi kopek oturmusken dunya kaymaya devam edebilirdi. */
+function yolculukSonu(){
+  if(!G.sonT) return null;
+  const p = G.sonT - KAYIP.top;
+  if(p <= 0) return { faz: 'perde', p: G.sonT / KAYIP.top };
+  if(p < YOLCULUK_YURU) return { faz: 'yuru', p: p / YOLCULUK_YURU };
+  return { faz: 'otur', p: Math.min(1, (p - YOLCULUK_YURU) / (YOLCULUK_SON - YOLCULUK_YURU)) };
+}
+
 /* --- YOLCULUK ----------------------------------------------------------
    Bir bolum bir gunun yol ayagi. Suru yerinde yuruyor, dunya kayiyor,
    varis agili sagdan girip buyuyor. Bolum VARINCA bitiyor.
@@ -8398,6 +9043,14 @@ function agilYeri(){
        Kapali bir kapiya yuruyen suru "varis" degil "duvara toslama"
        okunur. */
     faz: (function(){
+      /* KISLAK: kapi KAPANIYOR. Toren sayaci sifirdan buyukse varis
+         bitmis demektir; kanat geri geliyor ve son karede tamamen
+         kapali kaliyor. Yalniz 28. bolumde -- oteki agillarda kapi
+         acik kaliyor cunku yarin oradan yine cikilacak. */
+      if(G.kislakT > 0){
+        const kp = Math.min(1, G.kislakT / KISLAK_TOREN);
+        return kp >= 1 ? 'kapali' : { ad:'kapaniyor', p: kp };
+      }
       const vp = varisP();
       if(vp <= 0) return 'kapali';
       const ap = Math.min(1, vp / 0.20);
@@ -8617,9 +9270,12 @@ const Card = {
    Söylenen her şey DOĞRU olmak zorunda: doğumu gerçekten hesaplıyoruz. */
 function tomorrowNote(){
   const u = U(), d = Save.d;
-  const next = (d.mornings || 0) + 1;
-  const willBorn = d.flock < FLOCK_MAX && next % seasonBirthEvery(d.flock) === 0;
-  if(willBorn) return u.tmwLamb;
+  /* "YARIN KUZU DOGUYOR" SATIRI SILINDI. Dogum artik takvime degil
+     KAYIPSIZ VARISA bagli (bkz. kuzuHakki), yani "yarin" hakkinda
+     soylenebilecek dogru bir sey yok: kuzunun gelip gelmeyecegini
+     oyuncunun kendisi belirliyor. Eski satir bir SOZ veriyordu ve
+     yeni kuralda o soz yalan olurdu.
+     Yerine gecen sey bir yazi degil, kuzunun kendisi. */
   if((d.sore || 0) > 0) return u.tmwSore;
   /* "Köpeğin dinlendi" YALNIZ yorgunluğun bittiği sabah çıkar. Eskiden
      yarası olan herkese HER sabah çıkıyordu: oyuncu köpeğin yorulduğunu hiç
@@ -8640,14 +9296,19 @@ function showMorningEnd(){
      mDawn bir ELSE daliydi ve karsiligi yazilmayan her yeni bitis sebebi
      sessizce "SAFAK SOKTU" diye okunuyordu. Yeni sebep eklerken cumlesi
      de ayni anda eklenir. */
-  $('overWhy').textContent = m.why === 'empty' ? u.mEmpty
-                           : m.why === 'quit'  ? u.mQuit
-                           : m.why === 'vardi' ? u.mVardi : u.mDawn;
+  $('overWhy').textContent = m.why === 'empty'  ? u.mEmpty
+                           : m.why === 'quit'   ? u.mQuit
+                           : m.why === 'kislak' ? u.mKislak
+                           : m.why === 'vardi'  ? u.mVardi : u.mDawn;
   /* Kırmızı YALNIZ sürü tükendiğinde. Önceden tek hayvan kaybetmek bile
      "ŞAFAK SÖKTÜ"yü kırmızıya çeviriyordu — oysa şafağın sökmesi sabahı
      tamamlamak demek, kötü haber değil. Kayıp zaten sol sütunda yazıyor. */
   $('overWhy').style.color = m.why === 'empty' ? 'var(--alert)' : 'var(--ok)';
 
+  /* YOLCULUGUN BITTIGI IKI HAL. Ikisinde de bu ekran bir bolumun degil
+     BIR YOLCULUGUN kapanisi, ve sahibinin karari onun ne gostermesi
+     gerektigini soyluyor: NEREYE KADAR GELDIN. */
+  const bitti = m.why === 'empty' || m.why === 'kislak'; 
   /* Sol sütun: sürü. Büyük sayı KALAN hayvan — eski "9 / 12" kesri bir skor
      gibi okunuyordu ve altındaki "Kalan 9" satırıyla aynı şeyi söylüyordu. */
   $('overTally').hidden = false;
@@ -8670,7 +9331,12 @@ function showMorningEnd(){
   $('overDogUnit').textContent = u.uScar;
   $('overDogSub').textContent  = m.scars ? u.sNewScar(m.scars) : u.sNoNewScar;
 
-  const tmw = tomorrowNote();
+  /* "YARIN" SATIRI YOLCULUK BITTIYSE CIKMAZ. Basilan karede goruldu:
+     suru sifira inmis, panel "Suru kucuk. Kayipsiz varirsan bir kuzu
+     kazanirsin." diyordu. Yarin diye bir sey yok — o satir bir sonraki
+     bolume dair, ve bir sonraki bolum yok. Yalan vaat, hic vaat
+     etmemekten kotudur. */
+  const tmw = bitti ? '' : tomorrowNote();
   $('overTmw').textContent = tmw;
   $('overTmw').hidden = !tmw;
   /* ===== ŞAFAK RAPORU TEK MODA GÖRE (2026-08-21) =====================
@@ -8689,7 +9355,25 @@ function showMorningEnd(){
         kabı kalktı; 'kaç sabah' ve 'en büyük sürü' artık hiçbir şeyin
         ölçüsü değil. Yolculuğun ölçüsü nerede olduğun ve kaç hayvanın
         kaldığı — ikisi de zaten yukarıda yazıyor. */
-  $('overMeta').textContent = u.sMeta(Save.d.mornings, Save.d.bestFlock);
+  /* YOLCULUK BITTIYSE META SATIRI YOLUN KENDISINI SOYLUYOR.
+     'Sabah 14 · En büyük sürü 13' bir yolculugun sonunda soylenecek en
+     yanlis sey: oyuncunun o an merak ettigi tek sey nereye kadar
+     geldigi, ve o sayi baska hicbir yerde yazmiyor.
+     m.bolum finishMorning'de, KAYITTAN ONCE alindi — kayit o sirada
+     zaten yeni yolculuga hazirlanmis olabilir. */
+  /* META SATIRI ARTIK HER ZAMAN YOLU SOYLUYOR, sadece bitiste degil.
+     Basilan karede goruldu: siradan bir bolum sonunda satir 'Sabah 12 ·
+     En buyuk suru 11' diyordu. Ikisi de bu yapida hicbir seyin olcusu
+     degil (DEVIR bunu zaten yaziyordu) ve oyuncunun tek merak ettigi
+     sey -- 28 bolumun neresindeyim -- panelde HIC yazmiyordu.
+
+     Sayi Save.d.bolum'dan: 'vardi'da zaten SIRADAKI bolume ilerlemis
+     durumda, yani "neredeyim" sorusunun dogru cevabi o. Kaybedilen
+     bolumde ilerlemiyor, yani orada da dogru. Tek istisna kislak:
+     bolum 29'a cikiyor ve 29/28 diye okunurdu.                         */
+  $('overMeta').textContent = m.why === 'kislak'
+                            ? u.sYolTam(BOLUM_SAY)
+                            : u.sYol(Math.min(BOLUM_SAY, Save.d.bolum || 1), BOLUM_SAY);
   $('overMeta').hidden = false;
   $('overPerks').textContent = '';
   $('overUnlock').textContent = '';
@@ -8697,7 +9381,23 @@ function showMorningEnd(){
   $('btnPractice').hidden = true;
   $('btnAd').hidden = true;
   $('adNote').hidden = true;
-  $('btnMenu2').hidden = false;
+  /* ===== TEK DUGME (2026-08-22) ==================================
+     Basilan karede IKI dugme vardi: 'TEKRAR' ve 'MENU'. Ikisi de
+     birebir ayni seyi yapiyor (`toMenu`) ve ikisi de yanlis sey vaat
+     ediyordu: yolculukta "tekrar" diye bir sey yok, yolculuk DEVAM
+     ediyor; ve "menu" bir yer adi, bir eylem degil.
+
+     Bir onceki devir bu ikiligi kapattigini yaziyordu -- kapatmamis:
+     `btnMenu2` gizleniyordu ama `btnAgain` hic dokunulmadan ekranda
+     kaliyordu. Kod okunarak degil KARE BASILARAK goruldu.
+
+     Simdi tek dugme ve uzerinde ne olacagi yaziyor. Yolculuk bittiyse
+     "Yeni yolculuk" -- cunku basildiginda GERCEKTEN olan sey bu
+     (startRun sifir suruyu gorup yeniYolculuk cagiriyor), ve gorunmez
+     bir sifirlama bu deponun en eski yasagi. */
+  $('btnMenu2').hidden = true;
+  $('btnAgain').hidden = false;
+  $('btnAgain').textContent = bitti ? u.bYeniYol : u.bDevam;
   /* Kartın verisi sabah sonu ekranıyla AYNI kaynaktan gelir; ayrı hesap
      yapılırsa ikisi zamanla ayrışır ve hangisinin doğru olduğu bilinmez. */
   G.card = { kept: m.kept, scars: Save.d.scars || 0, mornings: Save.d.mornings,
@@ -8982,7 +9682,44 @@ const MORNING = {
      Simdi rampayla birlikte aciliyor: suruden gelen taban + kosunun
      saatinden gelen ek. */
   maxLiveBase: n => Math.max(1, Math.min(4, 1 + Math.floor(n / 6))),
-  maxLive(n){ return this.maxLiveBase(n) + Math.round(rampa() * 3); },
+  /* ESZAMANLILIK ARTIK BOLUMDEN DE GELIYOR (2026-08-22, sahibinin
+     ikinci karari). Uc kaynak ve UCU DE AYRI BIR SEY soyluyor:
+
+       maxLiveBase  suruye bagli   -- korunacak hayvan cok, tehdit cok
+       rampa()      kosuya bagli   -- BOLUM ICINDEKI tirmanis
+       esz          bolume bagli   -- BOLUMLER ARASINDAKI fark
+
+     `bask` ile karistirilmamali: bask SIKLIK (tehditler arasi aralik),
+     esz ESZAMANLILIK (ayni anda gokte kac tane). Olculdu ve ikisinin
+     ayri eksen oldugu tam da bu yuzden ortaya cikti: bask saatlerce
+     kisaliyordu ama gokte en fazla 3-4 tehdit durabildigi icin
+     dakikada dusen tehdit sayisi 4. dakikadan sonra DUZLESIYORDU.
+
+     VE BU SUTUN BIR KARSI AGIRLIK. Taban kalktigi icin suru artik kalici
+     olarak kuculuyor, yani maxLiveBase zamanla DUSUYOR: kayip veren
+     oyuncunun gogu kendiliginden seyreliyor. O seyrelme olum sarmalini
+     onleyen sey (bkz. kuzuHakki) ama tek basina birakilirsa yolculuk
+     ilerledikce KOLAYLASIRDI. esz bolumle artiyor, yani iki egri ters
+     yonde calisiyor ve toplam yerinde kaliyor.                        */
+  maxLive(n){
+    const taban = this.maxLiveBase(n) + Math.round(rampa() * 3);
+    /* BOLUM ESZAMANLILIGI SURUYLE SINIRLI. Ilk yazimda dogrudan
+       ekleniyordu ve olcum bunu hemen yakaladi: kampanya %90 isabetle
+       28. bolume varirken 13. bolumde tukendi. Sebep, sayilar
+       birlestirilince gorunur:
+
+         maxLiveBase suruye bagli ve suru kucukken 1
+         esz         bolume bagli ve bolum ilerledikce 3
+
+       Yani esz en agir darbeyi TAM DA SURU EN KUCUKKEN vuruyordu --
+       kaldirilan tabanin yerine gecmesi istenen negatif geri beslemenin
+       tam tersi. Iki hayvani kalmis bir surunun uzerinde dort kartal
+       durmasi ayrica anlamsiz: tehdit edecek hayvan yok.
+       Sinir n-1: her tehdide bir hayvan, ve en az bir hayvan bos
+       kaliyor -- kopegin yetisebilecegi hayvan.                       */
+    const esz = Math.min(bolumAyar(G.bolum).esz | 0, Math.max(0, n - 1));
+    return taban + esz;
+  },
   /* SEÇENEK 2 (öneri turu 04 §3 — o zamanki tercih, Seçenek 1'in ÜSTÜNE).
      Seçenek 1 göğü %92 boşluktan %74'e indirdi ve 18 tehdidin 18'i artık
      gösterisini oynuyor, ama EN UZUN SESSİZLİK 12 saniyede kaldı. Sebebi
@@ -9101,11 +9838,65 @@ function updateMorning(){
      yarim kesilirse hicbir sey anlatmiyor.
      Ust sinir bir EMNIYET KILIDI: bir hayvan bir sebeple kapiya
      varamazsa bolum sonsuza kadar surmesin. */
-  const varisTamam = varisSurusu();
-  if(varisTamam || G.yol >= yolUzunlugu() + 260){ finishMorning('vardi'); return; }
+  /* VARIS PAYI BOYUNCA YENI TEHDIT DOGMAZ. Iki isi birden yapiyor:
+     (1) Varis "sonuc ekraninin kendisi" diye tasarlandi — koyunlar tek
+         tek giriyor, oyuncu onlari sayiyor. Tam o sirada gokten kartal
+         dusurmek o kapanisi bir carpismaya ceviriyordu.
+     (2) KUZU HAKKINI KESINLESTIRIYOR. Kuzu varis BASLARKEN suruye
+         katiliyor (kuzuKatil); varis boyunca hala kayip mumkun olsaydi
+         kazanilmis bir kuzuyu geri almak gerekirdi ve "verilen sonra
+         alinan" en kotu geri bildirim turudur.
+     Sahnedeki tehditler isini bitiriyor, yalnizca YENISI gelmiyor. */
+  /* ===== SURU TUKENDI: YOLCULUGUN SONU (2026-08-22) ==================
+     Eskiden burada dogrudan finishMorning('empty') vardi ve bunun tek
+     sonucu bir panelin acilmasiydi -- ustelik taban yuzunden oyuncu o
+     panelden UC hayvanla cikiyordu, yani hicbir sey bitmemisti.
 
-  // Sürü tükendiyse bolum erken biter — devam edecek bir şey kalmadı
-  if(!live.length){ finishMorning('empty'); return; }
+     Simdi bitiyor, ve once EKRANDA bitiyor. Kaybin kendi perdesi
+     (KAYIP.top = 103 kare) sonuna kadar oynuyor, sonra dunya bir sure
+     daha kayiyor: bos yol, tek basina yuruyen kopek. Panel ondan sonra
+     aciliyor.
+     Sebep DERSLER'in kendi kurali: bu oyunun en agir olayi bir yaziyla
+     duyurulamaz. Kaybin juice turunda ogrenilen sey de ayni -- "kayip
+     agir ve sessiz". Yolculugun kaybi, tek bir hayvanin kaybindan daha
+     agir olmali; tek sayi olarak da oyle: 103 -> 103+150.
+
+     ⚠ VARIS DENETIMLERININ USTUNDE OLMAK ZORUNDA. Altta yazilmisti ve
+     bir kapi acik kaliyordu: son hayvan VARIS PAYI ICINDE giderse
+     `varisSurusu()` "herkes iceri girdi" diyerek true donuyor (kalan
+     yok, dolayisiyla hepsi 'gone'), ve bolum SURU YOKKEN 'vardi' ile
+     bitiyordu. Sifir hayvanla agila varmak bir varis degildir.          */
+  if(!live.length){
+    if(++G.sonT >= KAYIP.top + YOLCULUK_SON){ finishMorning('empty'); return; }
+    G.dog.pose = 'walk';
+    return;                          // tehdit uretimi yok, yol kaymaya devam
+  }
+
+  /* Yuvalar VARIS KAPISININ USTUNDE: kayalik yolun ortasinda, varis
+     payinin cok oncesinde bitiyor (YUVA_YERI en fazla 0.70). Yine de
+     burada duruyor ki bir gun pay buyurse kendiliginden dogru kalsin. */
+  yuvalariIsle();
+
+  const variyor = varisP() > 0;
+  kuzuKatil();                       // kayipsizsak: bir kuzu suruye katilir
+  const varisTamam = varisSurusu();
+  /* ===== KISLAK TORENI (2026-08-22) ================================
+     28. bolumde varis, oteki 27'sinden BASKA bir sey: yolun sonu.
+     Herkes iceri girdikten sonra KAPI KAPANIYOR ve bir daha acilmiyor.
+     Panel ondan sonra aciliyor.
+
+     Neden bir perde: bugune kadar 28. bolume varmakla 5. bolume varmak
+     birebir ayni goruntuydu -- sayac 28'de duruyor, bolum sonsuza kadar
+     tekrarlaniyordu ve oyuncu bitirdigini hicbir yerden ogrenemiyordu.
+     Simdi ogrendigi yer bir yazi degil, KAPANAN KAPI.
+
+     `varisTamam` sarti korunuyor: toren ancak kopek de iceri girdikten
+     SONRA basliyor. Kopegin en son girmesi ritueldi; onun ustune
+     kapanan kapi o rituelin cumlesini tamamliyor.                     */
+  if(varisTamam && Save.d.bolum >= BOLUM_SAY){
+    if(++G.kislakT < KISLAK_TOREN) return;
+  }
+  if(varisTamam || G.yol >= yolUzunlugu() + 260){ finishMorning('vardi'); return; }
   /* Kalan tehditler toparlansın diye kısa bir kuyruk payı; ama süresiz değil.
      G.strikes de bekleniyor: kurt boğuşması G.ducks'taki taşıyıcıyı hemen
      done İŞARETLİYOR (görsel yok, taşıyacak bir şey kalmadı) ama G.strikes
@@ -9126,7 +9917,7 @@ function updateMorning(){
      ZORLUK RAMPASI: tempo o sure boyunca artiyor, sonra tavanda
      kaliyor (bkz. morningShape cagrisi). Yani ilk iki dakika isinma,
      sonrasi sabit basinc — ve oyuncu dayanabildigi kadar dayaniyor. */
-  if(G.ducks.filter(d => !d.done).length < MORNING.maxLive(live.length)){
+  if(!variyor && G.ducks.filter(d => !d.done).length < MORNING.maxLive(live.length)){
     /* Geri sayım GÖK BOŞKEN HIZLANIYOR (Seçenek 2). "Boş" = ekranda canlı
        TEHDİT yok; kurt/çakal sayılmıyor çünkü o yer tehdidi ve gökyüzünün
        sessizliğini doldurmuyor (Cetvel L'nin "boş gök" ölçüsü de gökyüzüne
@@ -9198,7 +9989,7 @@ function updateMorning(){
        fiilen yok olmustu. Bayrak kalkti: cakalin sirasi zaten kurt
        gelene kadar (KURT_DAK); kurt basladiktan sonra groundThreatKind
        artik cakal dondurmuyor. */
-    const blocked = !kind || G.wolfCooldown > 0;
+    const blocked = !kind || G.wolfCooldown > 0 || variyor;
     const wolfBusy = G.ducks.some(d => d.wolf && !d.done) || G.strikes.some(s => s.isWolf);
     if(blocked){
       // takvim dışı, çakal bugün zaten kullanıldı ya da kampanya soğuması sürüyor
@@ -9235,13 +10026,27 @@ function finishMorning(why){
      Yarıda bırakmak ne kaçış yolu ne de kestirme — sadece durmak.        */
   const quit = why === 'quit';
 
-  Save.d.flock = Math.max(FLOCK_MIN, kept);
+  /* ===== TABAN KALKTI (2026-08-22) ====================================
+     Burada `Math.max(FLOCK_MIN, kept)` vardi. Suru artik SESSIZCE
+     dolmuyor: kaybettigin kadar az hayvanla devam ediyorsun, ve sifira
+     inersen yolculuk BITIYOR.
+     Gerekcesi ve olcumu FLOCK_MIN'in silindigi yerde yazili.            */
+  Save.d.flock = kept;
   if(!quit) Save.d.mornings++;
+
   /* VARISLA BIR SONRAKI BOLUME GECILIYOR. Kaybedilen bolum ilerletmiyor:
-     ayni bolum tekrar oynanir (her bolum bir KAYIT NOKTASI, en fazla bir
-     bolumluk ilerleme kaybedilir). Son bolumde sayac duruyor -- epilog
-     henuz yok, oraya varildiginda ne olacagi 5. maddeye bagli. */
-  if(why === 'vardi') Save.d.bolum = Math.min(BOLUM_SAY, Save.d.bolum + 1);
+     ayni bolum tekrar oynanir (her bolum bir KAYIT NOKTASI). Bu kural
+     YOLCULUGUN ICINDE gecerli; yolculugun kendisi ancak suru tukenince
+     biter.
+
+     28. BOLUMUN ARTIK GERCEK BIR BITISI VAR. Eskiden sayac burada
+     duruyordu (`Math.min(BOLUM_SAY, ...)`) ve son bolum SONSUZA KADAR
+     tekrarlaniyordu: oyuncu bitirdigini hicbir yerden ogrenemiyordu.
+     Simdi son agila varmak ayri bir bitis sebebi — 'kislak'.            */
+  if(why === 'vardi'){
+    Save.d.bolum++;                      // 28'den 29'a: KISLAK
+    if(Save.d.bolum > BOLUM_SAY) why = 'kislak';
+  }
   Save.d.scars += (G.scarsThisMorning || 0);
   /* Her yeni yara için bir damga. Sabah numarası BU sabahı da sayacak şekilde
      alınıyor (mornings yukarıda arttı), yani "bu sabah olan yaranın yaşı 0".
@@ -9269,11 +10074,12 @@ function finishMorning(why){
      ilerlemiyordu — sefer bölüm 1'in üçüncü gününde takılı kaldı. */
   /* Kampanya kancalari (alet kiri, iz, sahne ilerletme) SILINDI. */
 
-  const every = seasonBirthEvery(Save.d.flock);
-  if(!quit && Save.d.mornings % every === 0 && Save.d.flock < FLOCK_MAX){
-    Save.d.flock++;
-    G.born = 1;
-  } else G.born = 0;
+  /* KUZU ARTIK TAKVIMDEN DEGIL KAYIPSIZ VARISTAN GELIYOR (bkz. kuzuHakki).
+     Sayi burada islenmiyor: kuzu VARIS ANINDA suruye katildi (kuzuKatil),
+     yani `kept` onu zaten sayiyor ve Save.d.flock = kept satiri onu zaten
+     kaydetti. Burada yalnizca bilancoya "+1 kuzu" yazacak bayrak var.
+     Iki yerde artirmak, kuzuyu iki kez vermek olurdu.                    */
+  G.born = G.kuzuGeldi ? 1 : 0;
 
   /* Yırtıkkulak — "kaçırtıldı" (o sabah hiç koyun kaybetmeden tamamen
      çekildi) ise bayrak kayıtta kalır; TÜKETİMİ bir sonraki kurdun
@@ -9304,6 +10110,9 @@ function finishMorning(why){
   Telemetry.morning({ why, lost:G.lost, saved:G.saved, scars:G.scarsThisMorning||0 }, cfg.mode);
   G.morningEnd = { why, kept, before, lost:G.lost, saved:G.saved,
                    scars:G.scarsThisMorning || 0, born:G.born,
+                   /* OYNANAN bolum (G.bolum), kayittaki degil: Save.d.bolum
+                      bu satira gelene kadar coktan ilerlemis olabilir. */
+                   bolum: G.bolum,
                    busyStrikes:G.busyStrikes || 0 };
   showMorningEnd();
 }
@@ -9557,17 +10366,35 @@ const KURT_DAK  = 6;             // ilk kurt  (bolum ICINDE, dakika)
    kurt : ayni, kurt icin
    bask : tehdit sikligi carpani (kucuk = sik). 1.00 taban.
    zirh : zirhli kus orani carpani. 0 ise zirhli HIC yok.
-   uzun : yol uzunlugu carpani (bolum suresi)                            */
+   uzun : yol uzunlugu carpani (bolum suresi)
+   esz  : ayni anda gokte DURABILEN tehdide eklenen sayi (bkz.
+          MORNING.maxLive). `bask`tan AYRI EKSEN: bask sikligi,
+          esz eszamanliligi tasiyor.
+   yuva : yolun uzerinde duran kayaliklar. Dizinin her elemani BIR
+          kayalik, degeri uzerindeki tunek sayisi (1..4). [2] -> tek
+          kayalik iki kus; [2,3] -> iki kayalik. Yoksa yuva yok.
+          Bu sutun eszamanliligi de tasiyor: vurulmayan her kus
+          hizada BIRDEN kalkiyor (bkz. YUVA blogu).                     */
 const BOLUMLER = [
   null, // 0 kullanilmiyor -- bolumler 1'den basliyor
-  { yeni:'tek kartal',        cakal:null, kurt:null, bask:1.55, zirh:0,    uzun:0.80 },
-  { yeni:'iki kartal birden', cakal:null, kurt:null, bask:1.30, zirh:0,    uzun:0.85 },
-  { yeni:'ZIRHLI kartal',     cakal:null, kurt:null, bask:1.20, zirh:0.60, uzun:0.90 },
-  { yeni:'CAKAL — kopek kosuyor', cakal:2, kurt:null, bask:1.15, zirh:0.70, uzun:0.95 },
-  { yeni:'KURT — ilk bogusma',    cakal:2, kurt:5,   bask:1.10, zirh:0.80, uzun:1.00 },
-  { yeni:'nefes',             cakal:4, kurt:null, bask:1.35, zirh:0.50, uzun:0.90 },
-  { yeni:'DURAK I — yogun gok',   cakal:2, kurt:4,  bask:0.85, zirh:1.00, uzun:1.05 },
-  { yeni:'nefes',             cakal:3, kurt:null, bask:1.30, zirh:0.60, uzun:0.90 },
+  { yeni:'tek kartal',        cakal:null, kurt:null, bask:1.55, zirh:0,    uzun:0.80, esz:0 },
+  { yeni:'iki kartal birden', cakal:null, kurt:null, bask:1.30, zirh:0,    uzun:0.85, esz:0 },
+  { yeni:'ZIRHLI kartal',     cakal:null, kurt:null, bask:1.20, zirh:0.60, uzun:0.90, esz:1 },
+  { yeni:'CAKAL — kopek kosuyor', cakal:2, kurt:null, bask:1.15, zirh:0.70, uzun:0.95, esz:0 },
+  { yeni:'KURT — ilk bogusma',    cakal:2, kurt:5,   bask:1.10, zirh:0.80, uzun:1.00, esz:1 },
+  { yeni:'nefes',             cakal:4, kurt:null, bask:1.35, zirh:0.50, uzun:0.90, esz:0 },
+  { yeni:'DURAK I — yogun gok',   cakal:2, kurt:4,  bask:0.85, zirh:1.00, uzun:1.05, esz:2 },
+  { yeni:'nefes',             cakal:3, kurt:null, bask:1.30, zirh:0.60, uzun:0.90, esz:0 },
+  /* YUVA BURADA TANITILIYOR — ve ILK KEZ TEK KUSLA. Iki kusla
+     tanitilsaydi oyuncu ilk karsilasmada hem "bu ne" hem "ikisi birden
+     geliyor" sorusunu ayni anda cozmek zorunda kalirdi. Bir seyi ILK KEZ
+     gormek, onu yirminci kez gormekten baska bir sey. */
+  { yeni:'YUVA — yolda duran tehdit', cakal:3, kurt:5, bask:1.25, zirh:0.70, uzun:0.95, esz:1, yuva:[1] },
+  { yeni:'yuva iki kusla',    cakal:3, kurt:5,  bask:1.15, zirh:0.80, uzun:1.00, esz:1, yuva:[2] },
+  { yeni:'nefes',             cakal:4, kurt:null, bask:1.30, zirh:0.60, uzun:0.90, esz:0 },
+  { yeni:'iki yuva',          cakal:2, kurt:4,  bask:1.05, zirh:0.90, uzun:1.05, esz:1, yuva:[2, 2] },
+  { yeni:'DURAK II — dolu kayalik', cakal:2, kurt:4, bask:0.90, zirh:1.10, uzun:1.10, esz:2, yuva:[4] },
+  { yeni:'nefes',             cakal:4, kurt:6,  bask:1.25, zirh:0.60, uzun:0.90, esz:1 },
 ];
 
 /* Bolumun ayarlari. Tablonun disina tasan bolumler SON SATIRI kullanip
@@ -9578,12 +10405,27 @@ function bolumAyar(b){
   if(BOLUMLER[b]) return BOLUMLER[b];
   const son = BOLUMLER[BOLUMLER.length - 1];
   const fazla = b - (BOLUMLER.length - 1);
+  /* TABLO DISI BOLUMLER — "18'den sonra cesitlilik yalniz BILESIMDEN
+     gelir" kuralinin bugunku hali. Yuva sayisi da burada bilesime
+     giriyor: uc bolumde bir donuyor (2 kus / 3 kus / yok), yani
+     testere disi korunuyor -- her yuvali bolumden sonra bir nefes.
+     Saf fonksiyon: ayni bolum her zaman ayni. */
+  const y = [[2], [3], null];
   return {
     yeni: '(tablo disi — bileşim)',
     cakal: 2, kurt: 4,
     bask: Math.max(0.55, son.bask - fazla * 0.03),
     zirh: Math.min(1.6, son.zirh + fazla * 0.04),
     uzun: Math.min(1.25, son.uzun + fazla * 0.01),
+    /* Eszamanlilik tablo disinda da testere disi: yuvali bolumlerde
+       yuksek, nefes bolumunde dusuk. Tavan 4 -- ustunde gokyuzu
+       okunmuyor, tehditler birbirinin silueti oluyor. */
+    /* DOZ OLCULEREK DUSURULDU. Ilk deneme [3,3,1] + fazla/6 idi ve
+       kampanya %90 isabetle 28 yerine 15. bolumde tukendi -- eszamanlilik
+       zorluğu neredeyse iki katina cikariyor. Simdi tavan 3 ve testere
+       disi korunuyor: iki yuvali bolum, bir nefes. */
+    esz: Math.min(3, [2, 1, 0][fazla % 3] + Math.min(1, Math.floor(fazla / 8))),
+    yuva: y[fazla % 3],
   };
 }
 /* YER TEHDIDI ARTIK BOLUME BAGLI. Eskiden her bolumun 2. dakikasinda
@@ -9597,6 +10439,251 @@ function groundThreatKind(){
   if(a.kurt  != null && dak >= a.kurt)  return 'wolf';
   if(a.cakal != null && dak >= a.cakal) return 'jackal';
   return null;
+}
+
+/* ===== YUVA — YOLUN UZERINDE DURAN TEHDIT ==============================
+
+   Sahibinin ikinci karari iki parcaliydi: (a) yolun uzerinde DURAN yeni
+   bir tehdit, (b) ayni anda birden fazla tehdit. Bu tek nesne ikisini de
+   tasiyor, ve ayni olmalari tesadufi degil -- biri otekini URETIYOR.
+
+   NE: yolun kenarinda duran bir kayalik. Ufukta beliriyor, buyuyor,
+   yaklasiyor -- varis agiliyla BIREBIR ayni yaklasma egrisi (k^1.7).
+   Uzerinde dorde kadar KARTAL TUNUYOR.
+
+   NICIN "DAHA COK KARTAL" DEGIL: bugun her tehdit ekran disindan
+   GELIYOR ve oyuncunun tek isi TEPKI VERMEK. Bu ise HAZIRLIK ogretiyor.
+   Kayalik dakikalarca ufukta duruyor; oyuncu onu goruyor, kac kus
+   oldugunu sayiyor, ve gokteki isini yaparken ne zaman ona mermi
+   ayiracagina KENDISI karar veriyor. Yeni bir dusman degil, yeni bir
+   beceri.
+
+   VE BURADAN ESZAMANLILIK CIKIYOR: kayalik hizaya gelince tunekte
+   KALANLARIN HEPSI BIRDEN kalkiyor. Yani gokteki ani kalabaligin sebebi
+   bir zar degil OYUNCUNUN KENDI IHMALI. Olculen sorun ("iki+ tehdit
+   hicbir bolumde %12'yi gecmiyor") bir sayiyi buyuterek degil, o sayiyi
+   OYUNCUYA BAGLAYARAK cozuluyor.
+
+   TUNEYEN KUSLAR G.ducks'TA DEGIL, bilerek. Iki sebep:
+     1) paintBird olcek almiyor. G.ducks'a konsalardi 0.2 olcekli bir
+        kayanin uzerinde TAM BOY kartal cizilirdi.
+     2) Vurus kutusu tek kaynaktan gelmeli. `yuvaOlcu().tunek[i]` hem
+        cizimin hem nisanin okudugu yer -- `barinakOlcu` ile ayni desen.
+   Kavga yigininin fire() icinde kendi kutusuyla sinanmasi da ayni
+   gerekce; burada o desen ikinci kez kullaniliyor.                     */
+const YUVA = {
+  /* Kac piksel onceden ufukta belirir. 3000 px / 0.6 px-kare = ~83 saniye:
+     "gordum, hala vaktim var, once suruyu kollayayim" penceresi. Kisa
+     olsaydi hazirlik degil yine tepki olurdu.                          */
+  gorunur: 3000,
+  uzakOlcek: 0.15,          // YOL.uzakOlcek ile ayni: ayni yolda ayni perspektif
+  yakinOlcek: 1.00,
+  /* KAYALIK NEREDE DOGAR, NEREDE HIZAYA GELIR.
+     Ilk yazimda dogus W+22'deydi (agilin varisX deseni) ve BASILAN KARE
+     bunu hemen yakaladi: kayalik gorunur oldugu 68 saniyenin cogunu
+     ekranin SAG KENARINA YAPISMIS gecirip sonra hizla soldan cikiyordu.
+     Yani tam da vurulmasi gereken evrede vurulacak yerde DEGILDI --
+     "hazirlik" penceresi kagitta vardi, ekranda yoktu.
+
+     Sebep perspektifin kendisi: k^1.7 uzaktayken YAVAS kaydiriyor (ve bu
+     dogru, uzak sey yavas kayar). Agil icin sorun degil, cunku agil
+     yolun son %12'sinde beliriyor ve zaten HEDEF. Kayalik yolun
+     ortasinda ve GECILIYOR.
+
+     Cozum kaydirma egrisini bozmak degil DOGUS NOKTASINI iceri almak:
+     ufuk cizgisinin kacis noktasi ekranin kenari degil. Kayalik en
+     kucuk halinde bile EKRANDA doguyor (x=290, 7 px genis), sonra
+     kendi egrisiyle sola akiyor.
+       k=0.00  x 290  7 px       ufukta, sayilabilir
+       k=0.50  x 238  19 px      nisan alanina girdi
+       k=0.82  x 169  35 px      KALKIS
+       k=1.00  x 120  46 px      hizada, suru onunden geciyor          */
+  dogarX: W - 30,
+  hizaX: 120,
+  /* Hizadan sonra dunyanin hizinda sola akip cikiyor. */
+  gecisPx: 420,
+  /* KALKIS, kayalik tam hizaya gelmeden BIRAZ ONCE. Tam hizada kalksalardi
+     kuslar ekranin sag kenarindan degil suruye BASMIS halde dogardi:
+     dalis icin mesafe kalmaz, telgraf olmaz. 0.82 -> kalkis aninda kaya
+     hala sagda ve ekranda. */
+  kalkisK: 0.82,
+  /* Kalkan kuslarin daireden dalisa gecis gecikmesi. HEPSI BIRDEN
+     kalkiyor (eszamanlilik oyunun kendisi), ama HEPSI BIRDEN VURMUYOR:
+     dort dalis tek karede inseydi ekranda dort ayri olay degil tek bir
+     bulanik olay olurdu. 22 kare (~0.37 sn) araligi okunur kiliyor. */
+  kalkisAra: 22, kalkisIlk: 20,
+};
+
+/* Kac yuva, yolun neresinde. Bolumun SAF fonksiyonu: ayni bolum her
+   zaman ayni yerde. En buyuk pay 0.70 -- YOL.agilGorunur (0.88) ile
+   arasinda kalkis + dalis icin pay birakiyor, yoksa kuslar varis
+   ritueline karisirdi. */
+const YUVA_YERI = { 1: [0.42], 2: [0.30, 0.60], 3: [0.22, 0.46, 0.70] };
+
+/* Bolumun yuvalarini kurar. `yuva` tablodan gelen tunek sayilari dizisi:
+   [2] -> tek kayalik, iki kus. [2,3] -> iki kayalik. Bos/yoksa yuva yok. */
+function yuvalariKur(){
+  G.yuvalar = [];
+  const liste = bolumAyar(G.bolum).yuva;
+  if(!liste || !liste.length) return;
+  const yerler = YUVA_YERI[liste.length] || YUVA_YERI[1];
+  const uz = yolUzunlugu();
+  for(let i = 0; i < liste.length; i++){
+    const n = Math.max(1, Math.min(4, liste[i] | 0));
+    const kus = [];
+    for(let j = 0; j < 4; j++){
+      /* ZIRHLI TUNEKTE DE OLABILIR -- ve tunekteyken zirh plakasi
+         GORUNUYOR (drawTuneyenKartal), yani oyuncu "bu iki mermi ister"
+         bilgisini mermi harcamadan ONCE ogreniyor. Gokteki kartalda bu
+         bilgi ancak daire evresinde aciliyor; hazirlik tehdidinin
+         ogrettigi sey tam da bu farkin kendisi. */
+      const zirhli = j < n && lrnd() < armoredChance();
+      kus.push({ dolu: j < n, hp: zirhli ? 2 : 1, zirh: zirhli, flash: 0 });
+    }
+    G.yuvalar.push({
+      yolHedef: Math.round(uz * (yerler[i] || 0.42)),
+      kus, kalkti: false, bitti: false,
+    });
+  }
+}
+
+/* Kayaligin bu karedeki yeri ve olcegi -- YALNIZ G.yol'un fonksiyonu.
+   agilYeri() ile ayni sozlesme: durum tutulmuyor, duraklat/yeniden
+   yukle/geri sar hepsinde ayni yerde cikiyor. */
+function yuvaYeri(y){
+  if(!y || y.bitti) return null;
+  const kalan = y.yolHedef - G.yol;
+  if(kalan > YUVA.gorunur) return null;              // henuz ufukta degil
+  const k = Math.min(1.6, 1 - kalan / YUVA.gorunur); // 1 = hizada, >1 = gecti
+  if(k < 0) return null;
+  const e = Math.pow(Math.min(1, k), 1.7);
+  return {
+    k,
+    olcek: YUVA.uzakOlcek + (YUVA.yakinOlcek - YUVA.uzakOlcek) * e,
+    /* x TAM SAYI: yuvaOlcu kendi icinde de yuvarliyor ama iki yerde iki
+       farkli yuvarlama yapmak kutuyu cizimden 1 px kaydirabilir -- ve o
+       1 px nisanin yalan soylemesi demek. Tek yerde yuvarlanip iki tarafa
+       da AYNI sayi veriliyor.
+       k > 1'de kaya sola dogru gecip gidiyor (dunyanin hizinda). */
+    x: Math.round(k <= 1
+        ? YUVA.dogarX - (YUVA.dogarX - YUVA.hizaX) * e
+        : YUVA.hizaX - (k - 1) * YUVA.gecisPx),
+  };
+}
+
+/* Ekranda su an duran, HENUZ KALKMAMIS kus tasiyan yuvalar (cizim ve
+   nisan icin). Tek yerden turetiliyor ki ikisi ayrisamasin. */
+function yuvaSahne(){
+  const out = [];
+  for(const y of G.yuvalar || []){
+    const p = yuvaYeri(y);
+    if(p) out.push({ y, p });
+  }
+  return out;
+}
+
+/* Tunekteki bir kusa isabet. Vurus HAFIF VE HIZLI (juice turunun kurali):
+   kaybin diliyle degil vurusun diliyle konusuyor. */
+function yuvaVur(y, i, m){
+  const k = y.kus[i];
+  const b = m.tunek[i];
+  const cx = b.cx, cy = b.y + (b.h >> 1);
+  if(k.hp > 1){                     // zirhli: ilk isabet sersemletir
+    k.hp--; k.flash = 14;
+    Snd.ping(); shake(2, 6);
+    feathers(cx, cy, PAL.dim);
+    return;
+  }
+  k.dolu = false;
+  /* TUY = BIR SEY VURULDU. Oyunun tek isabet isareti bu, ve uzak
+     mesafede kusun kendisi 3-4 piksel oldugu icin isabeti tasiyan sey
+     zaten tuyler. */
+  for(let j = 0; j < 6; j++) feathers(cx, cy, j % 2 ? PAL.dim : PAL.wool);
+  hitStop(2); shake(2, 5); buzz(10);
+  Snd.hit && Snd.hit();
+  G.combo++;
+  if(G.stats) G.stats.hits++;
+}
+
+/* Nisan tunekteki bir kusun uzerinde mi. TEK OLCU KAYNAGI: kutu
+   `yuvaOlcu().tunek[i]`den geliyor, yani cizimin okudugu yerden. Ayri bir
+   kutu hesaplansaydi nisan bir gun cizimden kayardi ve oyuncu "vurdum
+   ama gecti" derdi -- bu deponun en zor yakalanan hata sinifi.
+
+   Vurus alani KUTUDAN BUYUK (base payi): uzakta tunek 2x3 piksel ve
+   piksel piksel nisan almak beceri degil sabir olur. Ayni pay gokteki
+   kartalda da var (MOD.hitbox), yani yeni bir kural degil var olanin
+   ayni yerde uygulanmasi. */
+function yuvaNisan(base){
+  for(const { y, p } of yuvaSahne()){
+    if(y.kalkti) continue;
+    const m = yuvaOlcu(p.x, YOL.taban, p.olcek);
+    let en = -1, ed = 1e9;
+    for(let i = 0; i < 4; i++){
+      if(!y.kus[i].dolu) continue;
+      const b = m.tunek[i];
+      const cx = b.cx, cy = b.y + (b.h >> 1);
+      /* Pay kutunun YARISI + taban: kutu buyudukce (yaklastikca) alan da
+         buyuyor, yani uzakta zor yakinda kolay -- perspektifin kendi
+         soyledigi sey. */
+      const hx = base * 0.55 + b.w * 0.5, hy = base * 0.55 + b.h * 0.5;
+      const dx = Math.abs(aim.x - cx), dy = Math.abs(aim.y - cy);
+      if(dx < hx && dy < hy){ const q = dx*dx + dy*dy; if(q < ed){ ed = q; en = i; } }
+    }
+    if(en >= 0){ yuvaVur(y, en, m); return true; }
+  }
+  return false;
+}
+
+/* Kayalik hizaya gelince tunekte KALANLARIN HEPSI BIRDEN kalkiyor.
+   Bir kus vurulduysa o kalkmiyor -- yani gokteki kalabaligi belirleyen
+   sey oyuncunun yaklasma boyunca ne yaptigi. */
+function yuvaKalkis(y, m){
+  y.kalkti = true;
+  let sira = 0;
+  for(let i = 0; i < 4; i++){
+    if(!y.kus[i].dolu) continue;
+    const t = makeThreat();
+    if(!t) break;                   // suru bittiyse kalkacak bir sey yok
+    const b = m.tunek[i];
+    t.x = b.cx; t.y = b.y + (b.h >> 1);
+    t.vx = -1.2; t.vy = -0.4;
+    t.dir = -1;
+    t.armored = y.kus[i].zirh; t.hp = y.kus[i].hp;
+    t.type = y.kus[i].zirh ? 'red' : t.type;
+    /* DAIREDEN BASLIYOR, YAKLASMADAN DEGIL. 'approach' bir TELGRAFTIR
+       ("henuz menzilde degil", bkz. threatInRange) ve bu kusun telgrafi
+       coktan verildi: oyuncu onu dakikalardir kayanin uzerinde goruyor.
+       Ikinci bir telgraf o dakikalari bosa cikarirdi. */
+    t.tState = 'circle'; t.threat = 'circle'; t.t = 0;
+    t.circleT = YUVA.kalkisIlk + sira * YUVA.kalkisAra;
+    G.ducks.push(t);
+    y.kus[i].dolu = false;
+    sira++;
+  }
+  if(sira) Snd.flap();
+}
+
+/* Her karede: yuvalari ilerlet, hizaya gelenleri kaldir, gecenleri kapat.
+   updateMorning'den cagriliyor. */
+function yuvalariIsle(){
+  for(const y of G.yuvalar || []){
+    if(y.bitti) continue;
+    const p = yuvaYeri(y);
+    if(!p){
+      // yolHedef'i coktan gecti ve artik gorunmuyor -> kapat
+      if(G.yol > y.yolHedef) y.bitti = true;
+      continue;
+    }
+    for(const k of y.kus) if(k.flash > 0) k.flash--;
+    if(!y.kalkti && p.k >= YUVA.kalkisK){
+      yuvaKalkis(y, yuvaOlcu(p.x, YOL.taban, p.olcek));
+    }
+    /* Kaya ekranin solundan cikinca is bitti. `k > 1.5` degil KONUM
+       sinaniyor: k lineer, x ise egriden geliyor -- ikisi ayrisirsa
+       kaya ekranda dururken silinirdi. */
+    if(p.x < -60) y.bitti = true;
+  }
 }
 
 function wolfGap(){
@@ -9871,6 +10958,20 @@ function wolfStrike(w, a){
 }
 
 function strike(t, a){
+  /* ZATEN GITMIS HAYVANA BASKIN OLMAZ. Iki tehdit ayni hayvani hedef
+     alabiliyor (makeThreat rastgele seciyor ve suru bire indiginde
+     BASKA SECENEK YOK) -- ikisi de baskin kaydi acinca ayni hayvan iki
+     kez "kaybediliyordu": bilanco 2 kayip yaziyor, surude 1 hayvan
+     eksiliyordu.
+     2026-08-22'de OLCUMLE yakalandi ve yakalama yontemi DERSLER'in
+     kendi kurali oldu: tek sayi ("1 hayvanla girdim, 2 kaybettim")
+     makul gorunmuyordu ama asil kaniti YANINDAKI sutundu -- kayittaki
+     suru ile bilancodan turetilen sayi ayrisiyordu.
+       bol 12 · once 1 · kayip 1 · kalan 1  -> turetilen 0
+       bol 15 · once 1 · kayip 2 · kalan 0  -> turetilen -1
+     Hata YENI DEGIL; yuva geldigi icin GORUNUR oldu (ayni anda gokte
+     iki+ tehdit orani %5'ten %15'e cikti). */
+  if(!a || a.state === 'gone'){ t.tState = 'leave'; t.t = 0; return; }
   // Hayvanın alınmasına kadar kısa bir pencere: köpek yetişebilir mi?
   a.state = 'alert'; a.alarm = 30;
   /* "Köpek meşgulken açık tehdit" ÖLÇÜM SAYACI: köpek zaten bir kurtla
@@ -10020,6 +11121,25 @@ function updateStrikes(){
 function resolveStrike(s, saved){
   const a = G.flock.find(x => x.id === s.animal);
   if(!a) return;
+  /* ===== KAYBEDILEN HAYVAN GERI DIRILMEZ (2026-08-22) ================
+     Bulunan en agir hata, ve tam da sahibinin bu turda kapattigi kapinin
+     ta kendisi: kaybin sessizce geri alinmasi.
+
+     Nasil oluyordu: iki tehdit AYNI hayvani hedefleyebiliyor (makeThreat
+     rastgele seciyor ve suru bire indiginde baska secenek yok). Ikisi de
+     baskin kaydi aciyor. Biri kayipla cozuluyor -> a.state='gone'.
+     Sonra oteki KURTARMAYLA cozuluyor -> a.state='graze', yani olen
+     hayvan ayaga kalkiyor. G.lost 1'de kaliyor ama surude 2 hayvan var.
+
+     Olculdu, kare kare:
+       bolum 10, suru 2, kare 8411: onceki karede canli=1, bu karede
+       canli=2, G.lost=1. Bilanco "1 kayip · 2 kaldi" diyordu -- ikiden
+       birini kaybedip ikisiyle donmek.
+
+     TESTLER YESILKEN VARDI ve yeni degil; yuva geldigi icin gorunur
+     oldu (ayni anda gokte iki+ tehdit orani %5'ten %15'e cikti).
+     Yakalayan sey tek bir sayi degil IKI SAYININ CELISKISIYDI.        */
+  if(a.state === 'gone') return;
   if(saved){
     a.state = 'graze'; a.alarm = 0;
     G.saved++;
@@ -10052,6 +11172,10 @@ function resolveStrike(s, saved){
       shake(4); buzz(30);
     }
   } else {
+    /* IKINCI KAPI, ilkiyle ayni sebep (bkz. strike). Baskin ACILDIKTAN
+       sonra da hayvan baska bir yoldan gidebilir (kurt kapabilir), ve
+       o zaman bu cozum ikinci kez sayardi. Ikisi ayri an, ayri kapi. */
+    if(a.state === 'gone') return;
     a.state = 'gone';
     G.lost++;
     /* SÜRÜ FARK EDİYOR (BULGU A, seçenek B). Kaybın olduğu yerden uzaklığa
@@ -10417,6 +11541,12 @@ function updateThreat(t){
 function fire(){
   if(G.phase === 'calib') return fireCalib();
   if(G.phase !== 'play') return;
+  /* KAPANIS PERDELERINDE TUFEK OLU. Nisangah zaten cizilmiyor
+     (bkz. render), ama cizmemek yetmez: dokunan parmak hala ates
+     ediyordu ve ekranda karsiligi olmayan bir ates, oyunun en agir
+     karesinde bir BOZUKLUK gibi okunur. Gorunmeyenin calismasi da
+     gorunmeyen ceza kadar kotu. */
+  if(G.sonT || G.kislakT) return;
   /* FIRTINA: nişan tamamen kapalı (eski karar kaydi — belge silindi). Tüfek ölü, komutlar tek fiil. */
   /* Gök BOŞken de kavga yığını meşru hedef. Bu kapı "gökte hiçbir şey yoksa
      ateş etme" diye yazılmıştı ve kurt yığını G.ducks'ta olmadığı için (kurt
@@ -10440,7 +11570,11 @@ function fire(){
 
      Cevap EN SESSIZ olan: %38 siklikta olan bir sey bagiramaz, yoksa
      oyunun arka plani olur. Kuru bir tik, perdesiz.                   */
-  if(!G.ducks.length && !kavgaYigini()){
+  /* Ekranda duran bir YUVA da mesru hedef: gok bos olabilir ama kayalik
+     orada duruyor ve uzerinde kus var. Bu kapi yuva eklenirken
+     guncellenmeseydi oyuncu tam da yuvanin ogrettigi seyi -- gok bosken
+     kayaliga mermi ayirmayi -- yapamazdi, ve tufek sessizce reddederdi. */
+  if(!G.ducks.length && !kavgaYigini() && !yuvaSahne().some(v => v.y.kus.some(k => k.dolu))){
     G.kuruTetik = TUFEK.kuruTetik;
     Snd.kuruTetik();
     return;
@@ -10496,9 +11630,15 @@ function fire(){
     const kx = Math.abs(aim.x - G.dog.x), ky = Math.abs(aim.y - (G.dog.y - 6));
     if(kx < base + 6 && ky < base + 6){ fightShot(kavga); return; }
   }
+  /* TUNEKTEKI KUSLAR G.ducks'ta DEGIL (bkz. YUVA blogu), o yuzden kavga
+     yigini gibi KENDI KUTUSUYLA sinaniyor. pick()'ten ONCE degil SONRA
+     olsaydi uzaktaki kucuk bir tunek, ustunden gecen bir kartaldan once
+     secilebilirdi; gokteki tehdit her zaman oncelikli -- o suruyu SIMDI
+     tehdit ediyor, tunekteki henuz etmiyor. */
   const d = pick(base);
-  if(d) hitBird(d);
-  else { G.iska = TUFEK.iska; Snd.iska(); }   // ISKA. Kavga yiginina ates
+  if(d){ hitBird(d); return; }
+  if(yuvaNisan(base)) return;
+  G.iska = TUFEK.iska; Snd.iska();   // ISKA. Kavga yiginina ates
                                  // buraya HIC gelmiyor: o dal return ediyor.
 }
 
@@ -10694,7 +11834,14 @@ function update(){
   G.t++;
   /* YOL ILERLIYOR. Yavas cekim kapisinin ALTINDA: kayip aninda dunya da
      yavasliyor, yoksa suru dururken manzara tam hizda akip gecerdi. */
-  if(G.phase === 'play') G.yol += YOL.hiz;
+  /* YOLCULUK BITTIGINDE DUNYA DURUYOR. Kopek oturunca yol da duruyor --
+     oturan bir kopegin arkasindan manzaranin akmaya devam etmesi
+     "yolculuk surdu ama kopek durdu" derdi, oysa soylenmesi gereken sey
+     tam tersi. Kislak toreninde de ayni: herkes iceri girdi, yuruyecek
+     kimse kalmadi. */
+  const _son = yolculukSonu();
+  if(G.phase === 'play' && !(_son && _son.faz === 'otur') && !G.kislakT)
+    G.yol += YOL.hiz;
   if(G.msgT > 0) G.msgT--;
   if(G.hint && --G.hint.t <= 0) G.hint = null;
 
@@ -11013,6 +12160,18 @@ function render(){
      ayni iki parcali cizim yolundan geciyor. */
   const _agil = G.phase === 'play' ? (agilYeri() || cikisAgilYeri()) : null;
   const AGIL_TABAN = YOL.taban;
+  /* YUVA — AGILDAN ONCE, SURUDEN ONCE. Sirasi bir derinlik ifadesi:
+     kayalik yolun KENARINDA duruyor, suru onun ONUNDEN geciyor. Suruden
+     sonra cizilseydi kayalik surunun uzerine binerdi ve "yolun uzerinde
+     duran sey" degil "surunun onunde duran sey" okunurdu.
+     Agilla ayni anda ekranda olmalari beklenmiyor (YUVA_YERI en fazla
+     0.70, agil %88'de beliriyor) ama olsalar bile dogru siralaniyorlar:
+     agil daha uzakta. */
+  if(G.phase === 'play' && typeof drawYuva === 'function'){
+    for(const { y, p } of yuvaSahne()){
+      drawYuva(g, p.x, AGIL_TABAN, p.olcek, G.t, y.kus.map(k => k.dolu));
+    }
+  }
   if(_agil){
     if(typeof drawAgilArka === 'function') drawAgilArka(g, _agil.x, AGIL_TABAN, _agil.olcek, _agil.kit, _agil.faz, G.t);
     else agilGecici(g, _agil.x, AGIL_TABAN, _agil.olcek);
@@ -11084,11 +12243,19 @@ function render(){
            degil. Isi varsa (kurda kosuyor, bogusuyor) yuru gecilmiyor:
            orada kendi hareketi var. */
         if(dog.icerde) { /* agila girdi -- cizilmiyor */ } else {
+        /* YOLCULUGUN SON PERDESI. Sonda kalan tek sey bu: bos yolda
+           oturmus, geriye bakan bir kopek. Oyunun en agir karesi, ve
+           tek bir yazi tasimiyor. */
+        const _s = yolculukSonu();
+        if(_s && _s.faz === 'otur'){
+          drawKangal(g, dog.x, dog.y, -1, 0, Save.d.scars, G.dogSore, 'otur');
+        } else {
         const yuruK = (!G.dogTask && G.phase === 'play')
           ? (Math.floor(G.yol / YOL.adimPx) % 6 + 6) % 6 : null;
         drawKangal(g, dog.x, dog.y, G.dogTask ? Math.sign(G.dogTask.x - dog.x) || 1 : 1,
                    G.dogTask ? ((G.t >> 2) & 1) : 0,
                    Save.d.scars, G.dogSore, yuruK);
+        }
         }
         if(wf && (wf.phase === 'chase' || wf.jackal)){
           const S = wf.jackal ? CAKAL : KURT;
@@ -11189,13 +12356,25 @@ function render(){
     }
   }
 
-  {
+  /* ARAYUZ KAPANIS PERDELERINDE SUSUYOR. Basilan kare bunu gosterdi:
+     surunun son hayvani gitmis, ekranda bos yol ve tek basina oturan
+     bir kopek var -- ve ustunde kirmizi "0 -2" sayaci ile ortada bir
+     NISANGAH duruyordu. Ikisi de "hala oyna" diyor; oysa oynanacak bir
+     sey kalmadi ve o kare oyunun en agir karesi.
+     Ayni sey kislak toreni icin de gecerli: kapi kapanirken sayac
+     okumak toreni bozar.
+     Bu, "kayip agir ve SESSIZ" kuralinin arayuz tarafi.               */
+  const _kapanis = yolculukSonu() || (G.kislakT > 0 ? { faz:'kislak' } : null);
+  /* DOM katmanindaki HUD de kapaniyor -- kanvasa cizilen sayac ile
+     DOM sayaci ayri iki sey, ikisini de susturmak gerekiyor. */
+  if(_kapanis) hud.classList.remove('on');
+  if(!_kapanis){
     drawHUD();
     if(G.msgT > 0 && G.msg) textC(g, G.msg, W/2, 52, PAL.bone, 2, PAL.ink);
   }
-  if(G.hint) drawHint();
+  if(G.hint && !_kapanis) drawHint();
 
-  if(G.phase === 'play'){
+  if(G.phase === 'play' && !_kapanis){
     drawIska(g);
     drawAim(g, aim.x, aim.y, G.shots === 0,
             G.reloadT > 0 ? 1 - G.reloadT / reloadCost() : -1,
@@ -12445,7 +13624,10 @@ function applyLang(){
   document.documentElement.lang = LANG;
   set('tTagline', u.tagline);
   const lede = $('tLede'); if(lede) lede.innerHTML = u.lede;
-  set('btnAgain', u.retry);    set('btnMenu2', u.menu);
+  /* btnAgain'in metnini showMorningEnd YAZIYOR (bitise gore degisiyor).
+     Burada u.retry ile ezilirse dil degistiren oyuncu "Yeni yolculuk"
+     yerine "Tekrar" gorurdu -- ve o dugme tekrar etmiyor. */
+  set('btnMenu2', u.menu);
   set('btnPractice', u.practiceBtn);
   /* btnCalib artık ayar panelinin içinde ve etiketi u.calib DEĞİL:
      `calib` anahtarı sözlükte iki kez tanımlı ve panelin kendi
